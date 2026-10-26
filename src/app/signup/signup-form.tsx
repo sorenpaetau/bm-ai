@@ -41,7 +41,7 @@ export function SignupForm() {
       <Field label="Password" hint="At least 8 characters.">
         <input name="password" type="password" autoComplete="new-password" minLength={8} required className={inputClass} />
       </Field>
-      <Button type="submit" disabled={pending} className="w-full">
+      <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? "Creating your account…" : "Create account"}
       </Button>
     </form>

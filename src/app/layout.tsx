@@ -4,7 +4,8 @@ import { SITE } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
-const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"] });
+// Fraunces is variable: "opsz" lets large headlines use its tighter display cut, "SOFT" rounds it slightly.
+const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], axes: ["opsz", "SOFT"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),

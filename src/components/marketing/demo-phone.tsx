@@ -32,66 +32,58 @@ export async function DemoQrCode({ className = "" }: { className?: string }) {
 }
 
 export function DemoPhone() {
-  const { theme, hero, sections, buttons, optin } = DEMO_CONTENT;
+  const { theme, hero, sections, buttons } = DEMO_CONTENT;
   const facts = sections.find((s) => s.type === "facts");
-  const story = sections.find((s) => s.type === "story");
+  const heroStyle = {
+    background: `radial-gradient(120% 70% at 50% 0%, color-mix(in oklab, ${theme.primary} 80%, white), ${theme.primary} 55%, color-mix(in oklab, ${theme.primary} 70%, black))`,
+  };
 
   return (
-    <div className="mx-auto w-[280px] shrink-0 rounded-[2.75rem] border-[10px] border-ink bg-ink shadow-2xl sm:w-[300px]">
-      <div className="relative h-[560px] overflow-hidden rounded-[2rem] bg-white sm:h-[600px]" aria-hidden="true">
-        <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-ink" />
-        <div className="px-5 pb-6 pt-12 text-white" style={{ background: theme.primary }}>
-          <p className="text-[11px] uppercase tracking-[0.2em]" style={{ color: theme.accent }}>
+    <div className="relative mx-auto w-[272px] shrink-0 rounded-[3rem] bg-gradient-to-b from-[#3a3d45] to-[#16171b] p-[9px] shadow-[0_50px_100px_-30px_rgb(0_0_0/0.75),inset_0_0_0_1px_rgb(255_255_255/0.12)] sm:w-[300px]">
+      <div className="relative h-[560px] overflow-hidden rounded-[2.5rem] bg-[#f6f2f0] sm:h-[610px]" aria-hidden="true">
+        <div className="absolute left-1/2 top-2.5 z-10 h-6 w-24 -translate-x-1/2 rounded-full bg-black" />
+        <div className="relative px-5 pt-12 pb-12 text-center text-white" style={heroStyle}>
+          <p className="text-[9px] font-semibold uppercase tracking-[0.3em]" style={{ color: theme.accent }}>
             {hero.brand}
           </p>
-          <p className="mt-1 font-serif text-2xl font-semibold leading-tight">{hero.title}</p>
-          {hero.subtitle && <p className="mt-1 text-xs text-white/75">{hero.subtitle}</p>}
+          {/* eslint-disable-next-line @next/next/no-img-element -- tiny local SVG */}
+          {hero.imageUrl && <img src={hero.imageUrl} alt="" className="mx-auto mt-3 h-40 w-auto drop-shadow-[0_14px_14px_rgb(0_0_0/0.4)] sm:h-44" />}
+          <p className="mt-3 font-serif text-[1.6rem] leading-[1.05]">{hero.title}</p>
+          {hero.subtitle && (
+            <p className="mx-auto mt-2 inline-block rounded-full bg-white/10 px-2.5 py-0.5 text-[10px] ring-1 ring-white/15">{hero.subtitle}</p>
+          )}
         </div>
 
-        <div className="space-y-4 px-5 py-4 text-[12px] leading-snug text-ink">
-          {facts?.type === "facts" && (
-            <div>
-              <p className="font-serif text-sm font-semibold">{facts.title}</p>
-              <dl className="mt-2 divide-y divide-line">
-                {facts.items.slice(0, 3).map((item) => (
-                  <div key={item.label} className="flex justify-between gap-3 py-1.5">
-                    <dt className="text-muted">{item.label}</dt>
-                    <dd className="text-right font-medium">{item.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          )}
-
-          {story?.type === "story" && (
-            <div>
-              <p className="font-serif text-sm font-semibold">{story.title}</p>
-              <p className="mt-1 line-clamp-2 text-muted">{story.body}</p>
-            </div>
-          )}
-
-          <div className="rounded-xl border border-line p-3">
-            <p className="font-semibold">{optin.headline}</p>
-            <p className="mt-0.5 text-muted">{optin.prompt}</p>
-            <div className="mt-2 h-7 rounded-md border border-line bg-paper" />
-          </div>
-        </div>
-
-        <div className="absolute inset-x-0 bottom-0 flex gap-2 border-t border-line bg-white px-4 py-3">
+        <div className="relative -mt-5 space-y-2 px-4">
           {buttons.map((b) => (
             <div
               key={b.label}
-              className="flex-1 whitespace-nowrap rounded-full py-2 text-center text-[11px] font-semibold"
+              className="rounded-full py-2.5 text-center text-[11px] font-semibold shadow-md"
               style={
                 b.style === "primary"
-                  ? { background: theme.primary, color: "#fff" }
-                  : { border: `1px solid ${theme.primary}`, color: theme.primary }
+                  ? { background: theme.accent, color: "#1c1917" }
+                  : { background: "#fff", color: theme.primary, boxShadow: `inset 0 0 0 1.5px ${theme.primary}` }
               }
             >
               {b.label}
             </div>
           ))}
         </div>
+
+        {facts?.type === "facts" && (
+          <div className="mx-3 mt-4 rounded-2xl bg-white p-4 text-[11px] shadow-sm">
+            <span className="block h-[2px] w-5 rounded-full" style={{ background: theme.accent }} />
+            <p className="mt-2 font-serif text-[15px] text-ink">{facts.title}</p>
+            <dl className="mt-2 grid grid-cols-2 gap-x-3">
+              {facts.items.slice(0, 4).map((item) => (
+                <div key={item.label} className="border-t border-black/5 py-1.5">
+                  <dt className="text-[8px] font-semibold uppercase tracking-wider text-muted">{item.label}</dt>
+                  <dd className="truncate text-ink">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
       </div>
     </div>
   );

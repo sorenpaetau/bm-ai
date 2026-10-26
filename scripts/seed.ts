@@ -38,6 +38,16 @@ async function main() {
   }
 
   let [product] = await sql<{ id: string }[]>`SELECT id FROM products WHERE slug = ${DEMO_PRODUCT.slug}`;
+  if (product && DEMO_CONTENT.hero.imageUrl) {
+    // Demo databases seeded before the bottle illustration existed get it added, without touching edits.
+    const image = sql.json(DEMO_CONTENT.hero.imageUrl);
+    await sql`
+      UPDATE products SET
+        content = CASE WHEN content->'hero' ? 'imageUrl' THEN content ELSE jsonb_set(content, '{hero,imageUrl}', ${image}) END,
+        published_content = CASE WHEN published_content->'hero' ? 'imageUrl' THEN published_content
+                                 ELSE jsonb_set(published_content, '{hero,imageUrl}', ${image}) END
+      WHERE id = ${product.id}`;
+  }
   if (!product) {
     [product] = await sql<{ id: string }[]>`
       INSERT INTO products (company_id, sku, name, description, slug, status, content, published_content, published_at)

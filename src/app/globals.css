@@ -3,14 +3,16 @@
 /* Design tokens. Use the Tailwind names (bg-ink, text-muted, border-line, bg-brand, text-accent ...)
    rather than raw hex values so the whole site can be re-themed here. */
 :root {
-  --paper: #faf8f5;
+  --paper: #f8f6f2;
   --surface: #ffffff;
-  --ink: #1c1917;
-  --muted: #6b645c;
-  --line: #e7e2da;
-  --brand: #1f3a5f;       /* B&M.ai navy */
+  --ink: #15130f;
+  --muted: #645d55;
+  --line: #e7e1d7;
+  --brand: #14213d;       /* B&M.ai midnight navy */
   --brand-ink: #ffffff;
-  --accent: #c8553d;      /* warm terracotta for calls to action */
+  --accent: #c4552f;      /* warm copper for calls to action */
+  --gold: #c9a24a;        /* champagne highlight, used sparingly */
+  --night: #0b1324;       /* dark sections (hero, call to action) */
 }
 
 @theme inline {
@@ -22,11 +24,115 @@
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-accent: var(--accent);
+  --color-gold: var(--gold);
+  --color-night: var(--night);
   --font-sans: var(--font-inter);
   --font-serif: var(--font-fraunces);
+
+  /* Soft, layered shadows: "card" for resting surfaces, "lift" for hover and floating elements. */
+  --shadow-card: 0 1px 2px rgb(21 19 15 / 0.04), 0 4px 16px -4px rgb(21 19 15 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(21 19 15 / 0.04), 0 18px 40px -12px rgb(21 19 15 / 0.18);
+  --shadow-glow: 0 10px 30px -8px rgb(196 85 47 / 0.55);
+
+  --animate-rise: rise 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-ripple: ripple 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+  --animate-fade: fade 0.4s ease-out both;
+}
+
+/* Defined outside @theme so they are always emitted (the .reveal class uses rise directly). */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes ripple {
+  0% { transform: scale(0.6); opacity: 0.7; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background: var(--paper);
   color: var(--ink);
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
+  /* Decorative glows may poke past the edge; clip (unlike hidden) keeps the sticky header working. */
+  overflow-x: clip;
+}
+
+h1, h2, h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: rgb(196 85 47 / 0.2);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Fine grid and grain textures for dark hero and call-to-action panels. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+@utility bg-grid-light {
+  background-image:
+    linear-gradient(to right, rgb(20 33 61 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(20 33 61 / 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@utility mask-fade-b {
+  mask-image: linear-gradient(to bottom, black 40%, transparent);
+}
+
+@utility mask-radial {
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* Elements fade up as they scroll into view, in browsers that support scroll-driven animation.
+   Elsewhere (and with reduced motion) they simply show. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      animation: rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 35%;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

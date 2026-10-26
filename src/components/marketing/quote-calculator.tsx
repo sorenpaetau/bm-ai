@@ -49,7 +49,7 @@ export function QuoteCalculator() {
     <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
       <div className="space-y-3">
         {lines.map((line, i) => (
-          <fieldset key={i} className="grid gap-3 rounded-2xl border border-line bg-surface p-4 sm:grid-cols-[1.4fr_0.8fr_1fr_auto] sm:items-end">
+          <fieldset key={i} className="grid gap-3 rounded-2xl border border-line/80 bg-surface p-5 shadow-[var(--shadow-card)] sm:grid-cols-[1.4fr_0.8fr_1fr_auto] sm:items-end">
             <legend className="sr-only">Product {i + 1}</legend>
             <label className="block space-y-1">
               <span className="text-xs font-medium text-muted">Product</span>
@@ -98,15 +98,22 @@ export function QuoteCalculator() {
         <button
           type="button"
           onClick={() => setLines((ls) => [...ls, { label: "", quantity: 0, tagType: "standard" }])}
-          className="w-full rounded-2xl border border-dashed border-line px-4 py-3 text-sm font-semibold text-brand hover:bg-surface"
+          className="w-full rounded-2xl border-2 border-dashed border-line px-4 py-4 text-sm font-semibold text-brand transition hover:border-accent/40 hover:bg-surface hover:text-accent"
         >
           + Add another product
         </button>
       </div>
 
-      <div className="h-fit rounded-2xl bg-brand p-6 text-brand-ink lg:sticky lg:top-24" aria-live="polite">
+      <div
+        className="relative isolate h-fit overflow-hidden rounded-3xl bg-night p-7 text-brand-ink shadow-[0_30px_60px_-20px_rgb(11_19_36/0.6)] lg:sticky lg:top-24"
+        aria-live="polite"
+      >
+        <span
+          aria-hidden="true"
+          className="absolute -top-24 -right-24 -z-10 h-64 w-64 rounded-full bg-[radial-gradient(closest-side,rgb(196_85_47/0.45),transparent)] blur-xl"
+        />
         <p className="text-sm text-brand-ink/70">Your tag order</p>
-        <p className="mt-1 font-serif text-4xl font-semibold">{formatCents(quote.totalCents)}</p>
+        <p className="mt-1 font-serif text-5xl font-semibold tracking-[-0.02em] tabular-nums">{formatCents(quote.totalCents)}</p>
         <p className="mt-1 text-sm text-brand-ink/80">
           {quote.totalQuantity > 0
             ? `${quote.totalQuantity.toLocaleString("en-US")} tags in one order, so every tag gets the ${formatCents(quote.tierCents)} price`
@@ -127,7 +134,7 @@ export function QuoteCalculator() {
         )}
 
         {tagsToNextTier > 0 && nextTier && (
-          <p className="mt-5 rounded-xl bg-white/10 p-3 text-sm">
+          <p className="mt-5 rounded-xl bg-gold/10 p-3 text-sm text-gold ring-1 ring-gold/25 ring-inset">
             Order {tagsToNextTier.toLocaleString("en-US")} more tags and every tag drops to {formatCents(nextTier.cents)}.
           </p>
         )}
@@ -139,7 +146,7 @@ export function QuoteCalculator() {
 
         <Link
           href={summary ? `/contact?message=${encodeURIComponent(summary)}` : "/contact"}
-          className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:brightness-110"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-accent px-5 py-3.5 text-sm font-semibold text-white shadow-[var(--shadow-glow)] transition hover:-translate-y-px hover:brightness-110"
         >
           Send me this quote
         </Link>

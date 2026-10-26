@@ -16,7 +16,7 @@ export function LoginForm() {
       <Field label="Password">
         <input name="password" type="password" autoComplete="current-password" required className={inputClass} />
       </Field>
-      <Button type="submit" disabled={pending} className="w-full">
+      <Button type="submit" size="lg" disabled={pending} className="w-full">
         {pending ? "Logging in…" : "Log in"}
       </Button>
     </form>

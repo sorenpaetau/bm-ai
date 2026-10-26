@@ -79,7 +79,7 @@ export function Honeypot() {
 export function SubmitButton({ children }: { children: ReactNode }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+    <Button type="submit" size="lg" disabled={pending} className="w-full sm:w-auto">
       {pending ? "Sending…" : children}
     </Button>
   );
@@ -96,7 +96,12 @@ export function FormMessage({ state }: { state: FormState }) {
 
 export function SuccessPanel({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-emerald-900">
+    <div role="status" className="animate-rise rounded-2xl border border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-7 text-emerald-900">
+      <span aria-hidden="true" className="mb-4 flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-white shadow-lg shadow-emerald-600/25">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12.5l4.5 4.5L19 7.5" />
+        </svg>
+      </span>
       <p className="font-serif text-2xl font-semibold">{title}</p>
       <div className="mt-2 space-y-2">{children}</div>
     </div>

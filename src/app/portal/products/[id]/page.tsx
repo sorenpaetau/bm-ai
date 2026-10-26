@@ -76,7 +76,7 @@ export default async function EditProductPage({
         <Link href="/portal" className="text-sm text-muted hover:text-ink">
           ← Your products
         </Link>
-        <h1 className="mt-2 font-serif text-2xl font-semibold">{p.name}</h1>
+        <h1 className="mt-2 font-serif text-3xl font-medium tracking-[-0.01em] sm:text-4xl">{p.name}</h1>
         <p className="text-sm text-muted">SKU {p.sku}</p>
       </div>
 

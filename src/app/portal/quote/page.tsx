@@ -23,7 +23,7 @@ export default async function QuotePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="font-serif text-2xl font-semibold">Order tags</h1>
+        <h1 className="font-serif text-3xl font-medium tracking-[-0.01em] sm:text-4xl">Order tags</h1>
         <p className="text-sm text-muted">
           Pick how many tags you need for each product and see your price straight away. Every tag has an NFC chip and a
           printed QR code.{" "}
