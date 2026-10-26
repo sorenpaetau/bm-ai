@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
-import { safeContent } from "@/app/portal/_lib/publish";
+import { safeContent } from "@/app/portal/_lib/content";
 import { PreviewView } from "./preview-view";
 
 // Renders a product's DRAFT content for its owner (or B&M.ai staff). Shown in the editor's phone frame.

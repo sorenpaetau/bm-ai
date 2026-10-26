@@ -1,4 +1,4 @@
-import { LandingContent as LandingContentSchema, type LandingContent } from "@/lib/landing";
+import type { LandingContent } from "@/lib/landing";
 
 // Rules for publishing a draft. Pure, so the editor can show them live and the server re-checks them.
 
@@ -29,8 +29,3 @@ export const STATUS_LABEL: Record<string, string> = {
   archived: "Archived",
 };
 
-/** Parse stored content, or null if it isn't a valid page (e.g. an empty '{}' row). */
-export function safeContent(json: unknown): LandingContent | null {
-  const parsed = LandingContentSchema.safeParse(json);
-  return parsed.success ? parsed.data : null;
-}

@@ -34,6 +34,12 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
 
   const blockers = publishBlockers(content, verified);
 
+  // Follow the server when the page is published or taken offline outside the editor.
+  useEffect(() => {
+    setIsLive(live);
+    if (!live) setChangedSincePublish(false);
+  }, [live]);
+
   const update = useCallback((fn: (draft: LandingContent) => void) => {
     setContent((c) => {
       const next = structuredClone(c);

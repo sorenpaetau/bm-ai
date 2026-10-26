@@ -1,7 +1,7 @@
 import { ConfirmSubmit } from "@/app/portal/_components/confirm-submit";
 import { QUOTE_STATUS } from "@/app/portal/_lib/quotes";
 import { sql } from "@/lib/db";
-import { formatCents } from "@/lib/pricing";
+import { formatCents, TAG_TYPES, type TagType } from "@/lib/pricing";
 import { VERTICALS, type Vertical } from "@/lib/site";
 import { setQuoteStatus, setStarterKitStatus, unverifyCompany, verifyCompany } from "./actions";
 import { StatusForm } from "./status-form";
@@ -203,7 +203,7 @@ export default async function AdminPage() {
                 <td className="p-3 text-xs">
                   {q.lines.map((l, i) => (
                     <div key={i}>
-                      {l.quantity.toLocaleString()} × {l.label} ({l.tagType.replace("_", " ")})
+                      {l.quantity.toLocaleString()} × {l.label} ({TAG_TYPES[l.tagType as TagType]?.label ?? l.tagType})
                     </div>
                   ))}
                   {q.notes && <div className="mt-1 text-muted italic">“{q.notes}”</div>}

@@ -2,7 +2,8 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { ButtonLink, Card } from "@/components/ui";
-import { needsReview, safeContent, STATUS_LABEL } from "./_lib/publish";
+import { safeContent } from "./_lib/content";
+import { needsReview, STATUS_LABEL } from "./_lib/publish";
 
 type Row = {
   id: string;

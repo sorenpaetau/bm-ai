@@ -7,7 +7,7 @@ import { starterContent } from "@/lib/ai/template";
 import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { Vertical } from "@/lib/site";
-import { safeContent } from "../../_lib/publish";
+import { safeContent } from "../../_lib/content";
 import { archiveProduct, redraft, unpublish, updateDetails } from "../actions";
 import { ConfirmSubmit } from "../../_components/confirm-submit";
 import { DetailsPanel } from "./details";
@@ -91,7 +91,6 @@ export default async function EditProductPage({
       )}
 
       <Editor
-        key={p.status}
         productId={p.id}
         slug={p.slug}
         initial={content}

@@ -52,8 +52,8 @@ const NewProduct = z.object({
 });
 
 async function draftFor(input: DraftInput, useAi: boolean) {
-  if (!useAi) return { content: starterContent(input), drafted: "starter" };
   if (!aiConfigured()) return { content: starterContent(input), drafted: "ai-off" };
+  if (!useAi) return { content: starterContent(input), drafted: "starter" };
   try {
     return { content: await draftLandingContent(input), drafted: "ai" };
   } catch (err) {
