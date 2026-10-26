@@ -110,6 +110,14 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
               </span>
             </div>
             <div className="ml-auto flex flex-wrap gap-2">
+              <a
+                href={`/portal-preview/${productId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-paper lg:hidden"
+              >
+                Preview
+              </a>
               {isLive && (
                 <a href={`/p/${slug}`} target="_blank" rel="noreferrer" className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold hover:bg-paper">
                   View live page
