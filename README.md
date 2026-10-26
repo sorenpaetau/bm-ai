@@ -1,36 +1,26 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# B&M.ai
 
-## Getting Started
+Tap a product, see its story. B&M.ai connects physical products to consumers through NFC tags and
+AI-built landing pages, and shows manufacturers who is engaging with their products.
 
-First, run the development server:
+## Run it locally
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1. Install Node.js 20+ and Postgres 16.
+2. Create a database and user matching `.env.example` (or edit the URL), then copy it to `.env.local`.
+3. `npm install`
+4. `npm run db:setup`
+5. `npm run dev` and open http://localhost:3000
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Try the demo tag at http://localhost:3000/t/DEMO2023.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy (Vercel)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Import this repository at vercel.com/new.
+2. In the project's Storage tab, add a Neon Postgres database. It sets `DATABASE_URL` for you.
+3. Add `ANTHROPIC_API_KEY` and `NEXT_PUBLIC_SITE_URL` under Settings → Environment Variables. Set
+   `DEMO_PASSWORD` and `ADMIN_PASSWORD` to create the demo logins; without them no logins are seeded.
+4. Deploy. The `vercel-build` script applies the schema and seeds demo data on every build.
 
-## Learn More
+Every pull request then gets its own preview link that can be shared with anyone.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `CLAUDE.md` for conventions.
