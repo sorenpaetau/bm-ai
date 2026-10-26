@@ -5,7 +5,7 @@ const globalForDb = globalThis as unknown as { sql?: postgres.Sql };
 
 export const sql =
   globalForDb.sql ??
-  postgres(process.env.DATABASE_URL ?? "postgres://bm:bm@localhost:5432/bm", {
+  postgres(process.env.DATABASE_URL ?? process.env.POSTGRES_URL ?? "postgres://bm:bm@localhost:5432/bm", {
     max: 5,
     transform: postgres.camel,
   });
