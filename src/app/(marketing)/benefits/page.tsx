@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Badge, CallToAction, PageHeader, Section, SectionHeading } from "@/components/marketing/section";
+import { Badge, CallToAction, IconTile, PageHeader, Section, SectionHeading } from "@/components/marketing/section";
+import { BagIcon, ChartIcon, HeartIcon, MailIcon, ShieldIcon, SparkIcon, CalendarIcon } from "@/components/icons";
 import { Card } from "@/components/ui";
 import { SITE } from "@/lib/site";
 
@@ -38,41 +39,49 @@ const grid = [
 
 const benefits = [
   {
+    icon: HeartIcon,
     title: "Customer loyalty and brand awareness",
     body: "Turn a one-time purchase into an ongoing relationship. Every bottle becomes a way back to you.",
     status: "now" as const,
   },
   {
+    icon: ChartIcon,
     title: "Know who your customers are",
     body: "See taps over time, by product, city and phone type, plus everyone who signed up.",
     status: "now" as const,
   },
   {
+    icon: SparkIcon,
     title: "AI writes the first draft",
     body: "Type in your product name and we draft the page for you. You review every word before it goes live.",
     status: "now" as const,
   },
   {
+    icon: BagIcon,
     title: "Shop button to your web store",
     body: "Add a “Buy this wine” button that goes straight to your Shopify store or any web page.",
     status: "now" as const,
   },
   {
+    icon: MailIcon,
     title: "Email marketing integration",
     body: "Send new sign-ups straight into Klaviyo, and keep products and prices in sync with Shopify.",
     status: "later" as const,
   },
   {
+    icon: ShieldIcon,
     title: "Authenticity checks and counterfeit alerts",
     body: "Secure tags that can't be copied, with an alert when a product is scanned somewhere it shouldn't be.",
     status: "later" as const,
   },
   {
+    icon: CalendarIcon,
     title: "Campaigns",
     body: "Point the same tags at a holiday offer or a new release for a few weeks, then switch back.",
     status: "later" as const,
   },
   {
+    icon: ChartIcon,
     title: "Deeper analytics",
     body: "Repeat visitors, campaign results and exports for your marketing team.",
     status: "later" as const,
@@ -90,21 +99,21 @@ export default function BenefitsPage() {
 
       <Section>
         <SectionHeading eyebrow="Side by side" title="What the shopper sees, and what you get back." />
-        <div className="mt-10 overflow-hidden rounded-2xl border border-line bg-surface">
-          <div className="hidden grid-cols-2 border-b border-line bg-paper text-sm font-semibold sm:grid">
-            <p className="px-6 py-3 text-ink">The shopper</p>
-            <p className="border-l border-line px-6 py-3 text-brand">You, the brand</p>
+        <div className="reveal mt-12 overflow-hidden rounded-3xl border border-line/80 bg-surface shadow-[var(--shadow-lift)]">
+          <div className="hidden grid-cols-2 bg-night text-sm font-semibold sm:grid">
+            <p className="px-7 py-4 text-white/80">The shopper</p>
+            <p className="border-l border-white/10 px-7 py-4 text-gold">You, the brand</p>
           </div>
           <ul className="divide-y divide-line">
             {grid.map((row) => (
               <li key={row.consumer} className="grid sm:grid-cols-2">
-                <div className="px-6 pb-2 pt-5 sm:py-5">
+                <div className="px-6 pb-2 pt-6 sm:px-7 sm:py-6">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted sm:hidden">The shopper</p>
                   <p className="text-ink">{row.consumer}</p>
                 </div>
-                <div className="px-6 pb-5 pt-2 sm:border-l sm:border-line sm:py-5">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-brand sm:hidden">You, the brand</p>
-                  <p className="font-medium text-brand">{row.manufacturer}</p>
+                <div className="px-6 pb-6 pt-2 sm:border-l sm:border-line sm:bg-paper/50 sm:px-7 sm:py-6">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-accent sm:hidden">You, the brand</p>
+                  <p className="font-medium text-ink">{row.manufacturer}</p>
                 </div>
               </li>
             ))}
@@ -120,12 +129,18 @@ export default function BenefitsPage() {
         />
         <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {benefits.map((b) => (
-            <Card key={b.title} className="flex flex-col gap-3 bg-paper">
-              <div>
+            <Card
+              key={b.title}
+              className="reveal flex flex-col gap-3 transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <IconTile tone={b.status === "now" ? "accent" : "light"}>
+                  <b.icon className="h-5 w-5" />
+                </IconTile>
                 <Badge tone={b.status === "now" ? "good" : "later"}>{b.status === "now" ? "Included" : "Coming soon"}</Badge>
               </div>
-              <p className="font-semibold text-ink">{b.title}</p>
-              <p className="text-sm text-muted">{b.body}</p>
+              <p className="mt-2 font-serif text-xl leading-snug font-medium text-ink">{b.title}</p>
+              <p className="text-sm leading-relaxed text-muted">{b.body}</p>
             </Card>
           ))}
         </div>

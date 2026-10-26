@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { Badge, PageHeader, Section, SectionHeading } from "@/components/marketing/section";
+import { Eyebrow, NightPanel, PageHeader, Section, SectionHeading } from "@/components/marketing/section";
+import { ArrowRightIcon, CheckIcon, GiftIcon } from "@/components/icons";
 import { QuoteCalculator } from "@/components/marketing/quote-calculator";
-import { ButtonLink, Card } from "@/components/ui";
+import { ButtonLink } from "@/components/ui";
 import { HOSTING_PLANS, STARTER_KIT, TAG_TIERS, TAG_TYPES, formatCents, type PlanId, type TagType } from "@/lib/pricing";
 
 export const metadata: Metadata = {
@@ -45,19 +46,22 @@ export default function PricingPage() {
       />
 
       <Section>
-        <div className="grid items-center gap-6 rounded-3xl border border-accent/30 bg-surface p-6 sm:p-10 lg:grid-cols-[1fr_auto]">
-          <div className="space-y-2">
-            <Badge tone="good">Free</Badge>
-            <h2 className="font-serif text-3xl font-semibold text-ink">Starter kit</h2>
-            <p className="max-w-2xl text-muted">
+        <NightPanel className="reveal grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-[auto_1fr_auto]">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-white shadow-[var(--shadow-glow)]">
+            <GiftIcon className="h-8 w-8" />
+          </span>
+          <div className="space-y-3">
+            <Eyebrow tone="light">Free to try</Eyebrow>
+            <h2 className="font-serif text-3xl font-medium tracking-[-0.02em] sm:text-4xl">Starter kit</h2>
+            <p className="max-w-2xl leading-relaxed text-white/70">
               {STARTER_KIT.tags} ready-to-use tags and a sample page for one of your products, at no charge. Put them on a
               few bottles, tap them, and see the results in your dashboard before you spend anything.
             </p>
           </div>
-          <ButtonLink href="/starter-kit" className="justify-self-start">
-            Request the starter kit
+          <ButtonLink href="/starter-kit" size="lg" className="justify-self-start">
+            Request the starter kit <ArrowRightIcon className="h-4 w-4" />
           </ButtonLink>
-        </div>
+        </NightPanel>
       </Section>
 
       <Section className="bg-surface">
@@ -67,33 +71,40 @@ export default function PricingPage() {
           intro="The more tags in one order, the lower the price for every tag in it."
         />
         <div className="mt-10 grid gap-8 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-2xl border border-line">
+          <div className="reveal h-fit overflow-hidden rounded-2xl border border-line/80 bg-surface shadow-[var(--shadow-card)]">
             <table className="w-full text-left">
-              <thead className="bg-paper text-sm text-muted">
+              <thead className="bg-paper text-xs tracking-[0.12em] text-muted uppercase">
                 <tr>
                   <th className="px-5 py-3 font-medium">Tags in your order</th>
                   <th className="px-5 py-3 text-right font-medium">Price per tag</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
-                {TAG_TIERS.map((t) => (
-                  <tr key={t.min}>
-                    <td className="px-5 py-3 text-ink">{tierLabel(t)}</td>
-                    <td className="px-5 py-3 text-right font-semibold text-ink">{formatCents(t.cents)}</td>
+                {TAG_TIERS.map((t, i) => (
+                  <tr key={t.min} className="transition hover:bg-paper/60">
+                    <td className="px-5 py-4 text-ink">{tierLabel(t)}</td>
+                    <td className="px-5 py-4 text-right">
+                      <span className="font-serif text-xl font-semibold text-ink">{formatCents(t.cents)}</span>
+                      {i === TAG_TIERS.length - 1 && (
+                        <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 align-middle text-[11px] font-semibold text-accent">
+                          Best price
+                        </span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="space-y-3">
-            <p className="font-semibold text-ink">Tag types</p>
+          <div className="reveal space-y-3">
+            <p className="text-xs font-semibold tracking-[0.12em] text-muted uppercase">Tag types</p>
             {(Object.keys(TAG_TYPES) as TagType[]).map((t) => (
-              <div key={t} className="flex items-start justify-between gap-4 rounded-xl border border-line bg-paper p-4">
+              <div key={t} className="flex items-start justify-between gap-4 rounded-2xl border border-line/80 bg-surface p-5 shadow-[var(--shadow-card)]">
                 <div>
                   <p className="font-medium text-ink">{TAG_TYPES[t].label}</p>
                   <p className="text-sm text-muted">{TAG_TYPES[t].description}</p>
                 </div>
-                <p className="shrink-0 text-sm font-semibold text-ink">
+                <p className="shrink-0 rounded-full bg-paper px-3 py-1 text-sm font-semibold text-ink">
                   {TAG_TYPES[t].upchargeCents ? `+${formatCents(TAG_TYPES[t].upchargeCents)} / tag` : "Included"}
                 </p>
               </div>
@@ -120,28 +131,57 @@ export default function PricingPage() {
           title="Keep your pages online"
           intro="Choose a plan by how many products need a page. Billed once a year, separately from tags."
         />
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {plans.map(([id, plan]) => (
-            <Card key={id} className={`flex flex-col gap-4 ${id === "silver" ? "border-brand/40" : "bg-paper"}`}>
-              <div className="flex items-center justify-between">
-                <p className="font-serif text-2xl font-semibold text-ink">{plan.label}</p>
-                {id === "silver" && <Badge tone="good">Best for a winery</Badge>}
+        <div className="mt-14 grid items-center gap-5 md:grid-cols-3">
+          {plans.map(([id, plan]) => {
+            const featured = id === "silver";
+            return (
+              <div
+                key={id}
+                className={`reveal relative flex flex-col gap-5 overflow-hidden rounded-3xl p-7 transition duration-300 hover:-translate-y-1 ${
+                  featured
+                    ? "bg-night text-white shadow-[0_30px_60px_-20px_rgb(11_19_36/0.6)] md:-my-4 md:py-11"
+                    : "border border-line/80 bg-surface text-ink shadow-[var(--shadow-card)] hover:shadow-[var(--shadow-lift)]"
+                }`}
+              >
+                {featured && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-[radial-gradient(closest-side,rgb(196_85_47/0.45),transparent)] blur-xl"
+                  />
+                )}
+                <div className="relative flex items-center justify-between gap-3">
+                  <p className="font-serif text-2xl font-medium">{plan.label}</p>
+                  {featured && (
+                    <span className="rounded-full bg-gold/15 px-2.5 py-1 text-xs font-semibold text-gold ring-1 ring-gold/30 ring-inset">
+                      Best for a winery
+                    </span>
+                  )}
+                </div>
+                <div className="relative">
+                  <p className="font-serif text-5xl font-semibold tracking-[-0.02em]">
+                    {formatCents(plan.yearlyCents)}
+                    <span className={`font-sans text-base font-normal ${featured ? "text-white/60" : "text-muted"}`}> / year</span>
+                  </p>
+                  <p className={`mt-1 text-sm ${featured ? "text-white/60" : "text-muted"}`}>
+                    or {formatCents(plan.monthlyCents)} / month
+                  </p>
+                </div>
+                <ul className={`relative space-y-2.5 border-t pt-5 text-sm ${featured ? "border-white/10" : "border-line"}`}>
+                  {[
+                    `Pages for up to ${plan.skus.toLocaleString("en-US")} products`,
+                    "Tap and sign-up dashboard",
+                    "Technical support",
+                    "Help improving your pages",
+                  ].map((f) => (
+                    <li key={f} className="flex items-center gap-2.5">
+                      <CheckIcon className={`h-4 w-4 shrink-0 ${featured ? "text-gold" : "text-accent"}`} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <div>
-                <p className="text-3xl font-semibold text-ink">
-                  {formatCents(plan.yearlyCents)}
-                  <span className="text-base font-normal text-muted"> / year</span>
-                </p>
-                <p className="text-sm text-muted">or {formatCents(plan.monthlyCents)} / month</p>
-              </div>
-              <ul className="space-y-1.5 text-sm text-ink">
-                <li>Pages for up to {plan.skus.toLocaleString("en-US")} products</li>
-                <li>Tap and sign-up dashboard</li>
-                <li>Technical support</li>
-                <li>Help improving your pages</li>
-              </ul>
-            </Card>
-          ))}
+            );
+          })}
         </div>
       </Section>
 
@@ -149,11 +189,20 @@ export default function PricingPage() {
         <div className="grid gap-10 lg:grid-cols-2">
           <div className="space-y-4">
             <SectionHeading eyebrow="Ordering" title="How ordering works" />
-            <ol className="list-decimal space-y-2 pl-5 text-ink">
-              <li>Start with the free starter kit, or tell us what you need.</li>
-              <li>Log in to your client portal and add your products. We draft a page for each one.</li>
-              <li>Review and publish your pages, then pick your tag quantities and types.</li>
-              <li>We send you a quote. Accept it and we ship your tags, ready to stick on.</li>
+            <ol className="reveal space-y-4 text-ink">
+              {[
+                "Start with the free starter kit, or tell us what you need.",
+                "Log in to your client portal and add your products. We draft a page for each one.",
+                "Review and publish your pages, then pick your tag quantities and types.",
+                "We send you a quote. Accept it and we ship your tags, ready to stick on.",
+              ].map((step, i) => (
+                <li key={step} className="flex gap-4">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">
+                    {i + 1}
+                  </span>
+                  <span className="pt-1">{step}</span>
+                </li>
+              ))}
             </ol>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row">
               <ButtonLink href="/starter-kit">Get the starter kit</ButtonLink>
@@ -162,14 +211,27 @@ export default function PricingPage() {
               </ButtonLink>
             </div>
           </div>
-          <dl className="space-y-5">
-            {faqs.map((f) => (
-              <div key={f.q}>
-                <dt className="font-semibold text-ink">{f.q}</dt>
-                <dd className="mt-1 text-muted">{f.a}</dd>
-              </div>
+          <div className="space-y-3">
+            <p className="text-xs font-semibold tracking-[0.12em] text-muted uppercase">Common questions</p>
+            {faqs.map((f, i) => (
+              <details
+                key={f.q}
+                open={i === 0}
+                className="reveal group rounded-2xl border border-line/80 bg-surface shadow-[var(--shadow-card)] open:shadow-[var(--shadow-lift)]"
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-semibold text-ink [&::-webkit-details-marker]:hidden">
+                  {f.q}
+                  <span
+                    aria-hidden="true"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-paper text-lg leading-none text-muted transition group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="-mt-1 px-5 pb-5 leading-relaxed text-muted">{f.a}</p>
+              </details>
             ))}
-          </dl>
+          </div>
         </div>
       </Section>
     </>

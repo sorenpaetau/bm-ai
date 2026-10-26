@@ -24,6 +24,8 @@ export const DEMO_CONTENT: LandingContent = {
     brand: "Ridgeline Cellars",
     title: "Cabernet Sauvignon 2023",
     subtitle: "Napa Valley · Estate grown",
+    // Our own illustration of the made-up bottle (public/demo), not a photo of a real wine.
+    imageUrl: "/demo/ridgeline-cabernet.svg",
   },
   sections: [
     {

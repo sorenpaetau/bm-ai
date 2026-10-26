@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 560" width="200" height="560">
+  <!-- Illustration of the fictional Ridgeline Cellars Cabernet, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="glass" x1="0" x2="1">
+      <stop offset="0" stop-color="#0d0b09"/>
+      <stop offset="0.22" stop-color="#2b2420"/>
+      <stop offset="0.32" stop-color="#4a3f38"/>
+      <stop offset="0.42" stop-color="#211b17"/>
+      <stop offset="0.85" stop-color="#120f0d"/>
+      <stop offset="1" stop-color="#060504"/>
+    </linearGradient>
+    <linearGradient id="foil" x1="0" x2="1">
+      <stop offset="0" stop-color="#2e0b14"/>
+      <stop offset="0.3" stop-color="#7a2438"/>
+      <stop offset="0.45" stop-color="#9b3a50"/>
+      <stop offset="1" stop-color="#2a0a12"/>
+    </linearGradient>
+    <linearGradient id="label" x1="0" x2="1">
+      <stop offset="0" stop-color="#d9d0bf"/>
+      <stop offset="0.25" stop-color="#f6f1e6"/>
+      <stop offset="0.75" stop-color="#efe8da"/>
+      <stop offset="1" stop-color="#cbc1ae"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" x2="1">
+      <stop offset="0" stop-color="#8a6a22"/>
+      <stop offset="0.5" stop-color="#e2c472"/>
+      <stop offset="1" stop-color="#8a6a22"/>
+    </linearGradient>
+    <clipPath id="shape"><path d="M82 6h36v150c0 34 52 52 52 112v262c0 12-8 20-20 20H50c-12 0-20-8-20-20V268c0-60 52-78 52-112Z"/></clipPath>
+  </defs>
+  <path d="M82 6h36v150c0 34 52 52 52 112v262c0 12-8 20-20 20H50c-12 0-20-8-20-20V268c0-60 52-78 52-112Z" fill="url(#glass)"/>
+  <path d="M80 4h40v118H80z" fill="url(#foil)"/>
+  <rect x="78" y="116" width="44" height="6" fill="url(#gold)"/>
+  <rect x="80" y="12" width="40" height="3" fill="url(#gold)" opacity="0.8"/>
+  <path d="M38 296h124v178H38z" fill="url(#label)"/>
+  <path d="M38 302h124M38 468h124" stroke="url(#gold)" stroke-width="1.2"/>
+  <g fill="none" stroke="#5b1a2b" stroke-width="1.4" stroke-linecap="round">
+    <path d="M66 362c10-12 18-6 26-14s16-10 24-2 10 4 18 2"/>
+    <path d="M60 368c14-6 24 0 40-6s24-2 40 2" stroke="#c9a227" stroke-width="1"/>
+  </g>
+  <text x="100" y="330" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="8" letter-spacing="3" fill="#8a6a22">ESTATE</text>
+  <text x="100" y="398" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="17" fill="#2b1218">Ridgeline</text>
+  <text x="100" y="413" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="8" letter-spacing="2.5" fill="#5b1a2b">CELLARS</text>
+  <text x="100" y="436" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="7" letter-spacing="0.8" fill="#3a2a2c">CABERNET SAUVIGNON</text>
+  <text x="100" y="454" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="7" letter-spacing="1.2" fill="#8a6a22">2023 · NAPA VALLEY</text>
+  <g clip-path="url(#shape)">
+  <path d="M66 168c-10 26-22 48-24 96v236" stroke="#fff" stroke-opacity="0.12" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M90 10v140" stroke="#fff" stroke-opacity="0.14" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

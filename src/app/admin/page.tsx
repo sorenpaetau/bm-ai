@@ -97,7 +97,7 @@ export default async function AdminPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="font-serif text-2xl font-semibold">Everything at a glance</h1>
+        <h1 className="font-serif text-3xl font-medium tracking-[-0.01em] sm:text-4xl">Everything at a glance</h1>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <Stat href="#companies" n={waiting.companies} label="companies waiting to be verified" />
           <Stat href="#starter-kits" n={waiting.kits} label="new starter kit requests" />

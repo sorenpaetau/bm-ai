@@ -22,8 +22,8 @@ export function PortalNav() {
             key={item.href}
             href={item.href}
             aria-current={active ? "page" : undefined}
-            className={`whitespace-nowrap border-b-2 px-3 py-3 font-medium ${
-              active ? "border-accent text-ink" : "border-transparent text-muted hover:text-ink"
+            className={`relative whitespace-nowrap px-3 py-3 font-medium transition after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full ${
+              active ? "text-ink after:bg-accent" : "text-muted after:bg-transparent hover:text-ink"
             }`}
           >
             {item.label}

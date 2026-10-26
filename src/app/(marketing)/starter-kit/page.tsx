@@ -27,22 +27,23 @@ export default function StarterKitPage() {
       <Section>
         <div className="grid gap-8 lg:grid-cols-[1fr_1.5fr]">
           <div className="space-y-4">
-            <p className="font-serif text-2xl font-semibold text-ink">What happens next</p>
-            <ol className="space-y-4">
+            <p className="font-serif text-3xl font-medium tracking-[-0.01em] text-ink">What happens next</p>
+            <ol className="relative space-y-6 pt-2">
+              <span aria-hidden="true" className="absolute top-6 bottom-6 left-[1.1rem] border-l border-dashed border-line" />
               {steps.map((s, i) => (
-                <li key={s.title} className="flex gap-4">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-ink">
+                <li key={s.title} className="reveal flex gap-4">
+                  <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-brand-ink ring-4 ring-paper">
                     {i + 1}
                   </span>
                   <div>
                     <p className="font-semibold text-ink">{s.title}</p>
-                    <p className="text-sm text-muted">{s.body}</p>
+                    <p className="mt-0.5 text-sm leading-relaxed text-muted">{s.body}</p>
                   </div>
                 </li>
               ))}
             </ol>
           </div>
-          <Card className="p-6 sm:p-8">
+          <Card className="p-6 shadow-[var(--shadow-lift)] sm:p-9">
             <StarterKitForm />
           </Card>
         </div>
