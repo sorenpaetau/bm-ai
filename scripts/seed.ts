@@ -56,8 +56,9 @@ async function main() {
       await sql`INSERT INTO tags (code, batch_id, company_id, product_id) VALUES (${code}, ${batch.id}, ${company.id}, ${product.id})`;
     }
 
-    // 30 days of fake taps so the dashboard has something to show.
+    // 90 days of fake taps with gentle growth, so every dashboard range has a sensible comparison.
     const devices = [
+      ["mobile", "ios"],
       ["mobile", "ios"],
       ["mobile", "android"],
       ["tablet", "ios"],
@@ -65,20 +66,44 @@ async function main() {
     const cities = [
       ["US", "CA", "San Francisco"],
       ["US", "CA", "Los Angeles"],
+      ["US", "CA", "Napa"],
       ["US", "NY", "New York"],
       ["US", "TX", "Austin"],
+      ["US", "IL", "Chicago"],
     ];
-    for (let day = 30; day >= 0; day--) {
-      const count = 3 + Math.floor(Math.random() * 12);
+    const rows = [];
+    for (let day = 90; day >= 0; day--) {
+      const trend = 4 + Math.round((90 - day) / 12);
+      const count = trend + Math.floor(Math.random() * 6);
       for (let i = 0; i < count; i++) {
         const [deviceType, os] = devices[Math.floor(Math.random() * devices.length)];
         const [country, region, city] = cities[Math.floor(Math.random() * cities.length)];
-        const at = new Date(Date.now() - day * 86_400_000 - Math.floor(Math.random() * 86_400_000));
-        await sql`
-          INSERT INTO taps (tag_code, product_id, company_id, source, visitor_id, device_type, os, country, region, city, created_at)
-          VALUES (${codes[i % codes.length]}, ${product.id}, ${company.id}, ${Math.random() < 0.8 ? "nfc" : "qr"},
-                  ${"v" + Math.floor(Math.random() * 200)}, ${deviceType}, ${os}, ${country}, ${region}, ${city}, ${at})`;
+        rows.push({
+          tag_code: codes[Math.floor(Math.random() * codes.length)],
+          product_id: product.id,
+          company_id: company.id,
+          source: Math.random() < 0.75 ? "nfc" : "qr",
+          visitor_id: "v" + Math.floor(Math.random() * 400),
+          device_type: deviceType,
+          os,
+          country,
+          region,
+          city,
+          created_at: new Date(Date.now() - day * 86_400_000 - Math.floor(Math.random() * 86_400_000)),
+        });
       }
+    }
+    await sql`INSERT INTO taps ${sql(rows)}`;
+
+    // A few sample sign-ups (example.com addresses, never real people).
+    const names = ["Ana", "Ben", "Chloe", "Dev", "Elena", "Frank", "Grace", "Hiro", "Isla", "Jon", "Kemi", "Liam", "Maya", "Noah"];
+    const consent = DEMO_CONTENT.optin.consentText;
+    for (const [i, name] of names.entries()) {
+      const at = new Date(Date.now() - Math.floor(Math.random() * 60) * 86_400_000);
+      await sql`
+        INSERT INTO optins (product_id, company_id, email, first_name, consent_text, tag_code, visitor_id, created_at)
+        VALUES (${product.id}, ${company.id}, ${`${name.toLowerCase()}${i}@example.com`}, ${name}, ${consent},
+                ${codes[i % codes.length]}, ${"v" + i}, ${at})`;
     }
   }
 
