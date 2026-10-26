@@ -149,3 +149,7 @@ CREATE TABLE IF NOT EXISTS quotes (
   status      text NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'sent', 'accepted', 'invoiced', 'paid', 'cancelled')),
   created_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- Portal tag order requests: who asked, and any notes (delivery date, artwork). Status 'sent' = requested.
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS notes text;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS requested_by uuid REFERENCES users(id) ON DELETE SET NULL;

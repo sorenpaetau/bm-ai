@@ -1,4 +1,104 @@
-// STUB: to be built by the "Portal and AI" workstream. See CLAUDE.md.
-export default function Page() {
-  return <div className="p-10 text-muted">Client portal: coming soon.</div>;
+import Link from "next/link";
+import { requireUser } from "@/lib/auth";
+import { sql } from "@/lib/db";
+import { ButtonLink, Card } from "@/components/ui";
+import { needsReview, safeContent, STATUS_LABEL } from "./_lib/publish";
+
+type Row = {
+  id: string;
+  sku: string;
+  name: string;
+  slug: string;
+  status: string;
+  content: unknown;
+  hasUnpublishedChanges: boolean;
+  updatedAt: Date;
+  taps30d: number;
+};
+
+export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+  const user = await requireUser();
+  const { welcome } = await searchParams;
+  const products = await sql<Row[]>`
+    SELECT p.id, p.sku, p.name, p.slug, p.status, p.content, p.updated_at,
+           (p.status = 'published' AND p.content IS DISTINCT FROM p.published_content) AS has_unpublished_changes,
+           (SELECT count(*)::int FROM taps t WHERE t.product_id = p.id AND t.created_at > now() - interval '30 days') AS taps_30d
+    FROM products p
+    WHERE p.company_id = ${user.companyId} AND p.status <> 'archived'
+    ORDER BY p.updated_at DESC`;
+
+  return (
+    <div className="space-y-6">
+      {welcome && (
+        <Card className="border-brand/30 bg-brand/5">
+          <h2 className="font-semibold">Welcome, {user.firstName ?? "there"}!</h2>
+          <p className="mt-1 text-sm text-muted">
+            Start by adding your first product. Our AI writes a first draft of its page; you check it, then publish.
+          </p>
+        </Card>
+      )}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="font-serif text-2xl font-semibold">Your products</h1>
+          <p className="text-sm text-muted">Each product gets its own page that opens when a customer taps its tag.</p>
+        </div>
+        <ButtonLink href="/portal/products/new">+ Add a product</ButtonLink>
+      </div>
+
+      {products.length === 0 ? (
+        <Card className="text-center">
+          <p className="font-medium">No products yet.</p>
+          <p className="mt-1 text-sm text-muted">Add one and we&apos;ll draft its page for you.</p>
+        </Card>
+      ) : (
+        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+          {products.map((p) => {
+            const content = safeContent(p.content);
+            const review = content ? needsReview(content).length : 0;
+            return (
+              <li key={p.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="min-w-0">
+                  <Link href={`/portal/products/${p.id}`} className="font-medium hover:underline">
+                    {p.name}
+                  </Link>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted">
+                    <span>SKU {p.sku}</span>
+                    <StatusPill status={p.status} />
+                    {review > 0 && (
+                      <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">
+                        {review} section{review === 1 ? "" : "s"} need review
+                      </span>
+                    )}
+                    {p.hasUnpublishedChanges && (
+                      <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-900">Unpublished changes</span>
+                    )}
+                    <span>{p.taps30d} taps in the last 30 days</span>
+                  </div>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  {p.status === "published" && (
+                    <ButtonLink href={`/p/${p.slug}`} target="_blank" variant="ghost">
+                      View live page
+                    </ButtonLink>
+                  )}
+                  <ButtonLink href={`/portal/products/${p.id}`} variant="secondary">
+                    Edit page
+                  </ButtonLink>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const live = status === "published";
+  return (
+    <span className={`rounded-full px-2 py-0.5 font-medium ${live ? "bg-emerald-100 text-emerald-900" : "bg-stone-100 text-stone-700"}`}>
+      {STATUS_LABEL[status] ?? status}
+    </span>
+  );
 }
