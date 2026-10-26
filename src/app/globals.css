@@ -53,6 +53,16 @@
   0% { transform: scale(0.6); opacity: 0.7; }
   100% { transform: scale(2.2); opacity: 0; }
 }
+/* Rings that spread from the tap point in the tap illustrations (SVG circles). */
+@keyframes tap-ring {
+  0% { transform: scale(0.5); opacity: 0.9; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+.tap-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tap-ring 2.4s cubic-bezier(0.2, 0.7, 0.2, 1) infinite;
+}
 @keyframes fade {
   from { opacity: 0; }
   to { opacity: 1; }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Eyebrow, NightPanel, PageHeader, Section, SectionHeading } from "@/components/marketing/section";
-import { ArrowRightIcon, CheckIcon, GiftIcon } from "@/components/icons";
+import { ArrowRightIcon, CheckIcon } from "@/components/icons";
+import { NfcSticker } from "@/components/tap-art";
 import { QuoteCalculator } from "@/components/marketing/quote-calculator";
 import { ButtonLink } from "@/components/ui";
 import { HOSTING_PLANS, STARTER_KIT, TAG_TIERS, TAG_TYPES, formatCents, type PlanId, type TagType } from "@/lib/pricing";
@@ -47,9 +48,7 @@ export default function PricingPage() {
 
       <Section>
         <NightPanel className="reveal grid items-center gap-8 p-8 sm:p-12 lg:grid-cols-[auto_1fr_auto]">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-accent text-white shadow-[var(--shadow-glow)]">
-            <GiftIcon className="h-8 w-8" />
-          </span>
+          <NfcSticker className="w-24 drop-shadow-[0_16px_30px_rgb(0_0_0/0.5)] sm:w-28" />
           <div className="space-y-3">
             <Eyebrow tone="light">Free to try</Eyebrow>
             <h2 className="font-serif text-3xl font-medium tracking-[-0.02em] sm:text-4xl">Starter kit</h2>

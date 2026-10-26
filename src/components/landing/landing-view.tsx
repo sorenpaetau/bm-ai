@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element -- brand images live on arbitrary hosts; plain <img> keeps pages light. */
 import type { CSSProperties, ReactNode } from "react";
 import { ArrowRightIcon, BagIcon, CalendarIcon, GiftIcon, LogoMark, MailIcon, PhoneIcon, PinIcon } from "@/components/icons";
+import { NfcSticker } from "@/components/tap-art";
 import type { ActionButton, LandingContent, Section } from "@/lib/landing";
 import { SITE } from "@/lib/site";
 import {
@@ -144,6 +145,14 @@ export function LandingView({
             </section>
           )}
         </div>
+
+        <aside className="mx-4 mt-8 flex items-center gap-4 rounded-[1.75rem] bg-white p-5 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.08)] ring-1 ring-black/[0.04] sm:mx-5">
+          <NfcSticker className="h-16 w-16 shrink-0" label="TAP" />
+          <p className="text-[15px] leading-snug text-ink/80">
+            <span className="block font-semibold text-ink">Tap the sticker any time</span>
+            Hold your phone to the round sticker on the product to come back to this page.
+          </p>
+        </aside>
 
         <footer className="mt-12 space-y-4 px-6 text-center text-xs text-muted">
           {content.disclaimer && <p>{content.disclaimer}</p>}
