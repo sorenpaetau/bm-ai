@@ -106,7 +106,7 @@ export default function HomePage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-gold" />
               </span>
-              Now piloting with wineries
+              Now inviting wineries to pilot
             </p>
             <h1 className="font-serif text-[2.9rem] leading-[1.02] font-medium tracking-[-0.03em] sm:text-7xl">
               Every product can tell{" "}
