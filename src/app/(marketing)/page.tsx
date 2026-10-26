@@ -1,5 +1,6 @@
 import { CallToAction, Badge, IconTile, NightPanel, Section, SectionHeading } from "@/components/marketing/section";
 import { DEMO_TAG_CODE, DemoPhone, DemoQrCode } from "@/components/marketing/demo-phone";
+import { NfcSticker, OpenStepArt, SpotStepArt, TapScene, TapStepArt } from "@/components/tap-art";
 import {
   ArrowRightIcon,
   BagIcon,
@@ -9,6 +10,7 @@ import {
   CheckIcon,
   GiftIcon,
   HeartIcon,
+  QrIcon,
   ShirtIcon,
   SparkleBottleIcon,
   StoreIcon,
@@ -24,19 +26,19 @@ import { SITE } from "@/lib/site";
 
 const steps = [
   {
-    icon: TapIcon,
-    title: "Tap or scan",
-    body: "A small NFC tag on the bottle (with a QR code printed on it) opens your product page. No app to download.",
+    art: SpotStepArt,
+    title: "Spot the sticker",
+    body: "Look for the round tap sticker on the bottle. It has a QR code too, for phones that can't tap.",
   },
   {
-    icon: BookIcon,
+    art: TapStepArt,
+    title: "Tap it with your phone",
+    body: "Hold the top of your phone against the sticker for a second. iPhone or Android, no app needed.",
+  },
+  {
+    art: OpenStepArt,
     title: "Meet the brand",
-    body: "Tasting notes, food pairings, the family story, upcoming events and a button to buy again, all on one fast mobile page.",
-  },
-  {
-    icon: HeartIcon,
-    title: "Stay connected",
-    body: "Shoppers register the bottle for an offer. You see every tap and every sign-up in your dashboard.",
+    body: "The wine's own page opens: tasting notes, pairings, events, and a button to buy again or sign up.",
   },
 ];
 
@@ -136,45 +138,50 @@ export default function HomePage() {
             </ul>
           </div>
 
-          <div className="relative mx-auto animate-rise [animation-delay:150ms]">
-            {/* Tap ripples behind the phone */}
-            <div aria-hidden="true" className="absolute top-1/3 left-1/2 -z-10 -translate-x-1/2">
-              <span className="absolute -inset-40 animate-ripple rounded-full border border-white/15" />
-              <span className="absolute -inset-40 animate-ripple rounded-full border border-white/10 [animation-delay:0.8s]" />
-              <span className="absolute -inset-40 animate-ripple rounded-full border border-white/5 [animation-delay:1.6s]" />
-            </div>
-            <div className="animate-float">
-              <DemoPhone />
-            </div>
+          <div className="relative mx-auto w-full max-w-[520px] animate-rise [animation-delay:150ms]">
             <div
               aria-hidden="true"
-              className="absolute top-24 -left-10 hidden w-52 rounded-2xl bg-white/95 p-3.5 text-ink shadow-[var(--shadow-lift)] backdrop-blur sm:block lg:-left-24"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent/10 text-accent">
-                  <TapIcon className="h-4.5 w-4.5" />
-                </span>
-                <div className="text-xs leading-tight">
-                  <p className="font-semibold">New tap</p>
-                  <p className="text-muted">Napa, CA · just now</p>
-                </div>
-              </div>
+              className="absolute top-1/2 left-1/2 -z-10 h-[85%] w-[85%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgb(255_255_255/0.12),transparent)]"
+            />
+            <TapScene tone="dark" className="w-full [mask-image:linear-gradient(to_bottom,black_78%,transparent)]" />
+          </div>
+        </Container>
+      </section>
+
+      {/* Look for this sticker */}
+      <section className="relative isolate overflow-hidden border-b border-line bg-surface">
+        <Container className="grid items-center gap-10 py-16 sm:py-20 md:grid-cols-[auto_1fr] md:gap-16">
+          <div className="reveal relative mx-auto w-52 sm:w-64">
+            <div aria-hidden="true" className="absolute inset-0 -z-10">
+              <span className="absolute inset-0 animate-ripple rounded-full border-2 border-accent/30" />
+              <span className="absolute inset-0 animate-ripple rounded-full border-2 border-accent/20 [animation-delay:0.8s]" />
+              <span className="absolute inset-0 animate-ripple rounded-full border-2 border-accent/10 [animation-delay:1.6s]" />
             </div>
-            <div
-              aria-hidden="true"
-              className="absolute -right-6 bottom-28 hidden w-48 rounded-2xl bg-white/95 p-3.5 text-ink shadow-[var(--shadow-lift)] backdrop-blur sm:block lg:-right-16"
-            >
-              <p className="text-[11px] font-medium text-muted">Sign-ups this week</p>
-              <p className="mt-0.5 flex items-baseline gap-2">
-                <span className="font-serif text-2xl font-semibold">48</span>
-                <span className="text-xs font-semibold text-emerald-600">▲ 18%</span>
-              </p>
-              <div className="mt-2 flex h-8 items-end gap-1">
-                {sampleWeek.map((v, i) => (
-                  <span key={i} className="flex-1 rounded-sm bg-brand/80" style={{ height: `${v}%` }} />
-                ))}
-              </div>
-            </div>
+            <NfcSticker className="w-full drop-shadow-[0_24px_40px_rgb(20_33_61/0.35)]" />
+          </div>
+          <div className="space-y-6">
+            <SectionHeading
+              eyebrow="Look for this sticker"
+              title="See the sticker? Tap it."
+              intro="Every product we tag carries this round sticker with the tap symbol, the same one people already know from paying with their phone. One tap opens the product's own page."
+            />
+            <ul className="reveal grid gap-3 sm:grid-cols-3">
+              {[
+                { icon: TapIcon, title: "iPhone", body: "Hold the top of the phone near the sticker" },
+                { icon: TapIcon, title: "Android", body: "Touch the back of the phone to the sticker" },
+                { icon: QrIcon, title: "No tap?", body: "Scan the QR code printed beside it" },
+              ].map((f) => (
+                <li key={f.title} className="flex gap-3 rounded-2xl bg-paper p-4 ring-1 ring-line ring-inset">
+                  <IconTile tone="accent">
+                    <f.icon className="h-5 w-5" />
+                  </IconTile>
+                  <div>
+                    <p className="font-semibold text-ink">{f.title}</p>
+                    <p className="text-sm leading-snug text-muted">{f.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </Container>
       </section>
@@ -228,23 +235,21 @@ export default function HomePage() {
 
       {/* How it works */}
       <Section className="bg-surface">
-        <SectionHeading eyebrow="How it works" title="Three steps, no app." center />
+        <SectionHeading eyebrow="How it works" title="Spot it. Tap it. Meet the brand." center />
         <ol className="relative mt-14 grid gap-5 md:grid-cols-3">
-          <span
-            aria-hidden="true"
-            className="absolute top-[3.25rem] right-[16%] left-[16%] hidden border-t border-dashed border-line md:block"
-          />
           {steps.map((step, i) => (
             <li key={step.title} className="reveal relative">
-              <Card className="h-full p-7 text-center transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]">
-                <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-brand text-white shadow-[0_10px_24px_-10px_rgb(20_33_61/0.7)]">
-                  <step.icon className="h-6 w-6" />
-                  <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs font-bold text-white ring-4 ring-surface">
+              <Card className="h-full overflow-hidden p-3 transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-lift)]">
+                <div className="relative">
+                  <step.art className="w-full" />
+                  <span className="absolute top-3 left-3 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-sm font-bold text-white shadow-md">
                     {i + 1}
                   </span>
-                </span>
-                <p className="mt-6 font-serif text-2xl font-medium tracking-[-0.01em] text-ink">{step.title}</p>
-                <p className="mt-2 leading-relaxed text-muted">{step.body}</p>
+                </div>
+                <div className="px-4 pt-5 pb-4">
+                  <p className="font-serif text-2xl font-medium tracking-[-0.01em] text-ink">{step.title}</p>
+                  <p className="mt-2 leading-relaxed text-muted">{step.body}</p>
+                </div>
               </Card>
             </li>
           ))}
@@ -253,7 +258,7 @@ export default function HomePage() {
 
       {/* Live demo */}
       <Section id="demo">
-        <div className="grid items-center gap-12 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid items-center gap-12 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-7">
             <SectionHeading
               eyebrow="Try it yourself"
@@ -273,23 +278,26 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {demoFeatures.map((f) => (
-              <li
-                key={f.title}
-                className="reveal group flex gap-4 rounded-2xl border border-line/80 bg-surface p-5 shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
-              >
-                <IconTile tone="accent">
-                  <f.icon className="h-5 w-5" />
-                </IconTile>
-                <div>
-                  <p className="font-semibold text-ink">{f.title}</p>
-                  <p className="mt-0.5 text-sm leading-relaxed text-muted">{f.body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="reveal relative">
+            <DemoPhone />
+          </div>
         </div>
+        <ul className="mt-14 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {demoFeatures.map((f) => (
+            <li
+              key={f.title}
+              className="reveal group flex gap-4 rounded-2xl border border-line/80 bg-surface p-5 shadow-[var(--shadow-card)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--shadow-lift)]"
+            >
+              <IconTile tone="accent">
+                <f.icon className="h-5 w-5" />
+              </IconTile>
+              <div>
+                <p className="font-semibold text-ink">{f.title}</p>
+                <p className="mt-0.5 text-sm leading-relaxed text-muted">{f.body}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
       </Section>
 
       {/* Dashboard preview */}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader, Section } from "@/components/marketing/section";
 import { StarterKitForm } from "@/components/marketing/starter-kit-form";
+import { StickerSheet } from "@/components/tap-art";
 import { Card } from "@/components/ui";
 import { STARTER_KIT } from "@/lib/pricing";
 
@@ -27,6 +28,7 @@ export default function StarterKitPage() {
       <Section>
         <div className="grid gap-8 lg:grid-cols-[1fr_1.5fr]">
           <div className="space-y-4">
+            <StickerSheet className="reveal mb-6 w-full max-w-md -rotate-2" />
             <p className="font-serif text-3xl font-medium tracking-[-0.01em] text-ink">What happens next</p>
             <ol className="relative space-y-6 pt-2">
               <span aria-hidden="true" className="absolute top-6 bottom-6 left-[1.1rem] border-l border-dashed border-line" />
