@@ -3,7 +3,7 @@ export const SITE = {
   name: "B&M.ai",
   tagline: "Simple and Easy AI Marketing Platform for Manufacturers and Consumers",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
-  contactEmail: "contact@brandnmarketing.ai",
+  contactEmail: "contact@brandnmarketing.com",
 } as const;
 
 export const MARKETING_NAV = [
