@@ -488,10 +488,15 @@ function ListField({
   rows?: number;
 }) {
   // Keep the raw text while typing so a trailing comma or new line isn't eaten.
-  const [text, setText] = useState(values.join(separator === "," ? ", " : "\n"));
+  const parse = (t: string) => t.split(separator).map((v) => v.trim()).filter(Boolean);
+  const joined = values.join(separator === "," ? ", " : "\n");
+  const [text, setText] = useState(joined);
+  // If the values change from outside (e.g. a row above was removed and this row now shows another
+  // tier), show the new values instead of the old text.
+  if (parse(text).join("\u0000") !== values.join("\u0000")) setText(joined);
   const set = (t: string) => {
     setText(t);
-    onChange(t.split(separator).map((v) => v.trim()).filter(Boolean));
+    onChange(parse(t));
   };
   return separator === "," ? (
     <TextField label={label} value={text} onChange={set} hint={hint} />

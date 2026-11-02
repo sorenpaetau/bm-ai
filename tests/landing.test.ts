@@ -86,6 +86,8 @@ test("blank rows are dropped and empty sections are not shown", () => {
   ];
   const shown = sectionsToShow(sections, { now: NOV_15_PACIFIC });
   assert.deepEqual(shown.map((s) => s.id), ["facts", "club2"]);
+  const hoursOnly: Section = { ...base, id: "v", type: "visit", title: "Visit", address: "", hours: "Daily 10–5", map: true, experiences: [], nearby: [], links: [] };
+  assert.equal(sectionsToShow([hoursOnly], { now: NOV_15_PACIFIC }).length, 1, "hours alone still show");
   assert.ok(shown[0].type === "facts" && shown[0].items.length === 1);
   assert.ok(shown[1].type === "memberships" && shown[1].tiers[0].perks.length === 1);
 });

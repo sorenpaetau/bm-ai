@@ -124,7 +124,9 @@ export function tidySection(section: Section): Section | null {
         nearby: section.nearby.filter((n) => filled(n.name)),
         links: section.links.filter((l) => filled(l.label) && filled(l.url)),
       };
-      return filled(v.address) || filled(v.body) || v.experiences.length || v.nearby.length ? v : null;
+      return filled(v.address) || filled(v.body) || filled(v.hours) || filled(v.phone) || v.experiences.length || v.nearby.length || v.links.length
+        ? v
+        : null;
     }
   }
 }
