@@ -153,3 +153,33 @@ CREATE TABLE IF NOT EXISTS quotes (
 -- Portal tag order requests: who asked, and any notes (delivery date, artwork). Status 'sent' = requested.
 ALTER TABLE quotes ADD COLUMN IF NOT EXISTS notes text;
 ALTER TABLE quotes ADD COLUMN IF NOT EXISTS requested_by uuid REFERENCES users(id) ON DELETE SET NULL;
+
+-- Card payments with Stripe Checkout (tag orders and hosting plans).
+-- A tag order that goes to Stripe Checkout starts as 'draft' and becomes 'paid' once Stripe confirms payment.
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS stripe_session_id text;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS stripe_payment_intent_id text;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS paid_at timestamptz;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS amount_paid_cents integer;
+ALTER TABLE quotes ADD COLUMN IF NOT EXISTS ship_to jsonb;            -- { name, phone, address: { line1, city, ... } } from Checkout
+CREATE UNIQUE INDEX IF NOT EXISTS quotes_stripe_session_idx ON quotes (stripe_session_id);
+-- New status 'shipped': B&M.ai has programmed and sent the tags. (Drop and re-add so re-running is safe.)
+ALTER TABLE quotes DROP CONSTRAINT IF EXISTS quotes_status_check;
+ALTER TABLE quotes ADD CONSTRAINT quotes_status_check
+  CHECK (status IN ('draft', 'sent', 'accepted', 'invoiced', 'paid', 'shipped', 'cancelled'));
+
+-- Hosting plan billing. companies.plan is the plan they pay for; 'starter' means none.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_interval text CHECK (plan_interval IN ('month', 'year'));
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS stripe_customer_id text;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_status text;     -- Stripe subscription status, e.g. 'active', 'past_due'
+-- The hosting checkout most recently opened. Opening a new one expires the old one, so two tabs can't start two plans.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_checkout_session_id text;
+-- 'test' or 'live': which Stripe mode the customer/subscription ids above belong to. Test ids are ignored in live mode.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS stripe_mode text;
+
+-- Small key/value store for app settings, e.g. the Stripe webhook signing secret created at deploy time.
+CREATE TABLE IF NOT EXISTS app_settings (
+  key         text PRIMARY KEY,
+  value       text NOT NULL,
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);

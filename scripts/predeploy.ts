@@ -8,4 +8,4 @@ if (!url) {
   console.warn("⚠ No DATABASE_URL set: skipping migrate and seed. Attach a Neon database in Vercel → Storage, then redeploy.");
   process.exit(0);
 }
-execSync("tsx scripts/migrate.ts && tsx scripts/seed.ts", { stdio: "inherit", env: { ...process.env, DATABASE_URL: url } });
+execSync("tsx scripts/migrate.ts && tsx scripts/seed.ts && tsx scripts/stripe-webhook.ts", { stdio: "inherit", env: { ...process.env, DATABASE_URL: url } });

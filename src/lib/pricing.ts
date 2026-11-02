@@ -1,18 +1,18 @@
 // Pricing for tags and hosting plans. The marketing Pricing page and the portal quote both use this,
 // so a price change here shows up everywhere.
 //
-// Tag tiers fix the overlapping ranges in the original proposal (1,000 was in two tiers) and apply
-// per ORDER, not per SKU: an order of 1,000 + 1,500 tags prices all 2,500 at the 1,000–4,999 rate.
+// Tag tiers are Jens's price breaks (1K $0.40, 5K $0.38, 20K $0.36, 50K $0.34, 100K $0.32). Orders under
+// 1,000 pay the 1K price. Tiers apply per ORDER, not per SKU: an order of 3,000 + 2,500 tags prices all
+// 5,500 at the 5,000–19,999 rate.
 
 export type TagType = "standard" | "custom_print" | "wet_inlay";
 
 export const TAG_TIERS = [
-  { min: 1, max: 999, cents: 40 },
-  { min: 1_000, max: 4_999, cents: 38 },
-  { min: 5_000, max: 19_999, cents: 36 },
-  { min: 20_000, max: 49_999, cents: 34 },
-  { min: 50_000, max: 99_999, cents: 31 },
-  { min: 100_000, max: Infinity, cents: 28 },
+  { min: 1, max: 4_999, cents: 40 },
+  { min: 5_000, max: 19_999, cents: 38 },
+  { min: 20_000, max: 49_999, cents: 36 },
+  { min: 50_000, max: 99_999, cents: 34 },
+  { min: 100_000, max: Infinity, cents: 32 },
 ] as const;
 
 export const TAG_TYPES: Record<TagType, { label: string; description: string; upchargeCents: number }> = {
@@ -42,6 +42,15 @@ export const HOSTING_PLANS: Record<PlanId, { label: string; skus: number; monthl
   gold: { label: "Gold", skus: 100, monthlyCents: 29_900, yearlyCents: 300_000 },
   platinum: { label: "Platinum", skus: 1_000, monthlyCents: 49_900, yearlyCents: 500_000 },
 };
+
+export type PlanInterval = "month" | "year";
+
+export function planPriceCents(plan: PlanId, interval: PlanInterval) {
+  return interval === "month" ? HOSTING_PLANS[plan].monthlyCents : HOSTING_PLANS[plan].yearlyCents;
+}
+
+/** Card payments in US dollars top out just under $1M per payment. Bigger orders are invoiced. */
+export const MAX_CARD_PAYMENT_CENTS = 99_999_999;
 
 export const STARTER_KIT = { tags: 10, priceCents: 0 } as const;
 

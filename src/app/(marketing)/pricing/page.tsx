@@ -8,7 +8,7 @@ import { HOSTING_PLANS, STARTER_KIT, TAG_TIERS, TAG_TYPES, formatCents, type Pla
 
 export const metadata: Metadata = {
   title: "Pricing & Ordering",
-  description: "A free starter kit, simple per-tag pricing with volume discounts, and yearly hosting plans.",
+  description: "A free starter kit, simple per-tag pricing with volume discounts, and monthly or yearly hosting plans.",
 };
 
 function tierLabel(t: (typeof TAG_TIERS)[number]) {
@@ -19,7 +19,7 @@ function tierLabel(t: (typeof TAG_TIERS)[number]) {
 const faqs = [
   {
     q: "Is the tag price per product or for the whole order?",
-    a: "For the whole order. If you order 1,000 tags for one wine and 1,500 for another, all 2,500 get the 1,000+ price.",
+    a: "For the whole order. If you order 3,000 tags for one wine and 2,500 for another, all 5,500 get the 5,000+ price.",
   },
   {
     q: "Can I buy a lot of tags now and use them over time?",
@@ -27,7 +27,7 @@ const faqs = [
   },
   {
     q: "Why is hosting a separate bill?",
-    a: "Tags are a one-time purchase. Hosting keeps your pages online and is billed once a year, so the two never get mixed up on one invoice.",
+    a: "Tags are a one-time purchase. Hosting keeps your pages online and is billed monthly or yearly on its own, so the two never get mixed up on one bill.",
   },
   {
     q: "What happens if I change the page after the tags are printed?",
@@ -43,7 +43,7 @@ export default function PricingPage() {
       <PageHeader
         eyebrow="Pricing & Ordering"
         title="Simple pricing. Start free."
-        intro="Pay once for the tags you put on your products, and a yearly fee to keep your product pages online."
+        intro="Pay once for the tags you put on your products, and a monthly or yearly fee to keep your product pages online."
       />
 
       <Section>
@@ -128,7 +128,7 @@ export default function PricingPage() {
         <SectionHeading
           eyebrow="Hosting"
           title="Keep your pages online"
-          intro="Choose a plan by how many products need a page. Billed once a year, separately from tags."
+          intro="Choose a plan by how many products need a page. Pay monthly, or yearly and save. Billed separately from tags."
         />
         <div className="mt-14 grid items-center gap-5 md:grid-cols-3">
           {plans.map(([id, plan]) => {
@@ -193,7 +193,7 @@ export default function PricingPage() {
                 "Start with the free starter kit, or tell us what you need.",
                 "Log in to your client portal and add your products. We draft a page for each one.",
                 "Review and publish your pages, then pick your tag quantities and types.",
-                "We send you a quote. Accept it and we ship your tags, ready to stick on.",
+                "Pay by card in your portal (or ask us for an invoice), and we program and ship your tags, ready to stick on.",
               ].map((step, i) => (
                 <li key={step} className="flex gap-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white">

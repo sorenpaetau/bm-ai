@@ -3,13 +3,16 @@
 import { useActionState, useState } from "react";
 import { Button, Card, inputClass } from "@/components/ui";
 import { formatCents, quoteTags, TAG_TIERS, TAG_TYPES, type TagType } from "@/lib/pricing";
-import { requestQuote, type QuoteState } from "./actions";
+import { payByCard, requestQuote, type QuoteState } from "./actions";
 
 type Line = { productId: string; label: string; quantity: number; tagType: TagType };
 
-export function QuoteForm({ products }: { products: { id: string; name: string }[] }) {
+export function QuoteForm({ products, canPayByCard }: { products: { id: string; name: string }[]; canPayByCard: boolean }) {
   const [lines, setLines] = useState<Line[]>([{ productId: products[0]?.id ?? "", label: "", quantity: 1000, tagType: "standard" }]);
-  const [state, action, pending] = useActionState<QuoteState, FormData>(requestQuote, {});
+  const [requestState, requestAction, requesting] = useActionState<QuoteState, FormData>(requestQuote, {});
+  const [payState, payAction, paying] = useActionState<QuoteState, FormData>(payByCard, {});
+  const state = requestState.ok ? requestState : { error: payState.error ?? requestState.error };
+  const pending = requesting || paying;
   const nameOf = (l: Line) => products.find((p) => p.id === l.productId)?.name ?? l.label;
   const quote = quoteTags(lines.map((l) => ({ label: nameOf(l), quantity: l.quantity || 0, tagType: l.tagType })));
   const set = (i: number, patch: Partial<Line>) => setLines((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)));
@@ -26,7 +29,7 @@ export function QuoteForm({ products }: { products: { id: string; name: string }
   }
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={canPayByCard ? payAction : requestAction} className="space-y-5">
       <input type="hidden" name="lines" value={JSON.stringify(lines)} />
       <Card className="space-y-4">
         {lines.map((l, i) => (
@@ -129,8 +132,8 @@ export function QuoteForm({ products }: { products: { id: string; name: string }
             </table>
             <p className="mt-3 text-xs text-muted">
               Your whole order gets the {formatCents(quote.tierCents)}-per-tag rate for {quote.totalQuantity.toLocaleString()} tags. Bigger
-              orders pay less per tag (from {formatCents(TAG_TIERS[TAG_TIERS.length - 1].cents)} each). Page hosting is billed separately once a
-              year, not on this order.
+              orders pay less per tag (from {formatCents(TAG_TIERS[TAG_TIERS.length - 1].cents)} each). Page hosting is billed separately, not on
+              this order.
             </p>
           </>
         )}
@@ -139,10 +142,29 @@ export function QuoteForm({ products }: { products: { id: string; name: string }
           <textarea name="notes" rows={3} placeholder="Delivery date, label size, artwork…" className={inputClass} />
         </label>
         {state.error && <p className="mt-3 text-sm text-red-700">{state.error}</p>}
-        <Button type="submit" disabled={pending || quote.totalQuantity === 0} className="mt-4">
-          {pending ? "Sending…" : "Request this order"}
-        </Button>
-        <p className="mt-2 text-xs text-muted">Nothing is charged now. We&apos;ll confirm by email and send an invoice.</p>
+        {canPayByCard ? (
+          <>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button type="submit" disabled={pending || quote.totalQuantity === 0}>
+                {paying ? "Opening secure checkout…" : `Pay ${quote.totalCents ? formatCents(quote.totalCents) : ""} by card`}
+              </Button>
+              <Button type="submit" variant="ghost" formAction={requestAction} disabled={pending || quote.totalQuantity === 0}>
+                {requesting ? "Sending…" : "Request an invoice instead"}
+              </Button>
+            </div>
+            <p className="mt-2 text-xs text-muted">
+              Card payments are handled by Stripe. You&apos;ll add your shipping address there, and get a receipt by email. We
+              program and ship your tags once the payment goes through.
+            </p>
+          </>
+        ) : (
+          <>
+            <Button type="submit" disabled={pending || quote.totalQuantity === 0} className="mt-4">
+              {pending ? "Sending…" : "Request this order"}
+            </Button>
+            <p className="mt-2 text-xs text-muted">Nothing is charged now. We&apos;ll confirm by email and send an invoice.</p>
+          </>
+        )}
       </Card>
     </form>
   );

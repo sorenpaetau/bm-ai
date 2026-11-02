@@ -9,6 +9,7 @@ const NAV = [
   { href: "/portal/tags", label: "Tags", match: (p: string) => p.startsWith("/portal/tags") },
   { href: "/portal/analytics", label: "Analytics", match: (p: string) => p.startsWith("/portal/analytics") },
   { href: "/portal/quote", label: "Order tags", match: (p: string) => p.startsWith("/portal/quote") },
+  { href: "/portal/plan", label: "Billing", match: (p: string) => p.startsWith("/portal/plan") },
 ];
 
 export function PortalNav() {
