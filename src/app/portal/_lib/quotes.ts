@@ -5,5 +5,6 @@ export const QUOTE_STATUS: Record<string, string> = {
   accepted: "Confirmed",
   invoiced: "Invoiced",
   paid: "Paid",
+  shipped: "Shipped",
   cancelled: "Cancelled",
 };

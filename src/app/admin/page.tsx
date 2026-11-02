@@ -1,7 +1,9 @@
 import { ConfirmSubmit } from "@/app/portal/_components/confirm-submit";
 import { QUOTE_STATUS } from "@/app/portal/_lib/quotes";
+import { formatShipTo, orderNumber, type OrderLine, type ShipTo } from "@/lib/checkout";
 import { sql } from "@/lib/db";
-import { formatCents, TAG_TYPES, type TagType } from "@/lib/pricing";
+import { formatCents, HOSTING_PLANS, TAG_TYPES, type PlanId, type TagType } from "@/lib/pricing";
+import { stripePaymentLink, stripeSubscriptionLink } from "@/lib/stripe";
 import { VERTICALS, type Vertical } from "@/lib/site";
 import { setQuoteStatus, setStarterKitStatus, unverifyCompany, verifyCompany } from "./actions";
 import { StatusForm } from "./status-form";
@@ -23,6 +25,10 @@ type Company = {
   live: number;
   tags: number;
   taps30d: number;
+  plan: string;
+  planInterval: string | null;
+  planStatus: string | null;
+  stripeSubscriptionId: string | null;
 };
 type Kit = {
   id: string;
@@ -39,11 +45,15 @@ type Quote = {
   id: string;
   companyName: string;
   email: string | null;
-  lines: { label: string; quantity: number; tagType: string }[];
+  lines: OrderLine[];
   totalCents: number;
   status: string;
   notes: string | null;
   createdAt: Date;
+  paidAt: Date | null;
+  amountPaidCents: number | null;
+  stripePaymentIntentId: string | null;
+  shipTo: ShipTo | null;
 };
 type Product = { id: string; name: string; slug: string; status: string; companyName: string; updatedAt: Date };
 
@@ -69,6 +79,7 @@ export default async function AdminPage() {
   const [companies, kits, quotes, products] = await Promise.all([
     sql<Company[]>`
       SELECT c.id, c.name, c.vertical, c.website, c.city, c.state, c.verified_at, c.created_at,
+             c.plan, c.plan_interval, c.plan_status, c.stripe_subscription_id,
              u.email AS contact_email, concat_ws(' ', u.first_name, u.last_name) AS contact_name,
              (SELECT count(*)::int FROM products p WHERE p.company_id = c.id AND p.status <> 'archived') AS products,
              (SELECT count(*)::int FROM products p WHERE p.company_id = c.id AND p.status = 'published') AS live,
@@ -79,9 +90,11 @@ export default async function AdminPage() {
       ORDER BY (c.verified_at IS NULL) DESC, c.created_at DESC`,
     sql<Kit[]>`SELECT * FROM starter_kit_requests ORDER BY (status = 'new') DESC, created_at DESC LIMIT 100`,
     sql<Quote[]>`
-      SELECT q.id, c.name AS company_name, u.email, q.lines, q.total_cents, q.status, q.notes, q.created_at
+      SELECT q.id, c.name AS company_name, u.email, q.lines, q.total_cents, q.status, q.notes, q.created_at,
+             q.paid_at, q.amount_paid_cents, q.stripe_payment_intent_id, q.ship_to
       FROM quotes q JOIN companies c ON c.id = q.company_id LEFT JOIN users u ON u.id = q.requested_by
-      ORDER BY (q.status = 'sent') DESC, q.created_at DESC LIMIT 100`,
+      WHERE q.status <> 'draft'
+      ORDER BY (q.status = 'paid') DESC, (q.status = 'sent') DESC, q.created_at DESC LIMIT 100`,
     sql<Product[]>`
       SELECT p.id, p.name, p.slug, p.status, c.name AS company_name, p.updated_at
       FROM products p JOIN companies c ON c.id = p.company_id
@@ -92,16 +105,19 @@ export default async function AdminPage() {
     companies: companies.filter((c) => !c.verifiedAt).length,
     kits: kits.filter((k) => k.status === "new").length,
     quotes: quotes.filter((q) => q.status === "sent").length,
+    toShip: quotes.filter((q) => q.status === "paid").length,
   };
+  const slugs = new Map(products.map((p) => [p.id, p.slug]));
 
   return (
     <div className="space-y-10">
       <div>
         <h1 className="font-serif text-3xl font-medium tracking-[-0.01em] sm:text-4xl">Everything at a glance</h1>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat href="#orders" n={waiting.toShip} label="paid tag orders to program and ship" />
           <Stat href="#companies" n={waiting.companies} label="companies waiting to be verified" />
           <Stat href="#starter-kits" n={waiting.kits} label="new starter kit requests" />
-          <Stat href="#orders" n={waiting.quotes} label="new tag order requests" />
+          <Stat href="#orders" n={waiting.quotes} label="tag orders waiting for an invoice" />
         </div>
       </div>
 
@@ -134,6 +150,15 @@ export default async function AdminPage() {
                 {c.products} products ({c.live} live)
                 <br />
                 {c.tags} tags · {c.taps30d} taps in 30 days
+                <br />
+                {c.plan in HOSTING_PLANS && c.stripeSubscriptionId ? (
+                  <a href={stripeSubscriptionLink(c.stripeSubscriptionId)} target="_blank" rel="noreferrer" className="text-brand underline">
+                    {HOSTING_PLANS[c.plan as PlanId].label} plan, {c.planInterval === "month" ? "monthly" : "yearly"}
+                    {c.planStatus && c.planStatus !== "active" ? ` (${c.planStatus.replace("_", " ")})` : ""}
+                  </a>
+                ) : (
+                  "No paid plan"
+                )}
               </td>
               <td className="p-3">
                 {c.verifiedAt ? (
@@ -187,28 +212,62 @@ export default async function AdminPage() {
         )}
       </Section>
 
-      <Section id="orders" title="Tag order requests" hint="From the Order Tags page in the client portal. Send the invoice yourself, then update the status here.">
+      <Section
+        id="orders"
+        title="Tag orders"
+        hint="From the Order Tags page in the client portal. Card orders arrive already Paid: program and ship the tags, then set them to Shipped. Invoice requests show as Requested: send the invoice yourself, then update the status here."
+      >
         {quotes.length === 0 ? (
           <Empty>No orders yet.</Empty>
         ) : (
-          <Table head={["Company", "Order", "Total", "Status"]}>
+          <Table head={["Company", "Order", "Ship to", "Total", "Status"]}>
             {quotes.map((q) => (
               <tr key={q.id} className="align-top">
                 <td className="p-3">
                   <div className="font-medium">{q.companyName}</div>
                   <div className="text-xs text-muted">
-                    {q.email && <a href={`mailto:${q.email}`} className="underline">{q.email}</a>} · {day(q.createdAt)}
+                    {orderNumber(q.id)} · {day(q.createdAt)}
+                    <br />
+                    {q.email && <a href={`mailto:${q.email}`} className="underline">{q.email}</a>}
                   </div>
                 </td>
                 <td className="p-3 text-xs">
-                  {q.lines.map((l, i) => (
-                    <div key={i}>
-                      {l.quantity.toLocaleString()} × {l.label} ({TAG_TYPES[l.tagType as TagType]?.label ?? l.tagType})
-                    </div>
-                  ))}
+                  {q.lines.map((l, i) => {
+                    const slug = l.productId ? slugs.get(l.productId) : undefined;
+                    return (
+                      <div key={i}>
+                        {l.quantity.toLocaleString()} × {l.label} ({TAG_TYPES[l.tagType as TagType]?.label ?? l.tagType})
+                        {slug && (
+                          <>
+                            {" "}
+                            <a href={`/p/${slug}`} target="_blank" rel="noreferrer" className="text-brand underline">
+                              page /p/{slug}
+                            </a>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
                   {q.notes && <div className="mt-1 text-muted italic">“{q.notes}”</div>}
                 </td>
-                <td className="p-3 font-medium">{formatCents(q.totalCents)}</td>
+                <td className="p-3 text-xs whitespace-pre-line">{formatShipTo(q.shipTo) || <span className="text-muted">Not given</span>}</td>
+                <td className="p-3">
+                  <div className="font-medium">{formatCents(q.totalCents)}</div>
+                  {q.paidAt && (
+                    <div className="text-xs text-emerald-800">
+                      Paid by card {day(q.paidAt)}
+                      {q.amountPaidCents !== null && q.amountPaidCents !== q.totalCents && ` (${formatCents(q.amountPaidCents)} charged)`}
+                      {q.stripePaymentIntentId && (
+                        <>
+                          <br />
+                          <a href={stripePaymentLink(q.stripePaymentIntentId)} target="_blank" rel="noreferrer" className="underline">
+                            View in Stripe
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </td>
                 <td className="p-3">
                   <StatusForm action={setQuoteStatus.bind(null, q.id)} value={q.status} options={ADMIN_QUOTE_STATUS} />
                 </td>

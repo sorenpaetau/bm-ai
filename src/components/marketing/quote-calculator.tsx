@@ -9,7 +9,7 @@ import { TAG_TIERS, TAG_TYPES, formatCents, quoteTags, type QuoteLineInput, type
 
 const MAX_QUANTITY = 10_000_000;
 
-// The example from the original proposal, priced correctly: 2,500 tags in one order at the 1,000+ rate.
+// Jens's example from his site plan: 2,500 tags in one order at the $0.40 rate.
 const EXAMPLE: QuoteLineInput[] = [
   { label: "Cabernet Sauvignon 2023", quantity: 1_000, tagType: "standard" },
   { label: "Chardonnay 2023", quantity: 1_500, tagType: "standard" },

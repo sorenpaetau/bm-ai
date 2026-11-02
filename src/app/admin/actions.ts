@@ -25,7 +25,7 @@ export async function unverifyCompany(companyId: string) {
 }
 
 const KitStatus = z.enum(["new", "approved", "shipped", "declined"]);
-const QuoteStatus = z.enum(["sent", "accepted", "invoiced", "paid", "cancelled"]);
+const QuoteStatus = z.enum(["sent", "accepted", "invoiced", "paid", "shipped", "cancelled"]);
 
 export async function setStarterKitStatus(requestId: string, form: FormData) {
   await requireBmAdmin();
