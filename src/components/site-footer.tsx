@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { MARKETING_NAV, SITE } from "@/lib/site";
-import { LogoMark } from "./icons";
+import { Wordmark } from "./icons";
 import { Container } from "./ui";
 
 export function SiteFooter() {
@@ -8,9 +8,8 @@ export function SiteFooter() {
     <footer className="border-t border-line bg-surface text-sm text-muted">
       <Container className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr]">
         <div className="max-w-sm space-y-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <LogoMark className="h-8 w-8 text-brand" />
-            <span className="font-serif text-xl font-semibold tracking-tight text-ink">{SITE.name}</span>
+          <Link href="/" className="flex w-fit items-center" aria-label={`${SITE.name} home`}>
+            <Wordmark name={SITE.name} />
           </Link>
           <p>A small tag on every product. One tap opens its story, and you finally meet the people who buy it.</p>
         </div>

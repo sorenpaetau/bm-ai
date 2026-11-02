@@ -6,6 +6,7 @@ import {
   buttonHref,
   cleanTagCode,
   isoDay,
+  medalColor,
   readableInk,
   safeColor,
   safeUrl,
@@ -66,7 +67,33 @@ test("hidden sections, unreviewed AI sections and empty event lists are not show
 test("the demo page keeps its future events", () => {
   const shown = sectionsToShow(DEMO_CONTENT.sections, { now: new Date("2026-10-26T18:00:00Z") });
   const events = shown.find((s) => s.type === "events");
-  assert.equal(events?.type === "events" && events.items.length, 3);
+  assert.equal(events?.type === "events" && events.items.length, 4);
+});
+
+test("the demo page shows every section from the wine page plan", () => {
+  const shown = sectionsToShow(DEMO_CONTENT.sections, { now: new Date("2026-10-26T18:00:00Z") });
+  assert.equal(shown.length, DEMO_CONTENT.sections.length);
+});
+
+test("blank rows are dropped and empty sections are not shown", () => {
+  const sections: Section[] = [
+    { ...base, id: "facts", type: "facts", title: "Facts", items: [{ label: "Alcohol", value: "" }, { label: "Grape", value: "Merlot" }] },
+    { ...base, id: "empty-facts", type: "facts", title: "Facts", items: [{ label: "Rating", value: " " }] },
+    { ...base, id: "club", type: "memberships", title: "Club", tiers: [{ name: "Gold", perks: [] }] },
+    { ...base, id: "club2", type: "memberships", title: "Club", tiers: [{ name: "Gold", perks: ["", "20% off"] }] },
+    { ...base, id: "visit", type: "visit", title: "Visit", address: "", map: true, experiences: [{ title: "" }], nearby: [], links: [] },
+    { ...base, id: "wines", type: "products", title: "Wines", items: [{ name: "" }], link: { label: "Shop", url: "https://example.com" } },
+  ];
+  const shown = sectionsToShow(sections, { now: NOV_15_PACIFIC });
+  assert.deepEqual(shown.map((s) => s.id), ["facts", "club2"]);
+  assert.ok(shown[0].type === "facts" && shown[0].items.length === 1);
+  assert.ok(shown[1].type === "memberships" && shown[1].tiers[0].perks.length === 1);
+});
+
+test("membership tiers get medal colours", () => {
+  assert.equal(medalColor("Bronce club"), "#b0703c");
+  assert.equal(medalColor("Gold"), "#c9a227");
+  assert.equal(medalColor("Founders"), null);
 });
 
 test("unsafe links are dropped", () => {

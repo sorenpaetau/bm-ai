@@ -5,7 +5,7 @@ import { z } from "zod";
 // and the public page at /p/[slug] renders it. Change it here and all three follow.
 //
 // Every section is generic enough for any vertical: a wine page uses "facts" for ABV and pairing,
-// a cosmetics page uses it for ingredients. Vertical templates live in src/lib/templates.ts.
+// a cosmetics page uses it for ingredients. Vertical templates live in src/lib/ai/template.ts.
 
 const provenance = {
   /** True when the AI wrote this section. The editor shows a "needs review" badge until reviewed. */
@@ -18,16 +18,30 @@ const provenance = {
 const base = {
   id: z.string(),
   title: z.string(),
+  /** Short name for the jump button under the big photo, e.g. "Taste". Falls back to the title. */
+  navLabel: z.string().optional(),
   visible: z.boolean().default(true),
   ...provenance,
 };
 
 const image = z.object({ url: z.string(), alt: z.string().default("") });
 
+/** An optional "see more" link at the bottom of a section, e.g. "Visit our webstore". */
+const sectionLink = z.object({ label: z.string(), url: z.string() }).optional();
+
 export const FactsSection = z.object({
   ...base,
   type: z.literal("facts"),
-  items: z.array(z.object({ label: z.string(), value: z.string() })),
+  items: z.array(
+    z.object({
+      label: z.string(),
+      value: z.string(),
+      /** Small print under the value, e.g. who gave the rating. */
+      note: z.string().optional(),
+      /** Highlighted facts are shown as big tiles at the top of the fact box (rating, price, alcohol). */
+      highlight: z.boolean().optional(),
+    }),
+  ),
 });
 
 export const StorySection = z.object({
@@ -41,8 +55,15 @@ export const ProductsSection = z.object({
   ...base,
   type: z.literal("products"),
   items: z.array(
-    z.object({ name: z.string(), imageUrl: z.string().optional(), price: z.string().optional(), url: z.string().optional() }),
+    z.object({
+      name: z.string(),
+      description: z.string().optional(),
+      imageUrl: z.string().optional(),
+      price: z.string().optional(),
+      url: z.string().optional(),
+    }),
   ),
+  link: sectionLink,
 });
 
 export const OffersSection = z.object({
@@ -51,6 +72,7 @@ export const OffersSection = z.object({
   items: z.array(
     z.object({ title: z.string(), description: z.string().optional(), price: z.string().optional(), url: z.string().optional() }),
   ),
+  link: sectionLink,
 });
 
 export const EventsSection = z.object({
@@ -67,21 +89,87 @@ export const EventsSection = z.object({
   ),
 });
 
+/** Tasting notes: what it tastes like, how it feels, what it's made from and the year it was grown. */
+export const TastingSection = z.object({
+  ...base,
+  type: z.literal("tasting"),
+  body: z.string().default(""),
+  /** Flavors and aromas shown as little chips, e.g. Blackberry, Cassis, Vanilla. */
+  flavors: z.array(z.string()).default([]),
+  /** 1 (low) to 5 (high), e.g. Body 5, Tannin 4, Acidity 3. */
+  structure: z.array(z.object({ label: z.string(), level: z.number().min(0).max(5) })).default([]),
+  /** The blend, e.g. Cabernet Sauvignon 92%, Merlot 8%. */
+  blend: z.array(z.object({ name: z.string(), percent: z.number().min(0).max(100) })).default([]),
+  vintage: z.object({ year: z.string().default(""), body: z.string().default("") }).optional(),
+});
+
+/** Membership or club tiers, e.g. Bronze, Silver and Gold wine clubs. */
+export const MembershipsSection = z.object({
+  ...base,
+  type: z.literal("memberships"),
+  body: z.string().optional(),
+  tiers: z.array(
+    z.object({
+      name: z.string(),
+      price: z.string().optional(),
+      perks: z.array(z.string()).default([]),
+      url: z.string().optional(),
+      /** Shown with a "Most popular" ribbon. */
+      featured: z.boolean().optional(),
+    }),
+  ),
+  link: sectionLink,
+});
+
+/** Who makes it and how: the people (winemaker), the practices (farming, harvest) and the numbers. */
+export const MakerSection = z.object({
+  ...base,
+  type: z.literal("maker"),
+  body: z.string().optional(),
+  people: z
+    .array(z.object({ name: z.string(), role: z.string().optional(), body: z.string().optional(), imageUrl: z.string().optional() }))
+    .default([]),
+  items: z.array(z.object({ title: z.string(), body: z.string() })).default([]),
+  stats: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+  images: z.array(image).default([]),
+});
+
 export const VisitSection = z.object({
   ...base,
   type: z.literal("visit"),
   address: z.string(),
   hours: z.string().optional(),
+  phone: z.string().optional(),
   body: z.string().optional(),
+  /** Show a map of the address. It loads only when the visitor taps it, to keep the page fast. */
+  map: z.boolean().default(true),
+  /** Things to book on site: tastings, tours, weddings. */
+  experiences: z
+    .array(z.object({ title: z.string(), body: z.string().optional(), price: z.string().optional(), url: z.string().optional() }))
+    .default([]),
+  /** Nearby places to stay, eat or see. */
+  nearby: z
+    .array(
+      z.object({
+        name: z.string(),
+        kind: z.enum(["stay", "eat", "do"]).default("do"),
+        note: z.string().optional(),
+        url: z.string().optional(),
+      }),
+    )
+    .default([]),
   links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
 });
 
 export const Section = z.discriminatedUnion("type", [
   FactsSection,
   StorySection,
+  TastingSection,
   ProductsSection,
   OffersSection,
+  MembershipsSection,
   EventsSection,
+  MakerSection,
   VisitSection,
 ]);
 export type Section = z.infer<typeof Section>;

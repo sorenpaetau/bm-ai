@@ -1,6 +1,26 @@
 /* eslint-disable @next/next/no-img-element -- brand images live on arbitrary hosts; plain <img> keeps pages light. */
 import type { CSSProperties, ReactNode } from "react";
-import { ArrowRightIcon, BagIcon, CalendarIcon, GiftIcon, LogoMark, MailIcon, PhoneIcon, PinIcon } from "@/components/icons";
+import {
+  ArrowRightIcon,
+  BagIcon,
+  BedIcon,
+  BookIcon,
+  CalendarIcon,
+  CheckIcon,
+  ClockIcon,
+  CompassIcon,
+  ForkIcon,
+  GiftIcon,
+  LeafIcon,
+  ListIcon,
+  LogoMark,
+  MailIcon,
+  PhoneIcon,
+  PinIcon,
+  StarIcon,
+  TagIcon,
+  WineIcon,
+} from "@/components/icons";
 import { NfcSticker } from "@/components/tap-art";
 import type { ActionButton, LandingContent, Section } from "@/lib/landing";
 import { SITE } from "@/lib/site";
@@ -8,13 +28,16 @@ import {
   buttonHref,
   eventDateParts,
   isExternal,
+  mapEmbedUrl,
   mapsUrl,
+  medalColor,
   paragraphs,
   readableInk,
   safeColor,
   safeUrl,
   sectionsToShow,
 } from "./helpers";
+import { MapCard } from "./map-card";
 import { OptinForm } from "./optin-form";
 
 // The consumer landing page, rendered from LandingContent. Used by the live page at /p/[slug] and by
@@ -52,8 +75,8 @@ export function LandingView({
     .map((b) => ({ ...b, href: buttonHref(b) }))
     .filter((b): b is ActionButton & { href: string } => b.href !== null);
   const jumpLinks = [
-    ...sections.map((s) => ({ href: `#s-${s.id}`, label: s.title })),
-    ...(content.optin.enabled ? [{ href: "#register", label: content.optin.headline }] : []),
+    ...sections.map((s) => ({ href: `#s-${s.id}`, label: s.navLabel?.trim() || s.title, Icon: iconFor(s) })),
+    ...(content.optin.enabled ? [{ href: "#register", label: content.optin.headline, Icon: MailIcon }] : []),
   ];
 
   return (
@@ -66,6 +89,14 @@ export function LandingView({
       <main className="mx-auto max-w-xl overflow-hidden pb-12 sm:rounded-[2rem] sm:bg-[var(--lp-page)] sm:shadow-[0_30px_80px_-30px_rgb(0_0_0/0.35)] sm:ring-1 sm:ring-black/5">
         <header className="relative isolate overflow-hidden bg-[image:var(--lp-hero)] text-[var(--lp-on-primary)]">
           <Ridges />
+          {tagCode && (
+            <p className="flex animate-rise justify-center px-6 pt-5">
+              <span className="inline-flex items-center gap-2 rounded-full bg-black/20 py-1 pr-3.5 pl-1 text-[12px] font-medium ring-1 ring-white/15 backdrop-blur-sm ring-inset">
+                <NfcSticker className="h-6 w-6" label="" />
+                You tapped the sticker on this bottle
+              </span>
+            </p>
+          )}
           <div className="flex animate-rise items-center justify-center px-6 pt-8">
             {logo ? (
               <img src={logo} alt={hero.brand} className="h-11 w-auto object-contain" />
@@ -82,7 +113,7 @@ export function LandingView({
               src={heroImage}
               alt={hero.title}
               fetchPriority="high"
-              className="relative mx-auto mt-6 max-h-[46vh] w-full animate-rise object-contain drop-shadow-[0_24px_30px_rgb(0_0_0/0.45)]"
+              className="relative mx-auto mt-6 max-h-[52vh] w-full animate-rise object-contain drop-shadow-[0_24px_30px_rgb(0_0_0/0.45)]"
             />
           )}
           <div className={`animate-rise px-6 text-center [animation-delay:80ms] ${heroImage ? "pt-4 pb-24" : "pt-10 pb-24"}`}>
@@ -103,22 +134,7 @@ export function LandingView({
           </div>
         )}
 
-        {jumpLinks.length > 2 && (
-          <nav aria-label="On this page" className="mt-6 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <ul className="flex w-max gap-2 px-5">
-              {jumpLinks.map((l) => (
-                <li key={l.href}>
-                  <a
-                    href={l.href}
-                    className="block whitespace-nowrap rounded-full bg-white px-3.5 py-1.5 text-[13px] font-medium text-ink/75 shadow-sm ring-1 ring-black/5 transition hover:text-ink"
-                  >
-                    {l.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
+        {jumpLinks.length > 2 && <JumpNav links={jumpLinks} />}
 
         <div className="mt-6 space-y-4 px-4 sm:px-5">
           {sections.map((section) => (
@@ -229,8 +245,54 @@ function ActionLink({ button }: { button: ActionButton & { href: string } }) {
   );
 }
 
+/** An icon for each kind of section, used on the jump buttons and next to section headings. */
+const sectionIcons: Record<Section["type"], (p: { className?: string }) => ReactNode> = {
+  facts: ListIcon,
+  story: BookIcon,
+  tasting: WineIcon,
+  products: BagIcon,
+  offers: TagIcon,
+  memberships: StarIcon,
+  events: CalendarIcon,
+  maker: LeafIcon,
+  visit: PinIcon,
+};
+
+/** Gift sets are a "products" section too, but deserve their own icon. */
+function iconFor(section: Section) {
+  if (section.type === "products" && /gift/i.test(`${section.navLabel ?? ""} ${section.title}`)) return GiftIcon;
+  return sectionIcons[section.type];
+}
+
+function JumpNav({ links }: { links: Array<{ href: string; label: string; Icon: (p: { className?: string }) => ReactNode }> }) {
+  return (
+    <nav
+      aria-label="On this page"
+      className="relative z-10 mx-4 mt-6 rounded-[1.75rem] bg-white p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-14px_rgb(0_0_0/0.16)] ring-1 ring-black/[0.04] sm:mx-5"
+    >
+      <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Jump to</p>
+      <ul className="grid grid-cols-3 gap-2">
+        {links.map(({ href, label, Icon }) => (
+          <li key={href}>
+            <a
+              href={href}
+              className="flex h-full flex-col items-center gap-1.5 rounded-2xl bg-[var(--lp-tint)] px-1.5 py-3 text-center text-[12.5px] leading-tight font-medium text-ink/80 ring-1 ring-[var(--lp-primary)]/[0.07] transition ring-inset hover:text-ink active:scale-[0.97]"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[var(--lp-primary)] shadow-sm">
+                <Icon className="h-[18px] w-[18px]" />
+              </span>
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 function SectionCard({ section, preview }: { section: Section; preview: boolean }) {
   const needsReview = preview && section.aiGenerated && !section.reviewed;
+  const Icon = iconFor(section);
   return (
     <section
       aria-labelledby={`s-${section.id}`}
@@ -244,7 +306,12 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
         </p>
       )}
       <h2 id={`s-${section.id}`} className={`${heading} mb-5 scroll-mt-6 text-[1.65rem] leading-tight tracking-[-0.01em]`}>
-        <span aria-hidden="true" className="mb-3 block h-[3px] w-8 rounded-full bg-[var(--lp-accent)]" />
+        <span aria-hidden="true" className="mb-3 flex items-center gap-2.5">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--lp-accent-soft)] text-[var(--lp-primary)]">
+            <Icon className="h-4 w-4" />
+          </span>
+          <span className="h-[3px] w-8 rounded-full bg-[var(--lp-accent)]" />
+        </span>
         {section.title}
       </h2>
       <SectionBody section={section} />
@@ -252,25 +319,107 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
   );
 }
 
+function Sub({ children }: { children: ReactNode }) {
+  return <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">{children}</p>;
+}
+
+function Paragraphs({ text, className = "text-[17px] leading-relaxed text-ink/85" }: { text?: string; className?: string }) {
+  if (!text) return null;
+  return (
+    <>
+      {paragraphs(text).map((p, i) => (
+        <p key={i} className={className}>
+          {p}
+        </p>
+      ))}
+    </>
+  );
+}
+
+function ImageStrip({ images }: { images: Array<{ url: string; alt: string }> }) {
+  const list = images.flatMap((img) => {
+    const src = safeUrl(img.url);
+    return src ? [{ src, alt: img.alt }] : [];
+  });
+  if (list.length === 0) return null;
+  return (
+    <div className="-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pt-2 [scrollbar-width:none] sm:-mx-7 sm:scroll-px-7 sm:px-7">
+      {list.map((img, i) => (
+        <img
+          key={i}
+          src={img.src}
+          alt={img.alt}
+          loading="lazy"
+          className={`h-56 snap-start rounded-2xl bg-[var(--lp-tint)] object-cover ${list.length === 1 ? "w-full" : "w-4/5 shrink-0"}`}
+        />
+      ))}
+    </div>
+  );
+}
+
+/** The "see more" link at the bottom of a section, e.g. "Visit our webstore". */
+function SectionLink({ link }: { link?: { label: string; url: string } }) {
+  const href = safeUrl(link?.url);
+  if (!link || !href || !link.label.trim()) return null;
+  return (
+    <a
+      href={href}
+      {...externalProps(href)}
+      className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--lp-primary)] px-5 py-3.5 text-[15px] font-semibold text-[var(--lp-on-primary)] shadow-[0_10px_24px_-12px_rgb(0_0_0/0.5)] transition active:scale-[0.985]"
+    >
+      {link.label} <ArrowRightIcon className="h-4 w-4" />
+    </a>
+  );
+}
+
+/** Shades of the brand colour for the blend bar. */
+const BLEND_SHADES = [
+  "var(--lp-primary)",
+  "var(--lp-accent)",
+  "color-mix(in oklab, var(--lp-primary) 55%, white)",
+  "color-mix(in oklab, var(--lp-accent) 55%, white)",
+  "color-mix(in oklab, var(--lp-primary) 30%, white)",
+];
+
+const LEVEL_WORDS = ["", "Light", "Medium-light", "Medium", "Medium-full", "Full"];
+
 function SectionBody({ section }: { section: Section }) {
   switch (section.type) {
-    case "facts":
+    case "facts": {
+      const highlights = section.items.filter((i) => i.highlight);
+      const rest = section.items.filter((i) => !i.highlight);
       return (
-        <dl className="grid grid-cols-2 gap-x-5">
-          {section.items.map((item, i) => (
-            <div key={i} className={`border-t border-black/[0.06] py-3.5 ${item.value.length > 28 ? "col-span-2" : ""}`}>
-              <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{item.label}</dt>
-              <dd className="mt-1 text-[17px] leading-snug">{item.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="space-y-4">
+          {highlights.length > 0 && (
+            <dl className={`grid gap-2.5 ${highlights.length === 2 || highlights.length === 4 ? "grid-cols-2" : "grid-cols-3"}`}>
+              {highlights.map((item, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col items-center justify-center rounded-2xl bg-[var(--lp-tint)] px-2 py-4 text-center ring-1 ring-[var(--lp-primary)]/[0.08] ring-inset"
+                >
+                  <dd className={`${heading} text-[1.65rem] leading-none text-[var(--lp-primary)]`}>{item.value}</dd>
+                  <dt className="mt-2 text-[10.5px] font-semibold uppercase tracking-[0.14em] text-muted">{item.label}</dt>
+                  {item.note && <dd className="mt-1 text-[11px] leading-snug text-ink/60">{item.note}</dd>}
+                </div>
+              ))}
+            </dl>
+          )}
+          {rest.length > 0 && (
+            <dl className="grid grid-cols-2 gap-x-5">
+              {rest.map((item, i) => (
+                <div key={i} className={`border-t border-black/[0.06] py-3.5 ${item.value.length > 28 ? "col-span-2" : ""}`}>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{item.label}</dt>
+                  <dd className="mt-1 text-[17px] leading-snug">{item.value}</dd>
+                  {item.note && <dd className="mt-0.5 text-[13px] text-ink/60">{item.note}</dd>}
+                </div>
+              ))}
+            </dl>
+          )}
+        </div>
       );
+    }
 
-    case "story": {
-      const images = section.images.flatMap((img) => {
-        const src = safeUrl(img.url);
-        return src ? [{ src, alt: img.alt }] : [];
-      });
+    case "story":
       return (
         <div className="space-y-4 text-[17px] leading-relaxed text-ink/85">
           {paragraphs(section.body).map((p, i) => (
@@ -285,92 +434,282 @@ function SectionBody({ section }: { section: Section }) {
               {p}
             </p>
           ))}
-          {images.length > 0 && (
-            <div className="-mx-6 flex snap-x gap-3 overflow-x-auto px-6 pt-2 sm:-mx-7 sm:px-7">
-              {images.map((img, i) => (
-                <img
-                  key={i}
-                  src={img.src}
-                  alt={img.alt}
-                  loading="lazy"
-                  className={`h-56 snap-start rounded-2xl object-cover ${images.length === 1 ? "w-full" : "w-4/5 shrink-0"}`}
-                />
-              ))}
+          <ImageStrip images={section.images} />
+        </div>
+      );
+
+    case "tasting": {
+      const total = section.blend.reduce((sum, b) => sum + b.percent, 0) || 1;
+      return (
+        <div className="space-y-6">
+          {section.body && (
+            <div className="space-y-4">
+              <Paragraphs text={section.body} />
+            </div>
+          )}
+
+          {section.flavors.length > 0 && (
+            <div>
+              <Sub>Flavors &amp; aromas</Sub>
+              <ul className="flex flex-wrap gap-2">
+                {section.flavors.map((f, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center gap-2 rounded-full bg-[var(--lp-tint)] px-3.5 py-1.5 text-[14px] font-medium ring-1 ring-[var(--lp-primary)]/10 ring-inset"
+                  >
+                    <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[var(--lp-accent)]" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {section.structure.length > 0 && (
+            <div>
+              <Sub>How it feels</Sub>
+              <ul className="space-y-3">
+                {section.structure.map((s, i) => {
+                  const level = Math.round(s.level);
+                  return (
+                    <li key={i} className="grid grid-cols-[5.5rem_1fr] items-center gap-3">
+                      <span className="text-[15px] font-medium">{s.label}</span>
+                      <span className="flex items-center gap-1" role="img" aria-label={`${s.label}: ${level} out of 5`}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <span
+                            key={n}
+                            className={`h-2 flex-1 rounded-full ${n <= level ? "bg-[var(--lp-primary)]" : "bg-black/[0.08]"}`}
+                          />
+                        ))}
+                        <span className="ml-2 w-[5.5rem] shrink-0 text-right text-[12px] text-muted">{LEVEL_WORDS[level] ?? ""}</span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {section.blend.length > 0 && (
+            <div>
+              <Sub>The blend</Sub>
+              <div className="flex h-3.5 overflow-hidden rounded-full ring-1 ring-black/5" aria-hidden="true">
+                {section.blend.map((b, i) => (
+                  <span key={i} style={{ width: `${(b.percent / total) * 100}%`, background: BLEND_SHADES[i % BLEND_SHADES.length] }} />
+                ))}
+              </div>
+              <ul className="mt-3 space-y-1.5">
+                {section.blend.map((b, i) => (
+                  <li key={i} className="flex items-center gap-2.5 text-[15px]">
+                    <span aria-hidden="true" className="h-3 w-3 rounded-full" style={{ background: BLEND_SHADES[i % BLEND_SHADES.length] }} />
+                    <span className="flex-1">{b.name}</span>
+                    <span className="font-semibold tabular-nums">{b.percent}%</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {section.vintage && (
+            <div className="relative overflow-hidden rounded-2xl bg-[image:var(--lp-hero)] p-5 text-[var(--lp-on-primary)]">
+              <div className="flex items-baseline gap-3">
+                {section.vintage.year && (
+                  <span className={`${heading} text-[2.6rem] leading-none text-[var(--lp-accent)]`}>{section.vintage.year}</span>
+                )}
+                <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-80">The vintage</span>
+              </div>
+              {section.vintage.body && (
+                <div className="mt-3 space-y-3">
+                  <Paragraphs text={section.vintage.body} className="text-[15px] leading-relaxed opacity-90" />
+                </div>
+              )}
             </div>
           )}
         </div>
       );
     }
 
-    case "products":
+    case "products": {
+      const withImages = section.items.some((i) => safeUrl(i.imageUrl));
+      if (withImages) {
+        return (
+          <>
+            <ul className="-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pb-1 [scrollbar-width:none] sm:-mx-7 sm:scroll-px-7 sm:px-7">
+              {section.items.map((item, i) => {
+                const href = safeUrl(item.url);
+                const image = safeUrl(item.imageUrl);
+                const card = (
+                  <>
+                    <span className="flex aspect-[4/5] items-end justify-center overflow-hidden rounded-2xl bg-[radial-gradient(90%_70%_at_50%_100%,var(--lp-accent-soft),var(--lp-tint))] ring-1 ring-[var(--lp-primary)]/[0.06] ring-inset">
+                      {image ? (
+                        <img src={image} alt="" loading="lazy" className="h-[88%] w-full object-contain drop-shadow-[0_10px_12px_rgb(0_0_0/0.25)]" />
+                      ) : (
+                        <span aria-hidden="true" className={`${heading} self-center text-4xl text-[var(--lp-primary)]`}>
+                          {item.name.trim().charAt(0)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-3 block font-medium leading-snug">{item.name}</span>
+                    {item.description && <span className="mt-0.5 block text-[13px] leading-snug text-muted">{item.description}</span>}
+                    {item.price && <span className="mt-1.5 block font-semibold tabular-nums text-[var(--lp-primary)]">{item.price}</span>}
+                  </>
+                );
+                return (
+                  <li key={i} className="w-[46%] shrink-0 snap-start">
+                    {href ? (
+                      <a href={href} {...externalProps(href)} className="block">
+                        {card}
+                      </a>
+                    ) : (
+                      card
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+            <SectionLink link={section.link} />
+          </>
+        );
+      }
       return (
-        <ul className="-my-1 divide-y divide-black/[0.06]">
-          {section.items.map((item, i) => {
-            const href = safeUrl(item.url);
-            const image = safeUrl(item.imageUrl);
-            const row = (
-              <>
-                {image ? (
-                  <img src={image} alt="" loading="lazy" className="h-14 w-14 shrink-0 rounded-xl bg-black/5 object-cover" />
-                ) : (
+        <>
+          <ul className="-my-1 divide-y divide-black/[0.06]">
+            {section.items.map((item, i) => {
+              const href = safeUrl(item.url);
+              const row = (
+                <>
                   <span
                     aria-hidden="true"
                     className={`${heading} flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[var(--lp-tint)] text-xl text-[var(--lp-primary)]`}
                   >
                     {item.name.trim().charAt(0)}
                   </span>
-                )}
-                <span className="flex-1 font-medium leading-snug">{item.name}</span>
-                {item.price && <span className="font-medium tabular-nums text-ink/70">{item.price}</span>}
-                {href && <Chevron />}
-              </>
-            );
-            return (
-              <li key={i}>
-                {href ? (
-                  <a href={href} {...externalProps(href)} className="flex items-center gap-4 py-3">
-                    {row}
-                  </a>
-                ) : (
-                  <div className="flex items-center gap-4 py-3">{row}</div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                  <span className="flex-1 leading-snug">
+                    <span className="block font-medium">{item.name}</span>
+                    {item.description && <span className="block text-[13px] text-muted">{item.description}</span>}
+                  </span>
+                  {item.price && <span className="font-medium tabular-nums text-ink/70">{item.price}</span>}
+                  {href && <Chevron />}
+                </>
+              );
+              return (
+                <li key={i}>
+                  {href ? (
+                    <a href={href} {...externalProps(href)} className="flex items-center gap-4 py-3">
+                      {row}
+                    </a>
+                  ) : (
+                    <div className="flex items-center gap-4 py-3">{row}</div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <SectionLink link={section.link} />
+        </>
       );
+    }
 
     case "offers":
       return (
-        <ul className="space-y-3">
-          {section.items.map((item, i) => {
-            const href = safeUrl(item.url);
-            return (
-              <li
-                key={i}
-                className="relative overflow-hidden rounded-2xl bg-[var(--lp-tint)] p-5 ring-1 ring-[var(--lp-primary)]/10 ring-inset"
-              >
-                <span aria-hidden="true" className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--lp-accent)]" />
-                <p className={`${heading} text-lg leading-snug`}>{item.title}</p>
-                {item.description && <p className="mt-1 text-[15px] text-ink/75">{item.description}</p>}
-                {item.price && (
-                  <p className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-sm font-semibold text-[var(--lp-primary)] shadow-sm">
-                    {item.price}
-                  </p>
-                )}
-                {href && (
-                  <a
-                    href={href}
-                    {...externalProps(href)}
-                    className="mt-3 flex items-center gap-1 text-sm font-semibold text-[var(--lp-primary)]"
-                  >
-                    Learn more <ArrowRightIcon className="h-4 w-4" />
-                  </a>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <ul className="space-y-3">
+            {section.items.map((item, i) => {
+              const href = safeUrl(item.url);
+              return (
+                <li
+                  key={i}
+                  className="relative overflow-hidden rounded-2xl bg-[var(--lp-tint)] p-5 ring-1 ring-[var(--lp-primary)]/10 ring-inset"
+                >
+                  <span aria-hidden="true" className="absolute inset-y-4 left-0 w-1 rounded-r-full bg-[var(--lp-accent)]" />
+                  <p className={`${heading} text-lg leading-snug`}>{item.title}</p>
+                  {item.description && <p className="mt-1 text-[15px] text-ink/75">{item.description}</p>}
+                  {item.price && (
+                    <p className="mt-3 inline-flex rounded-full bg-white px-3 py-1 text-sm font-semibold text-[var(--lp-primary)] shadow-sm">
+                      {item.price}
+                    </p>
+                  )}
+                  {href && (
+                    <a
+                      href={href}
+                      {...externalProps(href)}
+                      className="mt-3 flex items-center gap-1 text-sm font-semibold text-[var(--lp-primary)]"
+                    >
+                      Learn more <ArrowRightIcon className="h-4 w-4" />
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <SectionLink link={section.link} />
+        </>
+      );
+
+    case "memberships":
+      return (
+        <div className="space-y-4">
+          {section.body && <Paragraphs text={section.body} className="text-[15px] leading-relaxed text-ink/80" />}
+          <ul className="space-y-3">
+            {section.tiers.map((tier, i) => {
+              const href = safeUrl(tier.url);
+              const medal = medalColor(tier.name) ?? "var(--lp-accent)";
+              return (
+                <li
+                  key={i}
+                  className={`relative overflow-hidden rounded-2xl p-5 ${
+                    tier.featured
+                      ? "bg-white shadow-[0_14px_34px_-16px_rgb(0_0_0/0.35)] ring-2 ring-[var(--lp-accent)]"
+                      : "bg-[var(--lp-tint)] ring-1 ring-[var(--lp-primary)]/10 ring-inset"
+                  }`}
+                >
+                  {tier.featured && (
+                    <span className="absolute top-0 right-0 rounded-bl-2xl bg-[var(--lp-accent)] px-3 py-1 text-[10.5px] font-bold uppercase tracking-[0.14em] text-[var(--lp-on-accent)]">
+                      Most popular
+                    </span>
+                  )}
+                  <div className="flex items-center gap-3.5">
+                    <span
+                      aria-hidden="true"
+                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-white shadow-md shadow-black/15 ring-2 ring-white"
+                      style={{ background: `radial-gradient(circle at 35% 30%, color-mix(in oklab, ${medal} 55%, white), ${medal} 60%, color-mix(in oklab, ${medal} 70%, black))` }}
+                    >
+                      <StarIcon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className={`${heading} text-xl leading-tight`}>{tier.name}</p>
+                      {tier.price && <p className="mt-0.5 text-sm font-semibold text-[var(--lp-primary)]">{tier.price}</p>}
+                    </div>
+                  </div>
+                  {tier.perks.length > 0 && (
+                    <ul className="mt-4 space-y-2">
+                      {tier.perks.map((perk, j) => (
+                        <li key={j} className="flex gap-2.5 text-[15px] leading-snug text-ink/85">
+                          <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lp-primary)]" />
+                          {perk}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {href && (
+                    <a
+                      href={href}
+                      {...externalProps(href)}
+                      className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-[15px] font-semibold transition active:scale-[0.985] ${
+                        tier.featured
+                          ? "bg-[var(--lp-accent)] text-[var(--lp-on-accent)]"
+                          : "bg-white text-[var(--lp-primary)] ring-[1.5px] ring-[var(--lp-primary)]/70 ring-inset"
+                      }`}
+                    >
+                      Join {tier.name} <ArrowRightIcon className="h-4 w-4" />
+                    </a>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+          <SectionLink link={section.link} />
+        </div>
       );
 
     case "events":
@@ -416,53 +755,213 @@ function SectionBody({ section }: { section: Section }) {
         </ul>
       );
 
-    case "visit": {
-      const links = section.links.flatMap((l) => {
-        const href = safeUrl(l.url);
-        return href ? [{ ...l, href }] : [];
-      });
+    case "maker":
       return (
-        <div className="space-y-4">
-          <a
-            href={mapsUrl(section.address)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-[var(--lp-tint)] p-4 ring-1 ring-[var(--lp-primary)]/10 ring-inset"
-          >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--lp-primary)] text-[var(--lp-on-primary)] shadow-md shadow-black/10">
-              <PinIcon className="h-5 w-5" />
-            </span>
-            <span className="flex-1">
-              <span className="block font-medium leading-snug">{section.address}</span>
-              <span className="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--lp-primary)]">
-                Get directions <ArrowRightIcon className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
-              </span>
-            </span>
-          </a>
-          {section.hours && (
-            <p className="flex gap-2 text-[15px]">
-              <span className="font-semibold">Hours</span>
-              <span className="text-ink/80">{section.hours}</span>
-            </p>
+        <div className="space-y-6">
+          {section.body && (
+            <div className="space-y-4">
+              <Paragraphs text={section.body} />
+            </div>
           )}
-          {section.body &&
-            paragraphs(section.body).map((p, i) => (
-              <p key={i} className="text-[15px] leading-relaxed text-ink/80">
-                {p}
-              </p>
-            ))}
-          {links.length > 0 && (
-            <div className="flex flex-wrap gap-2 pt-1">
-              {links.map((l, i) => (
-                <a
-                  key={i}
-                  href={l.href}
-                  {...externalProps(l.href)}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--lp-primary)] ring-[1.5px] ring-[var(--lp-primary)]/70 ring-inset"
-                >
-                  {l.label}
-                </a>
+
+          {section.stats.length > 0 && (
+            <dl className={`grid gap-2.5 ${section.stats.length === 2 || section.stats.length === 4 ? "grid-cols-2" : "grid-cols-3"}`}>
+              {section.stats.map((s, i) => (
+                <div key={i} className="rounded-2xl bg-[var(--lp-tint)] px-2 py-4 text-center ring-1 ring-[var(--lp-primary)]/[0.08] ring-inset">
+                  <dd className={`${heading} text-[1.45rem] leading-none text-[var(--lp-primary)]`}>{s.value}</dd>
+                  <dt className="mt-2 text-[10.5px] font-semibold uppercase tracking-[0.12em] text-muted">{s.label}</dt>
+                </div>
               ))}
+            </dl>
+          )}
+
+          {section.people.length > 0 && (
+            <ul className="space-y-3">
+              {section.people.map((person, i) => {
+                const photo = safeUrl(person.imageUrl);
+                const initials = person.name
+                  .split(/\s+/)
+                  .map((w) => w.charAt(0))
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase();
+                return (
+                  <li key={i} className="flex gap-4 rounded-2xl bg-[var(--lp-tint)] p-4 ring-1 ring-[var(--lp-primary)]/[0.08] ring-inset">
+                    {photo ? (
+                      <img src={photo} alt={person.name} loading="lazy" className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white" />
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        className={`${heading} flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[image:var(--lp-hero)] text-xl text-[var(--lp-accent)] ring-2 ring-white`}
+                      >
+                        {initials}
+                      </span>
+                    )}
+                    <div className="min-w-0">
+                      <p className={`${heading} text-lg leading-tight`}>{person.name}</p>
+                      {person.role && (
+                        <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--lp-primary)]">{person.role}</p>
+                      )}
+                      {person.body && <p className="mt-2 text-[15px] leading-relaxed text-ink/80">{person.body}</p>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {section.items.length > 0 && (
+            <ul className="space-y-4">
+              {section.items.map((item, i) => (
+                <li key={i} className="flex gap-3.5">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--lp-accent-soft)] text-[var(--lp-primary)]">
+                    <LeafIcon className="h-[18px] w-[18px]" />
+                  </span>
+                  <div>
+                    <p className="font-semibold leading-snug">{item.title}</p>
+                    <p className="mt-1 text-[15px] leading-relaxed text-ink/80">{item.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <ImageStrip images={section.images} />
+        </div>
+      );
+
+    case "visit": {
+      const phoneHref = section.phone ? buttonHref({ kind: "phone", url: section.phone }) : null;
+      const groups = (
+        [
+          ["stay", "Stay nearby", BedIcon],
+          ["eat", "Eat nearby", ForkIcon],
+          ["do", "More to see", CompassIcon],
+        ] as const
+      )
+        .map(([kind, label, Icon]) => ({ label, Icon, items: section.nearby.filter((n) => n.kind === kind) }))
+        .filter((g) => g.items.length > 0);
+      return (
+        <div className="space-y-5">
+          {section.address && section.map && (
+            <MapCard address={section.address} embedUrl={mapEmbedUrl(section.address)} directionsUrl={mapsUrl(section.address)} />
+          )}
+          {section.address && (
+            <a
+              href={mapsUrl(section.address)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-[var(--lp-tint)] p-4 ring-1 ring-[var(--lp-primary)]/10 ring-inset"
+            >
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--lp-primary)] text-[var(--lp-on-primary)] shadow-md shadow-black/10">
+                <PinIcon className="h-5 w-5" />
+              </span>
+              <span className="flex-1">
+                <span className="block font-medium leading-snug">{section.address}</span>
+                <span className="mt-0.5 inline-flex items-center gap-1 text-sm font-semibold text-[var(--lp-primary)]">
+                  Get directions <ArrowRightIcon className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
+                </span>
+              </span>
+            </a>
+          )}
+          {(section.hours || phoneHref) && (
+            <div className="space-y-2 text-[15px]">
+              {section.hours && (
+                <p className="flex gap-2.5">
+                  <ClockIcon className="mt-0.5 h-4 w-4 shrink-0 text-[var(--lp-primary)]" />
+                  <span className="text-ink/80">{section.hours}</span>
+                </p>
+              )}
+              {phoneHref && (
+                <a href={phoneHref} className="flex gap-2.5 font-medium text-[var(--lp-primary)]">
+                  <PhoneIcon className="mt-0.5 h-4 w-4 shrink-0" />
+                  {section.phone}
+                </a>
+              )}
+            </div>
+          )}
+          {section.body && <Paragraphs text={section.body} className="text-[15px] leading-relaxed text-ink/80" />}
+
+          {section.experiences.length > 0 && (
+            <div>
+              <Sub>Tastings &amp; tours</Sub>
+              <ul className="space-y-2.5">
+                {section.experiences.map((exp, i) => {
+                  const href = safeUrl(exp.url);
+                  return (
+                    <li key={i} className="rounded-2xl p-4 ring-1 ring-black/[0.07] ring-inset">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="font-semibold leading-snug">{exp.title}</p>
+                        {exp.price && <p className="shrink-0 text-sm font-semibold text-[var(--lp-primary)]">{exp.price}</p>}
+                      </div>
+                      {exp.body && <p className="mt-1 text-[14px] leading-snug text-ink/75">{exp.body}</p>}
+                      {href && (
+                        <a
+                          href={href}
+                          {...externalProps(href)}
+                          className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--lp-primary)]"
+                        >
+                          Book now <ArrowRightIcon className="h-4 w-4" />
+                        </a>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          {groups.map(({ label, Icon, items }) => (
+            <div key={label}>
+              <Sub>{label}</Sub>
+              <ul className="-my-1 divide-y divide-black/[0.06]">
+                {items.map((place, i) => {
+                  const href = safeUrl(place.url);
+                  const row = (
+                    <>
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--lp-tint)] text-[var(--lp-primary)]">
+                        <Icon className="h-[18px] w-[18px]" />
+                      </span>
+                      <span className="min-w-0 flex-1 leading-snug">
+                        <span className="block font-medium">{place.name}</span>
+                        {place.note && <span className="block text-[13px] text-muted">{place.note}</span>}
+                      </span>
+                      {href && <Chevron />}
+                    </>
+                  );
+                  return (
+                    <li key={i}>
+                      {href ? (
+                        <a href={href} {...externalProps(href)} className="flex items-center gap-3.5 py-2.5">
+                          {row}
+                        </a>
+                      ) : (
+                        <div className="flex items-center gap-3.5 py-2.5">{row}</div>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+
+          {section.links.length > 0 && (
+            <div className="flex flex-wrap gap-2 pt-1">
+              {section.links.flatMap((l, i) => {
+                const href = safeUrl(l.url);
+                return href
+                  ? [
+                      <a
+                        key={i}
+                        href={href}
+                        {...externalProps(href)}
+                        className="rounded-full px-4 py-2 text-sm font-semibold text-[var(--lp-primary)] ring-[1.5px] ring-[var(--lp-primary)]/70 ring-inset"
+                      >
+                        {l.label}
+                      </a>,
+                    ]
+                  : [];
+              })}
             </div>
           )}
         </div>

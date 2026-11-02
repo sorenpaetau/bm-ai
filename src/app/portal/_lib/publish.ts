@@ -14,9 +14,10 @@ export function publishBlockers(content: LandingContent, companyVerified: boolea
   if (!content.hero.title.trim()) out.push("Add a product name at the top of the page.");
   for (const s of content.sections) {
     if (!s.visible) continue;
-    if (s.type === "facts" && s.items.some((i) => !i.label.trim() || !i.value.trim()))
-      out.push(`Fill in or remove the empty facts in "${s.title || "Untitled"}".`);
-    if (s.type === "story" && !s.body.trim()) out.push(`Write some text for "${s.title || "Untitled"}" or hide it.`);
+    // Blank rows and empty sections are simply left off the live page (templates start with blank
+    // rows to fill in), so they don't block publishing. A value with no label would read oddly, though.
+    if (s.type === "facts" && s.items.some((i) => !i.label.trim() && i.value.trim()))
+      out.push(`Every fact in "${s.title || "Untitled"}" needs a label.`);
   }
   if (content.buttons.some((b) => !b.label.trim() || !b.url.trim())) out.push("Every button needs a label and a link.");
   if (content.optin.enabled && !content.optin.consentText.trim()) out.push("The sign-up box needs consent wording.");
