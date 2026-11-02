@@ -172,6 +172,8 @@ ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_interval text CHECK (plan_in
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS stripe_customer_id text;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS stripe_subscription_id text;
 ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_status text;     -- Stripe subscription status, e.g. 'active', 'past_due'
+-- The hosting checkout most recently opened. Opening a new one expires the old one, so two tabs can't start two plans.
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS plan_checkout_session_id text;
 
 -- Small key/value store for app settings, e.g. the Stripe webhook signing secret created at deploy time.
 CREATE TABLE IF NOT EXISTS app_settings (

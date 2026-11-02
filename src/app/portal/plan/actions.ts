@@ -22,8 +22,10 @@ export async function choosePlan(form: FormData) {
   const choice = Choice.safeParse({ plan: form.get("plan"), interval: form.get("interval") });
   if (!stripe || !choice.success) redirect("/portal/plan?error=1");
 
-  const [company] = await sql<{ stripeCustomerId: string | null; stripeSubscriptionId: string | null; planStatus: string | null }[]>`
-    SELECT stripe_customer_id, stripe_subscription_id, plan_status FROM companies WHERE id = ${user.companyId}`;
+  const [company] = await sql<
+    { stripeCustomerId: string | null; stripeSubscriptionId: string | null; planStatus: string | null; planCheckoutSessionId: string | null }[]
+  >`
+    SELECT stripe_customer_id, stripe_subscription_id, plan_status, plan_checkout_session_id FROM companies WHERE id = ${user.companyId}`;
   // One plan at a time: changes to an existing plan go through "Manage billing".
   if (company?.stripeSubscriptionId && ["active", "trialing", "past_due"].includes(company.planStatus ?? "")) redirect("/portal/plan");
 
@@ -32,6 +34,10 @@ export async function choosePlan(form: FormData) {
   const base = await origin();
   let url: string | null = null;
   try {
+    // Close any hosting checkout opened earlier (another tab, a back button) so only one can ever be paid.
+    if (company?.planCheckoutSessionId) {
+      await stripe.checkout.sessions.expire(company.planCheckoutSessionId).catch(() => undefined);
+    }
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [planLineItem(plan, interval)],
@@ -42,6 +48,7 @@ export async function choosePlan(form: FormData) {
       success_url: `${base}/portal/plan?subscribed={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/portal/plan?cancelled=1`,
     });
+    await sql`UPDATE companies SET plan_checkout_session_id = ${session.id} WHERE id = ${user.companyId}`;
     url = session.url;
   } catch (err) {
     console.error("Stripe Checkout failed", err);
