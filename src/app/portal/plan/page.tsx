@@ -4,14 +4,21 @@ import { sql } from "@/lib/db";
 import { recordPlanCheckout } from "@/lib/orders";
 import { formatCents, HOSTING_PLANS, type PlanId } from "@/lib/pricing";
 import { SITE } from "@/lib/site";
-import { getStripe, stripeEnabled } from "@/lib/stripe";
+import { getStripe, stripeEnabled, stripeMode } from "@/lib/stripe";
 import { Button, Card } from "@/components/ui";
 import { CheckIcon } from "@/components/icons";
 import { choosePlan, manageBilling } from "./actions";
 
 export const metadata: Metadata = { title: "Plan & billing" };
 
-type Company = { plan: string; planInterval: "month" | "year" | null; planStatus: string | null; stripeCustomerId: string | null; products: number };
+type Company = {
+  plan: string;
+  planInterval: "month" | "year" | null;
+  planStatus: string | null;
+  stripeCustomerId: string | null;
+  stripeMode: string | null;
+  products: number;
+};
 
 const STATUS: Record<string, string> = { active: "Active", trialing: "Active", past_due: "Payment overdue: please update your card" };
 
@@ -33,11 +40,13 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
   if (params.subscribed) await confirmPlan(params.subscribed, user.companyId);
 
   const [company] = await sql<Company[]>`
-    SELECT plan, plan_interval, plan_status, stripe_customer_id,
+    SELECT plan, plan_interval, plan_status, stripe_customer_id, stripe_mode,
            (SELECT count(*)::int FROM products p WHERE p.company_id = c.id AND p.status <> 'archived') AS products
     FROM companies c WHERE id = ${user.companyId}`;
   const current = company.plan in HOSTING_PLANS ? HOSTING_PLANS[company.plan as PlanId] : null;
-  const live = Boolean(current && company.planStatus && company.planStatus in STATUS);
+  // A plan paid in Stripe test mode doesn't count once real (live) payments are switched on.
+  const sameMode = !company.stripeMode || !stripeEnabled() || company.stripeMode === stripeMode();
+  const live = Boolean(current && sameMode && company.planStatus && company.planStatus in STATUS);
   const canPay = stripeEnabled();
   const plans = Object.entries(HOSTING_PLANS) as [PlanId, (typeof HOSTING_PLANS)[PlanId]][];
 

@@ -8,6 +8,20 @@ import { planLineItem } from "@/lib/checkout";
 import { sql } from "@/lib/db";
 import { getStripe, stripeMode } from "@/lib/stripe";
 
+/** The company's Stripe billing ids, but only those from the Stripe mode in use (test ids mean nothing in live mode). */
+async function billing(companyId: string) {
+  const mode = stripeMode();
+  const [row] = await sql<
+    { stripeCustomerId: string | null; stripeSubscriptionId: string | null; planStatus: string | null; planCheckoutSessionId: string | null }[]
+  >`
+    SELECT CASE WHEN stripe_mode = ${mode} THEN stripe_customer_id END AS stripe_customer_id,
+           CASE WHEN stripe_mode = ${mode} THEN stripe_subscription_id END AS stripe_subscription_id,
+           CASE WHEN stripe_mode = ${mode} THEN plan_status END AS plan_status,
+           plan_checkout_session_id
+    FROM companies WHERE id = ${companyId}`;
+  return row;
+}
+
 const Choice = z.object({ plan: z.enum(["silver", "gold", "platinum"]), interval: z.enum(["month", "year"]) });
 
 async function origin() {
@@ -22,10 +36,7 @@ export async function choosePlan(form: FormData) {
   const choice = Choice.safeParse({ plan: form.get("plan"), interval: form.get("interval") });
   if (!stripe || !choice.success) redirect("/portal/plan?error=1");
 
-  const [company] = await sql<
-    { stripeCustomerId: string | null; stripeSubscriptionId: string | null; planStatus: string | null; planCheckoutSessionId: string | null }[]
-  >`
-    SELECT stripe_customer_id, stripe_subscription_id, plan_status, plan_checkout_session_id FROM companies WHERE id = ${user.companyId}`;
+  const company = await billing(user.companyId);
   // One plan at a time: changes to an existing plan go through "Manage billing".
   if (company?.stripeSubscriptionId && ["active", "trialing", "past_due"].includes(company.planStatus ?? "")) redirect("/portal/plan");
 
@@ -60,7 +71,7 @@ export async function choosePlan(form: FormData) {
 export async function manageBilling() {
   const user = await requireUser();
   const stripe = getStripe();
-  const [company] = await sql<{ stripeCustomerId: string | null }[]>`SELECT stripe_customer_id FROM companies WHERE id = ${user.companyId}`;
+  const company = await billing(user.companyId);
   if (!stripe || !company?.stripeCustomerId) redirect("/portal/plan");
 
   let url: string | null = null;

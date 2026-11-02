@@ -80,7 +80,7 @@ export async function applySubscription(sub: Stripe.Subscription): Promise<void>
   if (LIVE_STATUSES.has(sub.status) && companyId && plan && plan in HOSTING_PLANS && (interval === "month" || interval === "year")) {
     const [updated] = await sql<{ name: string; previous: string | null }[]>`
       UPDATE companies c SET plan = ${plan}, plan_interval = ${interval}, plan_status = ${sub.status},
-             stripe_customer_id = ${customer}, stripe_subscription_id = ${sub.id}
+             stripe_customer_id = ${customer}, stripe_subscription_id = ${sub.id}, stripe_mode = ${sub.livemode ? "live" : "test"}
       FROM (SELECT id, stripe_subscription_id AS previous FROM companies WHERE id = ${companyId}) old
       WHERE c.id = old.id
       RETURNING c.name, old.previous`;

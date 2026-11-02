@@ -107,7 +107,12 @@ export default async function AdminPage() {
     quotes: quotes.filter((q) => q.status === "sent").length,
     toShip: quotes.filter((q) => q.status === "paid").length,
   };
-  const slugs = new Map(products.map((p) => [p.id, p.slug]));
+  // Landing pages for every product on the orders shown, archived or not, for fulfilment.
+  const orderProductIds = [...new Set(quotes.flatMap((q) => q.lines.map((l) => l.productId).filter((id): id is string => Boolean(id))))];
+  const orderPages = orderProductIds.length
+    ? await sql<{ id: string; slug: string }[]>`SELECT id, slug FROM products WHERE id IN ${sql(orderProductIds)}`
+    : [];
+  const slugs = new Map(orderPages.map((p) => [p.id, p.slug]));
 
   return (
     <div className="space-y-10">
