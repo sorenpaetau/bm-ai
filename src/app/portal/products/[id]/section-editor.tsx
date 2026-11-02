@@ -238,50 +238,56 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
       );
     case "products":
       return (
-        <ItemList
-          items={section.items}
-          onChange={(items) => patch({ items })}
-          blank={(): Item<typeof section> => ({ name: "" })}
-          addLabel="Add a product"
-          render={(item, set) => (
-            <div className="grid gap-2 sm:grid-cols-3">
-              <TextField label="Name" value={item.name} onChange={(name) => set({ name })} />
-              <TextField label="Price (optional)" value={item.price} onChange={(price) => set({ price: price || undefined })} placeholder="$42" />
-              <TextField label="Link (optional)" type="url" value={item.url} onChange={(url) => set({ url: url || undefined })} />
-              <TextField
-                className="sm:col-span-2"
-                label="Short description (optional)"
-                value={item.description}
-                onChange={(d) => set({ description: d || undefined })}
-              />
-              <TextField
-                label="Photo link (optional)"
-                type="url"
-                value={item.imageUrl}
-                onChange={(imageUrl) => set({ imageUrl: imageUrl || undefined })}
-              />
-            </div>
-          )}
-        />
+        <div className="space-y-3">
+          <ItemList
+            items={section.items}
+            onChange={(items) => patch({ items })}
+            blank={(): Item<typeof section> => ({ name: "" })}
+            addLabel="Add a product"
+            render={(item, set) => (
+              <div className="grid gap-2 sm:grid-cols-3">
+                <TextField label="Name" value={item.name} onChange={(name) => set({ name })} />
+                <TextField label="Price (optional)" value={item.price} onChange={(price) => set({ price: price || undefined })} placeholder="$42" />
+                <TextField label="Link (optional)" type="url" value={item.url} onChange={(url) => set({ url: url || undefined })} />
+                <TextField
+                  className="sm:col-span-2"
+                  label="Short description (optional)"
+                  value={item.description}
+                  onChange={(d) => set({ description: d || undefined })}
+                />
+                <TextField
+                  label="Photo link (optional)"
+                  type="url"
+                  value={item.imageUrl}
+                  onChange={(imageUrl) => set({ imageUrl: imageUrl || undefined })}
+                />
+              </div>
+            )}
+          />
+          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder="Visit our webstore" />
+        </div>
       );
     case "offers":
       return (
-        <ItemList
-          items={section.items}
-          onChange={(items) => patch({ items })}
-          blank={(): Item<typeof section> => ({ title: "" })}
-          addLabel="Add an offer"
-          render={(item, set) => (
-            <div className="space-y-2">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <TextField label="Offer" value={item.title} onChange={(title) => set({ title })} />
-                <TextField label="Price (optional)" value={item.price} onChange={(price) => set({ price: price || undefined })} />
+        <div className="space-y-3">
+          <ItemList
+            items={section.items}
+            onChange={(items) => patch({ items })}
+            blank={(): Item<typeof section> => ({ title: "" })}
+            addLabel="Add an offer"
+            render={(item, set) => (
+              <div className="space-y-2">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <TextField label="Offer" value={item.title} onChange={(title) => set({ title })} />
+                  <TextField label="Price (optional)" value={item.price} onChange={(price) => set({ price: price || undefined })} />
+                </div>
+                <TextField label="Details (optional)" value={item.description} onChange={(d) => set({ description: d || undefined })} />
+                <TextField label="Link (optional)" type="url" value={item.url} onChange={(url) => set({ url: url || undefined })} />
               </div>
-              <TextField label="Details (optional)" value={item.description} onChange={(d) => set({ description: d || undefined })} />
-              <TextField label="Link (optional)" type="url" value={item.url} onChange={(url) => set({ url: url || undefined })} />
-            </div>
-          )}
-        />
+            )}
+          />
+          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder="See all offers" />
+        </div>
       );
     case "memberships":
       return (
@@ -312,6 +318,7 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
               </div>
             )}
           />
+          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder="Compare memberships" />
         </div>
       );
     case "maker":
@@ -502,6 +509,28 @@ function ListField({
     <TextField label={label} value={text} onChange={set} hint={hint} />
   ) : (
     <TextArea label={label} value={text} onChange={set} hint={hint} rows={rows} />
+  );
+}
+
+type Link = { label: string; url: string } | undefined;
+
+/** The big button at the bottom of a section, e.g. "Visit our webstore". Empty both fields to remove it. */
+function SectionLinkField({ link, onChange, placeholder }: { link: Link; onChange: (link: Link) => void; placeholder: string }) {
+  const set = (p: Partial<{ label: string; url: string }>) => {
+    const next = { label: link?.label ?? "", url: link?.url ?? "", ...p };
+    onChange(next.label.trim() || next.url.trim() ? next : undefined);
+  };
+  return (
+    <div className="grid gap-2 rounded-lg border border-dashed border-line p-3 sm:grid-cols-2">
+      <TextField
+        label="Button at the bottom (optional)"
+        value={link?.label}
+        onChange={(label) => set({ label })}
+        placeholder={placeholder}
+        hint="Shown only when it has both text and a link."
+      />
+      <TextField label="Button link" type="url" value={link?.url} onChange={(url) => set({ url })} placeholder="https://" />
+    </div>
   );
 }
 
