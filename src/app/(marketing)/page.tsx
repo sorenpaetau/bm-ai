@@ -9,11 +9,11 @@ import {
   ChartIcon,
   CheckIcon,
   GiftIcon,
+  HeadphonesIcon,
   HeartIcon,
   QrIcon,
   ShirtIcon,
   SparkleBottleIcon,
-  StoreIcon,
   TapIcon,
   WineIcon,
   XIcon,
@@ -57,24 +57,28 @@ const useCases = [
     title: "Wine & spirits",
     status: "Ready now",
     body: "Give every bottle a sommelier: tasting notes, pairings, the vineyard story, club membership and tasting-room bookings. Age check built in.",
+    example: DEMO_TAG_CODE,
   },
   {
     icon: SparkleBottleIcon,
     title: "Cosmetics & beauty",
-    status: "Talk to us",
-    body: "Ingredients, how-to videos, shade guides and refills, right from the jar. Customers register for restock reminders.",
+    status: "Template ready",
+    body: "Key ingredients, the full ingredient list, skin type, cruelty-free status, shelf life and how to use it, right from the jar.",
+    example: "DEMOSKIN",
   },
   {
     icon: ShirtIcon,
     title: "Retail & clothing",
-    status: "Talk to us",
-    body: "Care instructions, sizing, the maker's story and warranty sign-up on a sewn-in tag or swing tag.",
+    status: "Template ready",
+    body: "Size and fit, materials, care, who made it, reviews, returns and delivery, on a sewn-in label or swing tag.",
+    example: "DEMOKNIT",
   },
   {
-    icon: StoreIcon,
-    title: "Stores & displays",
-    status: "Talk to us",
-    body: "Put a tag on the shelf or display so shoppers can compare products, read reviews and join a store mailing list.",
+    icon: HeadphonesIcon,
+    title: "Consumer electronics",
+    status: "Template ready",
+    body: "Battery life, what it works with, years of updates, warranty and repairs, plus warranty sign-up straight from the box.",
+    example: "DEMOAUDIO",
   },
 ];
 
@@ -386,7 +390,7 @@ export default function HomePage() {
         <SectionHeading
           eyebrow="Use cases"
           title="Built for wine first. Ready for more."
-          intro="We are starting with wineries. Other products work the same way, and we would love to hear about yours."
+          intro="We are starting with wineries. Pages for beauty, clothing and electronics are ready too. Open an example to see one."
         />
         <div className="mt-12 grid gap-5 sm:grid-cols-2">
           {useCases.map((u, i) => (
@@ -407,6 +411,12 @@ export default function HomePage() {
               </div>
               <p className="mt-5 font-serif text-2xl font-medium tracking-[-0.01em] text-ink">{u.title}</p>
               <p className="mt-2 leading-relaxed text-muted">{u.body}</p>
+              <a
+                href={`/t/${u.example}`}
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-accent hover:underline"
+              >
+                <TapIcon className="h-4 w-4" /> See an example page <ArrowRightIcon className="h-4 w-4" />
+              </a>
             </Card>
           ))}
         </div>

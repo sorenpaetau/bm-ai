@@ -117,6 +117,14 @@ export function tidySection(section: Section): Section | null {
       };
       return filled(m.body) || m.people.length || m.items.length || m.stats.length || m.images.length ? m : null;
     }
+    case "topic": {
+      const t = {
+        ...section,
+        items: section.items.filter((i) => filled(i.label) && filled(i.value)),
+        chips: section.chips.filter(filled),
+      };
+      return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length ? t : null;
+    }
     case "visit": {
       const v = {
         ...section,
@@ -129,6 +137,13 @@ export function tidySection(section: Section): Section | null {
         : null;
     }
   }
+}
+
+/** What the tap badge calls the thing the sticker is on: "You tapped the sticker on this bottle". */
+export function tapNoun(vertical?: string): string {
+  if (vertical === "wine_spirits") return "bottle";
+  if (vertical === "electronics") return "device";
+  return "product";
 }
 
 /** Google Maps embed for an address. Only loaded after the visitor taps "Show map". */

@@ -3,7 +3,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { LandingContent } from "../landing";
 import { VERTICALS } from "../site";
-import { AiDraft, AiWineDraft, buildDraftContent, type DraftInput } from "./template";
+import { marketFor, marketGuide } from "./markets";
+import { AiDraft, AiWineDraft, aiMarketDraftSchema, buildDraftContent, type AiMarketDraft, type DraftInput } from "./template";
 
 // Writes a first draft of a product landing page with Claude. The result is a DRAFT: every section
 // comes back aiGenerated + not reviewed, and the manufacturer must review it before publishing.
@@ -22,7 +23,7 @@ The manufacturer will review and edit every word before it goes live.
 Rules:
 - Base everything on the manufacturer's description. You may add widely known, uncontroversial facts about this kind of product (for example what a grape variety usually tastes like or pairs with), but mark those facts basis "general_knowledge".
 - Never invent prices, ratings, scores, awards, review quotes, event dates, discounts, addresses, opening hours or people's names. Leave them out instead.
-- No health, medical or safety claims. For alcohol: nothing aimed at people under 21 and no claims that drinking improves health, mood or performance.
+- No health or medical claims, and no safety claims the description does not make. For alcohol: nothing aimed at people under 21 and no claims that drinking improves health, mood or performance.
 - Write for a phone screen: short sentences, warm and plain. No hashtags or emoji.
 - Do not repeat the product name in every section.`;
 
@@ -46,6 +47,9 @@ ${input.description}
 export async function draftLandingContent(input: DraftInput): Promise<LandingContent> {
   const client = new Anthropic();
   const wine = input.vertical === "wine_spirits";
+  const market = marketFor(input.vertical);
+  const format = market ? aiMarketDraftSchema(market) : wine ? AiWineDraft : AiDraft;
+  const system = market ? SYSTEM + marketGuide(market) : wine ? SYSTEM + WINE_GUIDE : SYSTEM;
   let response;
   try {
     response = await client.beta.messages.parse({
@@ -54,8 +58,8 @@ export async function draftLandingContent(input: DraftInput): Promise<LandingCon
       // If a safety check declines the request, let the API retry on another model automatically.
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      output_config: { effort: "medium", format: betaZodOutputFormat(wine ? AiWineDraft : AiDraft) },
-      system: wine ? SYSTEM + WINE_GUIDE : SYSTEM,
+      output_config: { effort: "medium", format: betaZodOutputFormat(format) },
+      system,
       messages: [{ role: "user", content: userPrompt(input) }],
     });
   } catch (err) {
@@ -66,5 +70,5 @@ export async function draftLandingContent(input: DraftInput): Promise<LandingCon
   }
   if (response.stop_reason === "refusal") throw new DraftError("The AI writer declined to write this page.");
   if (!response.parsed_output) throw new DraftError("The AI writer returned an incomplete draft.");
-  return buildDraftContent(response.parsed_output, input);
+  return buildDraftContent(response.parsed_output as AiDraft | AiMarketDraft, input);
 }

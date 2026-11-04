@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420" width="400" height="420">
+  <!-- Illustration of a fictional Ashby &amp; Vale cashmere scarf, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="s" x1="0" x2="1"><stop offset="0" stop-color="#8f3b34"/><stop offset="0.5" stop-color="#b8574c"/><stop offset="1" stop-color="#7d322c"/></linearGradient>
+    <pattern id="ribv" width="6" height="10" patternUnits="userSpaceOnUse"><path d="M3 0V10" stroke="#000" stroke-opacity="0.12" stroke-width="1.4"/></pattern>
+  </defs>
+  <!-- folded scarf, draped -->
+  <path d="M120 40 Q200 10 280 40 L272 120 Q200 96 128 120 Z" fill="url(#s)"/>
+  <path d="M128 120 Q200 96 272 120 L262 360 L196 360 L190 150 Q160 136 140 140 L150 360 L96 360 Z" fill="url(#s)"/>
+  <path d="M120 40 Q200 10 280 40 L272 120 Q200 96 128 120 Z M128 120 Q200 96 272 120 L262 360 L196 360 L190 150 Q160 136 140 140 L150 360 L96 360 Z" fill="url(#ribv)"/>
+  <path d="M190 150 L196 360" stroke="#000" stroke-opacity="0.18" stroke-width="3"/>
+  <path d="M128 120 Q200 96 272 120" fill="none" stroke="#000" stroke-opacity="0.15" stroke-width="3"/>
+  <g stroke="#9c463e" stroke-width="3" stroke-linecap="round">
+    <path d="M100 360v30M108 360v34M116 360v30M124 360v34M132 360v30M140 360v34M148 360v30"/>
+    <path d="M200 360v34M208 360v30M216 360v34M224 360v30M232 360v34M240 360v30M248 360v34M256 360v30"/>
+  </g>
+  <path d="M96 300h54M196 300h66" stroke="#e9c9a8" stroke-opacity="0.7" stroke-width="5"/>
+  <path d="M96 312h54M196 312h66" stroke="#e9c9a8" stroke-opacity="0.5" stroke-width="2"/>
+</svg>

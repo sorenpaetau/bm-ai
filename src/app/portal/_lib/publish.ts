@@ -16,7 +16,7 @@ export function publishBlockers(content: LandingContent, companyVerified: boolea
     if (!s.visible) continue;
     // Blank rows and empty sections are simply left off the live page (templates start with blank
     // rows to fill in), so they don't block publishing. A value with no label would read oddly, though.
-    if (s.type === "facts" && s.items.some((i) => !i.label.trim() && i.value.trim()))
+    if ((s.type === "facts" || s.type === "topic") && s.items.some((i) => !i.label.trim() && i.value.trim()))
       out.push(`Every fact in "${s.title || "Untitled"}" needs a label.`);
   }
   if (content.buttons.some((b) => !b.label.trim() || !b.url.trim())) out.push("Every button needs a label and a link.");

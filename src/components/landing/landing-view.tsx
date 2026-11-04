@@ -3,23 +3,43 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   ArrowRightIcon,
   BagIcon,
+  BatteryIcon,
   BedIcon,
   BookIcon,
   CalendarIcon,
+  CameraIcon,
   CheckIcon,
+  ChipIcon,
   ClockIcon,
   CompassIcon,
+  DropIcon,
+  FaceIcon,
+  FeatherIcon,
+  FlaskIcon,
   ForkIcon,
   GiftIcon,
+  HandIcon,
+  HeadphonesIcon,
+  HeartIcon,
+  LayersIcon,
   LeafIcon,
+  LinkIcon,
   ListIcon,
   LogoMark,
   MailIcon,
   PhoneIcon,
   PinIcon,
+  RefreshIcon,
+  ReturnIcon,
+  RulerIcon,
+  ScreenIcon,
+  ShieldIcon,
+  SparkIcon,
   StarIcon,
   TagIcon,
+  TruckIcon,
   WineIcon,
+  WrenchIcon,
 } from "@/components/icons";
 import { NfcSticker } from "@/components/tap-art";
 import type { ActionButton, LandingContent, Section } from "@/lib/landing";
@@ -36,6 +56,7 @@ import {
   safeColor,
   safeUrl,
   sectionsToShow,
+  tapNoun,
 } from "./helpers";
 import { MapCard } from "./map-card";
 import { OptinForm } from "./optin-form";
@@ -55,6 +76,7 @@ export function LandingView({
   slug,
   tagCode,
   now,
+  vertical,
 }: {
   content: LandingContent;
   preview?: boolean;
@@ -64,6 +86,8 @@ export function LandingView({
   tagCode?: string;
   /** "Today" for hiding past events; defaults to now. */
   now?: Date;
+  /** The brand's market, e.g. "wine_spirits". Only changes small wording such as "this bottle". */
+  vertical?: string;
 }) {
   const { theme, hero } = content;
   const style = landingThemeStyle(theme);
@@ -93,7 +117,7 @@ export function LandingView({
             <p className="flex animate-rise justify-center px-6 pt-5">
               <span className="inline-flex items-center gap-2 rounded-full bg-black/20 py-1 pr-3.5 pl-1 text-[12px] font-medium ring-1 ring-white/15 backdrop-blur-sm ring-inset">
                 <NfcSticker className="h-6 w-6" label="" />
-                You tapped the sticker on this bottle
+                You tapped the sticker on this {tapNoun(vertical)}
               </span>
             </p>
           )}
@@ -121,6 +145,14 @@ export function LandingView({
             {hero.subtitle && (
               <p className="mx-auto mt-5 inline-flex rounded-full bg-[var(--lp-on-primary)]/10 px-4 py-1.5 text-sm font-medium ring-1 ring-[var(--lp-on-primary)]/15 backdrop-blur-sm ring-inset">
                 {hero.subtitle}
+              </p>
+            )}
+            {hero.price?.trim() && (
+              <p className="mt-5 flex flex-col items-center">
+                <span className={`${heading} text-[2.1rem] leading-none text-[var(--lp-accent)]`}>{hero.price}</span>
+                <span className="mt-2 text-[11px] font-semibold uppercase tracking-[0.2em] opacity-75">
+                  {hero.priceNote?.trim() || "Suggested retail price"}
+                </span>
               </p>
             )}
           </div>
@@ -256,27 +288,61 @@ const sectionIcons: Record<Section["type"], (p: { className?: string }) => React
   events: CalendarIcon,
   maker: LeafIcon,
   visit: PinIcon,
+  topic: ListIcon,
+};
+
+/** Pictures a topic box can pick by name (TopicSection.icon). Unknown names fall back to a list. */
+const TOPIC_ICONS: Record<string, (p: { className?: string }) => ReactNode> = {
+  ruler: RulerIcon,
+  layers: LayersIcon,
+  shield: ShieldIcon,
+  drop: DropIcon,
+  feather: FeatherIcon,
+  leaf: LeafIcon,
+  star: StarIcon,
+  return: ReturnIcon,
+  truck: TruckIcon,
+  flask: FlaskIcon,
+  list: ListIcon,
+  face: FaceIcon,
+  clock: ClockIcon,
+  hand: HandIcon,
+  tag: TagIcon,
+  chip: ChipIcon,
+  battery: BatteryIcon,
+  link: LinkIcon,
+  refresh: RefreshIcon,
+  screen: ScreenIcon,
+  camera: CameraIcon,
+  headphones: HeadphonesIcon,
+  wrench: WrenchIcon,
+  heart: HeartIcon,
+  spark: SparkIcon,
+  gift: GiftIcon,
 };
 
 /** Gift sets are a "products" section too, but deserve their own icon. */
 function iconFor(section: Section) {
+  if (section.type === "topic") return TOPIC_ICONS[section.icon ?? ""] ?? ListIcon;
   if (section.type === "products" && /gift/i.test(`${section.navLabel ?? ""} ${section.title}`)) return GiftIcon;
   return sectionIcons[section.type];
 }
 
 function JumpNav({ links }: { links: Array<{ href: string; label: string; Icon: (p: { className?: string }) => ReactNode }> }) {
+  // Market pages have ten topic boxes plus the story, products and deals: four across keeps it short.
+  const dense = links.length > 12;
   return (
     <nav
       aria-label="On this page"
       className="relative z-10 mx-4 mt-6 rounded-[1.75rem] bg-white p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-14px_rgb(0_0_0/0.16)] ring-1 ring-black/[0.04] sm:mx-5"
     >
       <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-muted">Jump to</p>
-      <ul className="grid grid-cols-3 gap-2">
+      <ul className={`grid gap-2 ${dense ? "grid-cols-4" : "grid-cols-3"}`}>
         {links.map(({ href, label, Icon }) => (
           <li key={href}>
             <a
               href={href}
-              className="flex h-full flex-col items-center gap-1.5 rounded-2xl bg-[var(--lp-tint)] px-1.5 py-3 text-center text-[12.5px] leading-tight font-medium text-ink/80 ring-1 ring-[var(--lp-primary)]/[0.07] transition ring-inset hover:text-ink active:scale-[0.97]"
+              className={`flex h-full flex-col items-center gap-1.5 rounded-2xl bg-[var(--lp-tint)] px-1 py-3 text-center ${dense ? "text-[11.5px]" : "text-[12.5px]"} leading-tight font-medium text-ink/80 ring-1 ring-[var(--lp-primary)]/[0.07] transition ring-inset hover:text-ink active:scale-[0.97]`}
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[var(--lp-primary)] shadow-sm">
                 <Icon className="h-[18px] w-[18px]" />
@@ -827,6 +893,46 @@ function SectionBody({ section }: { section: Section }) {
           )}
 
           <ImageStrip images={section.images} />
+        </div>
+      );
+
+    case "topic":
+      return (
+        <div className="space-y-5">
+          {section.answer && (
+            <p className={`${heading} rounded-2xl bg-[var(--lp-tint)] px-4 py-3.5 text-[1.45rem] leading-snug text-[var(--lp-primary)] ring-1 ring-[var(--lp-primary)]/[0.08] ring-inset`}>
+              {section.answer}
+            </p>
+          )}
+          {section.body && (
+            <div className="space-y-4">
+              <Paragraphs text={section.body} className="text-[16px] leading-relaxed text-ink/85" />
+            </div>
+          )}
+          {section.chips.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {section.chips.map((c, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2 rounded-full bg-[var(--lp-tint)] px-3.5 py-1.5 text-[14px] font-medium ring-1 ring-[var(--lp-primary)]/10 ring-inset"
+                >
+                  <span aria-hidden="true" className="h-2 w-2 rounded-full bg-[var(--lp-accent)]" />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          )}
+          {section.items.length > 0 && (
+            <dl className="grid grid-cols-2 gap-x-5">
+              {section.items.map((item, i) => (
+                <div key={i} className={`border-t border-black/[0.06] py-3 ${item.value.length > 24 ? "col-span-2" : ""}`}>
+                  <dt className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">{item.label}</dt>
+                  <dd className="mt-1 text-[16px] leading-snug">{item.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <SectionLink link={section.link} />
         </div>
       );
 

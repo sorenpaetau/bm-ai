@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420" width="400" height="420">
+  <!-- Illustration of a fictional Ashby &amp; Vale cashmere crewneck sweater in oatmeal, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="knit" x1="0" x2="1">
+      <stop offset="0" stop-color="#ad9a7c"/>
+      <stop offset="0.18" stop-color="#d8c6aa"/>
+      <stop offset="0.5" stop-color="#ece0cb"/>
+      <stop offset="0.82" stop-color="#d8c6aa"/>
+      <stop offset="1" stop-color="#ad9a7c"/>
+    </linearGradient>
+    <pattern id="rib" width="7" height="12" patternUnits="userSpaceOnUse">
+      <path d="M0 0 L3.5 6 L7 0 M0 6 L3.5 12 L7 6" fill="none" stroke="#000" stroke-opacity="0.07" stroke-width="1.2"/>
+    </pattern>
+    <pattern id="ribv" width="6" height="10" patternUnits="userSpaceOnUse">
+      <path d="M3 0V10" stroke="#000" stroke-opacity="0.14" stroke-width="1.4"/>
+    </pattern>
+  </defs>
+  <!-- sleeves -->
+  <path d="M282 72 L316 82 Q346 98 354 140 L386 314 L340 326 L304 176 Z" fill="url(#knit)"/>
+  <path d="M118 72 L84 82 Q54 98 46 140 L14 314 L60 326 L96 176 Z" fill="url(#knit)"/>
+  <path d="M282 72 L316 82 Q346 98 354 140 L386 314 L340 326 L304 176 Z M118 72 L84 82 Q54 98 46 140 L14 314 L60 326 L96 176 Z" fill="url(#rib)"/>
+  <path d="M338 314 L386 302 L392 334 L344 346 Z" fill="#d8c6aa"/>
+  <path d="M338 314 L386 302 L392 334 L344 346 Z" fill="url(#ribv)"/>
+  <path d="M62 314 L14 302 L8 334 L56 346 Z" fill="#d8c6aa"/>
+  <path d="M62 314 L14 302 L8 334 L56 346 Z" fill="url(#ribv)"/>
+  <!-- body -->
+  <path d="M106 72 L152 52 Q200 80 248 52 L294 72 Q308 82 308 112 L312 356 L88 356 L92 112 Q92 82 106 72 Z" fill="url(#knit)"/>
+  <path d="M106 72 L152 52 Q200 80 248 52 L294 72 Q308 82 308 112 L312 356 L88 356 L92 112 Q92 82 106 72 Z" fill="url(#rib)"/>
+  <path d="M96 176 Q98 260 92 340 M304 176 Q302 260 308 340" fill="none" stroke="#000" stroke-opacity="0.08" stroke-width="3"/>
+  <!-- hem -->
+  <rect x="86" y="350" width="228" height="38" rx="6" fill="#d8c6aa"/>
+  <rect x="86" y="350" width="228" height="38" rx="6" fill="url(#ribv)"/>
+  <rect x="86" y="350" width="228" height="6" fill="#000" fill-opacity="0.08"/>
+  <!-- neckline -->
+  <path d="M152 52 Q200 34 248 52 Q200 76 152 52 Z" fill="#ad9a7c"/>
+  <path d="M150 52 Q200 86 250 52" fill="none" stroke="#d8c6aa" stroke-width="13" stroke-linecap="round"/>
+  <path d="M150 52 Q200 86 250 52" fill="none" stroke="url(#ribv)" stroke-width="13" stroke-linecap="round"/>
+  <path d="M146 50 Q200 92 254 50" fill="none" stroke="#000" stroke-opacity="0.12" stroke-width="2"/>
+  
+  <path d="M168 66 C150 96 140 120 128 150" fill="none" stroke="#7b6a55" stroke-width="2"/>
+  <g transform="rotate(-14 120 188)">
+    <rect x="86" y="148" width="72" height="104" rx="8" fill="#f7f1e6" stroke="#cbbfa9" stroke-width="2"/>
+    <circle cx="122" cy="160" r="5" fill="#cbbfa9"/>
+    <text x="122" y="186" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#2b3a55" letter-spacing="1.5">ASHBY</text>
+    <text x="122" y="199" text-anchor="middle" font-family="Georgia, serif" font-size="11" fill="#2b3a55" letter-spacing="1.5">&amp; VALE</text>
+    
+  <g>
+    <circle cx="122" cy="226" r="15" fill="#14213d" stroke="#ffffff" stroke-width="1.8"/>
+    <path d="M118.2 220.8a6.8 6.8 0 0 1 0 10.5M122.0 217.8a10.5 10.5 0 0 1 0 16.5M125.8 215.2a14.2 14.2 0 0 1 0 21.6" fill="none" stroke="#e8b04b" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+  </g>
+</svg>

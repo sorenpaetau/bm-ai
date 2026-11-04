@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 460" width="220" height="460">
+  <!-- Illustration of a fictional Saltmeadow gel cleanser, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="t" x1="0" x2="1"><stop offset="0" stop-color="#bfd3cf"/><stop offset="0.3" stop-color="#eef6f4"/><stop offset="0.75" stop-color="#d9e8e5"/><stop offset="1" stop-color="#a9c0bb"/></linearGradient>
+    <linearGradient id="c" x1="0" x2="1"><stop offset="0" stop-color="#8a5c4f"/><stop offset="0.4" stop-color="#e3b8a5"/><stop offset="1" stop-color="#8a5c4f"/></linearGradient>
+  </defs>
+  <path d="M40 30 H180 L170 360 Q168 372 156 372 H64 Q52 372 50 360 Z" fill="url(#t)"/>
+  <path d="M40 30 H180 V42 H40 Z" fill="#9fb8b3"/>
+  <path d="M40 34 H180" stroke="#7d9994" stroke-width="2" stroke-dasharray="3 4"/>
+  <rect x="58" y="368" width="104" height="66" rx="10" fill="url(#c)"/>
+  <text x="110" y="170" text-anchor="middle" font-family="Georgia, serif" font-size="12" letter-spacing="1.5" fill="#6d4c5c">SALTMEADOW</text>
+  <text x="110" y="200" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#6d4c5c">Soft Gel</text>
+  <text x="110" y="218" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#6d4c5c">Cleanser</text>
+  <path d="M62 50 L70 350" stroke="#fff" stroke-opacity="0.8" stroke-width="6" stroke-linecap="round"/>
+</svg>

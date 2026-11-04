@@ -18,7 +18,8 @@ export function SignupForm() {
         <select name="vertical" required defaultValue={v.vertical ?? "wine_spirits"} className={inputClass}>
           <option value="wine_spirits">Wine &amp; Spirits</option>
           <option value="cosmetics">Cosmetics</option>
-          <option value="retail">Retail products</option>
+          <option value="retail">Retail: clothing, shoes, bags, food</option>
+          <option value="electronics">Consumer electronics</option>
         </select>
       </Field>
       <Field label="Company website" hint="Helps us confirm the account belongs to your brand.">

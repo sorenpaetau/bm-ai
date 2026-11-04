@@ -269,3 +269,120 @@ export const ClockIcon = (p: IconProps) => (
     <path d="M12 7.5V12l3 2" />
   </Icon>
 );
+
+// Topic box icons for the retail, cosmetics and electronics pages.
+
+export const RulerIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="2.5" y="8" width="19" height="8" rx="1.5" />
+    <path d="M6.5 8v3M10 8v4M13.5 8v3M17 8v4" />
+  </Icon>
+);
+
+export const LayersIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z" />
+    <path d="M3.5 12l8.5 4.5 8.5-4.5M3.5 16l8.5 4.5 8.5-4.5" />
+  </Icon>
+);
+
+export const DropIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3.5s6 6.4 6 11a6 6 0 0 1-12 0c0-4.6 6-11 6-11Z" />
+    <path d="M9 15a3 3 0 0 0 3 3" />
+  </Icon>
+);
+
+export const FeatherIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M20 4c-7 0-12 4.5-12 11v5" />
+    <path d="M20 4c0 8-4.5 12-11 12" />
+    <path d="M8 15l6-6" />
+  </Icon>
+);
+
+export const ReturnIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9 7.5H15a5 5 0 0 1 0 10H8" />
+    <path d="M11.5 4l-3.5 3.5 3.5 3.5" />
+  </Icon>
+);
+
+export const TruckIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M2.5 6.5h11v10h-11zM13.5 10h4l3 3v3.5h-7" />
+    <circle cx="6.5" cy="17.5" r="1.8" />
+    <circle cx="17" cy="17.5" r="1.8" />
+  </Icon>
+);
+
+export const FlaskIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9.5 3.5h5M10 3.5v5.5L4.8 18a2 2 0 0 0 1.7 3h11a2 2 0 0 0 1.7-3L14 9V3.5" />
+    <path d="M7.5 14.5h9" />
+  </Icon>
+);
+
+export const FaceIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M9 10h.01M15 10h.01M9 14.5a4 4 0 0 0 6 0" />
+  </Icon>
+);
+
+export const HandIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4.5a1.5 1.5 0 0 1 3 0V11M14 10.5V6a1.5 1.5 0 0 1 3 0v7.5a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 14.5a1.5 1.5 0 0 1 2.4-1.8L8 15" />
+  </Icon>
+);
+
+export const ChipIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="6" y="6" width="12" height="12" rx="2" />
+    <rect x="9.5" y="9.5" width="5" height="5" rx="0.8" />
+    <path d="M9.5 2.5V6M14.5 2.5V6M9.5 18v3.5M14.5 18v3.5M2.5 9.5H6M2.5 14.5H6M18 9.5h3.5M18 14.5h3.5" />
+  </Icon>
+);
+
+export const BatteryIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="2.5" y="7" width="17" height="10" rx="2.5" />
+    <path d="M21.5 10.5v3" />
+    <path d="M11.5 9l-2.5 3.5h4l-2.5 3.5" />
+  </Icon>
+);
+
+export const RefreshIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M19.5 12a7.5 7.5 0 0 1-13.4 4.6M4.5 12a7.5 7.5 0 0 1 13.4-4.6" />
+    <path d="M18.5 3.5v4h-4M5.5 20.5v-4h4" />
+  </Icon>
+);
+
+export const ScreenIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="2.5" y="4" width="19" height="13" rx="2" />
+    <path d="M8.5 21h7M12 17v4" />
+  </Icon>
+);
+
+export const CameraIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 8.5A2 2 0 0 1 5 6.5h2.5L9 4h6l1.5 2.5H19a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    <circle cx="12" cy="13" r="3.5" />
+  </Icon>
+);
+
+export const HeadphonesIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
+    <rect x="3" y="14" width="4.5" height="7" rx="1.8" />
+    <rect x="16.5" y="14" width="4.5" height="7" rx="1.8" />
+  </Icon>
+);
+
+export const WrenchIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.3-3.3a6 6 0 0 1-7.9 7.9l-6.4 6.4a2.1 2.1 0 0 1-3-3l6.4-6.4a6 6 0 0 1 7.9-7.9z" />
+  </Icon>
+);

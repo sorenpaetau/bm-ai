@@ -38,7 +38,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   if (!product) notFound();
 
   const tagCode = cleanTagCode(Array.isArray(query.t) ? query.t[0] : query.t) ?? undefined;
-  const page = <LandingView content={product.content} slug={product.slug} tagCode={tagCode} />;
+  const page = <LandingView content={product.content} slug={product.slug} tagCode={tagCode} vertical={product.vertical} />;
 
   const gate = ageGateFor(product.raw, product.content, product.vertical);
   if (!gate.enabled) return page;

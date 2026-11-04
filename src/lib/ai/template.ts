@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { LandingContent, type Section } from "../landing";
 import type { Vertical } from "../site";
+import { marketFor, type MarketTemplate } from "./markets";
 
 // Turns what the AI writes (AiDraft) into the shared LandingContent shape, and builds the plain
 // starter page used when no AI key is configured. Pure functions, so they are unit tested.
@@ -77,6 +78,47 @@ export const AiWineDraft = AiDraft.extend({
 });
 export type AiWineDraft = z.infer<typeof AiWineDraft>;
 
+/**
+ * The retail, cosmetics and electronics draft (see markets.ts): a short answer, a few sentences and
+ * key rows for each topic box the AI may fill, plus the brand story. Built per market so the AI can
+ * only name that market's topics. Reviews, ratings and test results are never asked for.
+ */
+export function aiMarketDraftSchema(market: MarketTemplate) {
+  const ids = market.topics.filter((t) => t.ai !== "never").map((t) => t.id);
+  return z.object({
+    subtitle: AiDraft.shape.subtitle,
+    topics: z
+      .array(
+        z.object({
+          id: z.enum(ids as [string, ...string[]]).describe("Which topic box this is"),
+          answer: z.string().describe("The short answer shown big, 2 to 6 words, e.g. '100% cashmere' or 'Up to 30 hours'. Empty if not known"),
+          body: z.string().describe("1 to 3 short sentences for a shopper"),
+          items: z
+            .array(z.object({ label: z.string(), value: z.string() }))
+            .describe("Short label/value rows, e.g. Sizes: XS to XL. Only facts from the description"),
+          chips: z.array(z.string()).describe("Optional one- to three-word chips, e.g. ingredient names or devices it works with. Often empty"),
+          basis,
+        }),
+      )
+      .describe("One entry for each topic you can fill. Leave a topic out when you have nothing true to say"),
+    story: AiDraft.shape.story,
+    optin: AiDraft.shape.optin,
+  });
+}
+export type AiMarketDraft = {
+  subtitle: string;
+  topics: Array<{
+    id: string;
+    answer: string;
+    body: string;
+    items: Array<{ label: string; value: string }>;
+    chips: string[];
+    basis: keyof typeof SOURCE_LABELS;
+  }>;
+  story: AiDraft["story"];
+  optin: AiDraft["optin"];
+};
+
 export const SOURCE_LABELS = {
   description: "Your product description",
   general_knowledge: "AI general knowledge: please check",
@@ -87,6 +129,7 @@ const THEMES: Record<Vertical, LandingContent["theme"]> = {
   cosmetics: { primary: "#6d4c5c", accent: "#d8a7a0", font: "sans" },
   pharmaceutical: { primary: "#1f4e79", accent: "#4a9d8f", font: "sans" },
   retail: { primary: "#1f3a5f", accent: "#c8553d", font: "sans" },
+  electronics: { primary: "#16202e", accent: "#38a3d1", font: "sans" },
 };
 
 const STARTER_FACTS: Record<Vertical, string[]> = {
@@ -94,6 +137,7 @@ const STARTER_FACTS: Record<Vertical, string[]> = {
   cosmetics: ["Key ingredients", "Skin type", "Size", "How to use"],
   pharmaceutical: ["Active ingredient", "Strength", "Directions"],
   retail: ["Material", "Size", "Care", "Warranty"],
+  electronics: ["Battery life", "Works with", "Warranty"],
 };
 
 function isAlcohol(vertical: Vertical) {
@@ -123,7 +167,10 @@ function shell(input: DraftInput, sections: Section[], optin: { headline: string
 }
 
 /** Every AI-written section is marked aiGenerated and not reviewed, so it shows "needs review". */
-export function buildDraftContent(draft: AiDraft | AiWineDraft, input: DraftInput): LandingContent {
+export function buildDraftContent(draft: AiDraft | AiWineDraft | AiMarketDraft, input: DraftInput): LandingContent {
+  const market = marketFor(input.vertical);
+  if (market && "topics" in draft) return marketContent(input, market, draft);
+  if ("topics" in draft) throw new Error(`No market template for ${input.vertical}`);
   if (isAlcohol(input.vertical) && "tasting" in draft) return wineContent(input, draft);
   const ai = { visible: true, aiGenerated: true, reviewed: false };
   const sections: Section[] = [
@@ -170,6 +217,8 @@ function moreSections(draft: AiDraft): Section[] {
 /** A plain starter page the manufacturer fills in by hand (used when AI is off or fails). */
 export function starterContent(input: DraftInput): LandingContent {
   if (isAlcohol(input.vertical)) return wineContent(input);
+  const market = marketFor(input.vertical);
+  if (market) return marketContent(input, market);
   const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] };
   return shell(
     input,
@@ -189,7 +238,7 @@ export function starterContent(input: DraftInput): LandingContent {
 
 function starterOptin(input: DraftInput) {
   return {
-    headline: isAlcohol(input.vertical) ? "Register this bottle" : "Register your product",
+    headline: isAlcohol(input.vertical) ? "Register this bottle" : (marketFor(input.vertical)?.optinHeadline ?? "Register your product"),
     prompt: `Get news, offers and invites from ${input.companyName}.`,
   };
 }
@@ -312,5 +361,69 @@ export function wineContent(input: DraftInput, draft?: AiWineDraft): LandingCont
 
   const content = shell(input, sections, draft?.optin ?? starterOptin(input));
   content.hero.subtitle = draft?.subtitle || undefined;
+  return content;
+}
+
+const clean = (v: string | undefined) => (v ?? "").trim();
+
+/**
+ * A retail, cosmetics or electronics page (Jens's "Version 2" market docs): about ten topic boxes,
+ * then the brand's story, other products with a webstore button, and deals and new arrivals. The AI
+ * fills in what it can from the description; every topic it can't fill starts blank with the usual
+ * rows, and blank topics stay off the live page until the brand fills them in.
+ */
+export function marketContent(input: DraftInput, market: MarketTemplate, draft?: AiMarketDraft): LandingContent {
+  const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] as string[] };
+  const brand = input.companyName;
+
+  const topics: Section[] = market.topics.map((t) => {
+    const found = t.ai === "never" ? undefined : draft?.topics.find((d) => d.id === t.id);
+    const aiRows = (found?.items ?? []).map((i) => ({ label: clean(i.label), value: clean(i.value) })).filter((i) => i.label && i.value);
+    const chips = (found?.chips ?? []).map(clean).filter(Boolean).slice(0, 12);
+    const hasAi = Boolean(found && (clean(found.answer) || clean(found.body) || aiRows.length || chips.length));
+    const items = [
+      ...t.rows.map((label) => ({ label, value: aiRows.find((r) => sameLabel(r.label, label))?.value ?? "" })),
+      ...aiRows.filter((r) => !t.rows.some((label) => sameLabel(label, r.label))),
+    ];
+    return {
+      ...(hasAi && found ? { visible: true, aiGenerated: true, reviewed: false, sources: sourcesFor([found.basis]) } : own),
+      id: t.id,
+      type: "topic",
+      title: t.title,
+      navLabel: t.navLabel,
+      icon: t.icon,
+      answer: hasAi ? clean(found?.answer) : "",
+      body: hasAi ? clean(found?.body) : "",
+      items,
+      chips: hasAi ? chips : [],
+    };
+  });
+
+  const sections: Section[] = [
+    ...topics,
+    {
+      ...(draft ? { visible: true, aiGenerated: true, reviewed: false, sources: sourcesFor([draft.story.basis]) } : own),
+      id: "story",
+      type: "story",
+      title: draft?.story.title || "Our story",
+      navLabel: "Our story",
+      body: draft?.story.body ?? input.description,
+      images: [],
+    },
+    {
+      ...own,
+      id: "more",
+      type: "products",
+      title: `More from ${brand}`,
+      navLabel: "More products",
+      items: [{ name: "" }],
+      link: input.website ? { label: "Visit our webstore", url: input.website } : undefined,
+    },
+    { ...own, id: "deals", type: "offers", title: "Deals & new arrivals", navLabel: "Deals", items: [{ title: "" }] },
+  ];
+
+  const content = shell(input, sections, draft?.optin ?? starterOptin(input));
+  content.hero.subtitle = draft?.subtitle || undefined;
+  if (input.website) content.buttons = [{ label: "Go to website", url: input.website, style: "secondary", kind: "link" }];
   return content;
 }

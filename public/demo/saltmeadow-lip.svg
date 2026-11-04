@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 380" width="400" height="380">
+  <!-- Illustration of a fictional Saltmeadow overnight lip balm tin, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="tin" x1="0" x2="1"><stop offset="0" stop-color="#9c6b5c"/><stop offset="0.35" stop-color="#f1cdbd"/><stop offset="0.6" stop-color="#d9a38f"/><stop offset="1" stop-color="#8a5c4f"/></linearGradient>
+  </defs>
+  <ellipse cx="200" cy="300" rx="150" ry="22" fill="#000" fill-opacity="0.12"/>
+  <path d="M60 200 V250 Q60 296 200 296 Q340 296 340 250 V200 Z" fill="#8a5c4f"/>
+  <ellipse cx="200" cy="200" rx="140" ry="52" fill="url(#tin)"/>
+  <ellipse cx="200" cy="200" rx="112" ry="38" fill="none" stroke="#fff" stroke-opacity="0.45" stroke-width="3"/>
+  <text x="200" y="196" text-anchor="middle" font-family="Georgia, serif" font-size="18" letter-spacing="4" fill="#5a3a30">SALTMEADOW</text>
+  <text x="200" y="220" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="13" fill="#5a3a30">Overnight Lip Balm</text>
+</svg>

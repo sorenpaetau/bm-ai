@@ -161,6 +161,26 @@ export const VisitSection = z.object({
   links: z.array(z.object({ label: z.string(), url: z.string() })).default([]),
 });
 
+/**
+ * One "topic box": a single thing shoppers want to know, e.g. "Size & fit" or "Battery & charging".
+ * The retail, cosmetics and electronics templates are built from about ten of these (Jens's
+ * "Version 2" market docs), each with its own jump button under the big photo.
+ */
+export const TopicSection = z.object({
+  ...base,
+  type: z.literal("topic"),
+  /** Which small picture to show, e.g. "ruler", "battery" (see TOPIC_ICONS in the landing view). */
+  icon: z.string().optional(),
+  /** The short answer, shown big, e.g. "100% cashmere" or "Up to 40 hours". */
+  answer: z.string().default(""),
+  body: z.string().default(""),
+  /** Short label and value rows, e.g. Sizes: XS to XL. */
+  items: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+  /** Little chips, e.g. key ingredients or devices it works with. */
+  chips: z.array(z.string()).default([]),
+  link: sectionLink,
+});
+
 export const Section = z.discriminatedUnion("type", [
   FactsSection,
   StorySection,
@@ -171,6 +191,7 @@ export const Section = z.discriminatedUnion("type", [
   EventsSection,
   MakerSection,
   VisitSection,
+  TopicSection,
 ]);
 export type Section = z.infer<typeof Section>;
 export type SectionType = Section["type"];
@@ -198,6 +219,10 @@ export const LandingContent = z.object({
     title: z.string(),
     subtitle: z.string().optional(),
     imageUrl: z.string().optional(),
+    /** Suggested retail price shown under the product name, e.g. "$280". */
+    price: z.string().optional(),
+    /** Small print next to the price. Defaults to "Suggested retail price". */
+    priceNote: z.string().optional(),
   }),
   sections: z.array(Section).default([]),
   buttons: z.array(ActionButton).default([]),
