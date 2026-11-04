@@ -1,6 +1,7 @@
 import { sql } from "../src/lib/db";
 import { randomCode } from "../src/lib/codes";
 import { DEMO_COMPANY, DEMO_CONTENT, DEMO_PRODUCT } from "../src/lib/demo";
+import { DEMO_MARKETS } from "../src/lib/demo-markets";
 import bcrypt from "bcryptjs";
 
 // Seeds a demo manufacturer, a published demo product with 10 tags and some sample taps,
@@ -126,8 +127,49 @@ async function main() {
     }
   }
 
+  await seedMarketDemos();
+
   console.log("Seeded demo data. Try http://localhost:3000/t/DEMO2023");
   await sql.end();
+}
+
+/**
+ * One published demo page per market (retail, cosmetics, electronics), each with one fixed tag code.
+ * These made-up brands have no logins, so nobody edits them in the portal: the page is refreshed from
+ * src/lib/demo-markets.ts on every deploy.
+ */
+async function seedMarketDemos() {
+  for (const demo of DEMO_MARKETS) {
+    const c = demo.company;
+    let [company] = await sql<{ id: string }[]>`SELECT id FROM companies WHERE name = ${c.name}`;
+    if (!company) {
+      [company] = await sql<{ id: string }[]>`
+        INSERT INTO companies (name, vertical, city, state, website, verified_at, plan)
+        VALUES (${c.name}, ${c.vertical}, ${c.city}, ${c.state}, ${c.website}, now(), 'silver')
+        RETURNING id`;
+    }
+    const json = sql.json(demo.content);
+    let [product] = await sql<{ id: string }[]>`SELECT id FROM products WHERE slug = ${demo.product.slug}`;
+    if (product) {
+      await sql`
+        UPDATE products SET content = ${json}, published_content = ${json}, status = 'published', updated_at = now()
+        WHERE id = ${product.id}`;
+    } else {
+      [product] = await sql<{ id: string }[]>`
+        INSERT INTO products (company_id, sku, name, description, slug, status, content, published_content, published_at)
+        VALUES (${company.id}, ${demo.product.sku}, ${demo.product.name}, ${demo.product.description}, ${demo.product.slug},
+                'published', ${json}, ${json}, now())
+        RETURNING id`;
+    }
+    const [tag] = await sql`SELECT code FROM tags WHERE code = ${demo.tagCode}`;
+    if (!tag) {
+      const [batch] = await sql<{ id: string }[]>`
+        INSERT INTO tag_batches (company_id, product_id, tag_type, quantity, label)
+        VALUES (${company.id}, ${product.id}, 'standard', 1, 'Demo tag')
+        RETURNING id`;
+      await sql`INSERT INTO tags (code, batch_id, company_id, product_id) VALUES (${demo.tagCode}, ${batch.id}, ${company.id}, ${product.id})`;
+    }
+  }
 }
 
 main().catch((err) => {

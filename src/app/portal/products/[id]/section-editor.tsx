@@ -16,7 +16,38 @@ export const SECTION_TYPES: Record<SectionType, { label: string; hint: string }>
   events: { label: "Events", hint: "Dated events. Each one hides itself after its date" },
   maker: { label: "The maker", hint: "Your winemaker or founders, how you farm and make it, and key numbers" },
   visit: { label: "Visit us", hint: "Address and map, tastings and tours, nearby places to stay and eat" },
+  topic: { label: "Topic box", hint: "One thing shoppers want to know, e.g. Size & fit or Battery: a short answer, details and key rows" },
 };
+
+/** Pictures a topic box can show (the same names the landing page understands). */
+const TOPIC_ICON_CHOICES: Array<[string, string]> = [
+  ["list", "List"],
+  ["ruler", "Ruler (size)"],
+  ["layers", "Layers (materials)"],
+  ["shield", "Shield (quality, safety)"],
+  ["drop", "Drop (care, texture)"],
+  ["feather", "Feather (comfort)"],
+  ["leaf", "Leaf (ethics)"],
+  ["star", "Star (reviews)"],
+  ["return", "Arrow (returns)"],
+  ["truck", "Truck (delivery)"],
+  ["flask", "Flask (ingredients)"],
+  ["face", "Face (skin type)"],
+  ["clock", "Clock (shelf life)"],
+  ["hand", "Hand (how to use)"],
+  ["tag", "Price tag"],
+  ["chip", "Chip (performance)"],
+  ["battery", "Battery"],
+  ["link", "Link (works with)"],
+  ["refresh", "Arrows (updates)"],
+  ["screen", "Screen"],
+  ["camera", "Camera"],
+  ["headphones", "Headphones"],
+  ["wrench", "Wrench (repairs)"],
+  ["heart", "Heart"],
+  ["spark", "Sparkle"],
+  ["gift", "Gift"],
+];
 
 export function blankSection(type: SectionType): Section {
   const base = {
@@ -46,6 +77,8 @@ export function blankSection(type: SectionType): Section {
       return { ...base, type, people: [], items: [], stats: [], images: [] };
     case "visit":
       return { ...base, type, address: "", map: true, experiences: [], nearby: [], links: [] };
+    case "topic":
+      return { ...base, type, icon: "list", answer: "", body: "", items: [{ label: "", value: "" }], chips: [] };
   }
 }
 
@@ -390,6 +423,51 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
             </div>
           )}
         />
+      );
+    case "topic":
+      return (
+        <div className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-[2fr_1fr]">
+            <TextField
+              label="Short answer, shown big"
+              value={section.answer}
+              onChange={(answer) => patch({ answer })}
+              placeholder="e.g. 100% cashmere"
+            />
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-muted">Picture</span>
+              <select value={section.icon ?? "list"} onChange={(e) => patch({ icon: e.target.value })} className={inputClass}>
+                {TOPIC_ICON_CHOICES.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <TextArea label="Details (optional)" rows={3} value={section.body} onChange={(body) => patch({ body })} />
+          <p className="text-xs font-medium text-muted">Key facts</p>
+          <ItemList
+            items={section.items}
+            onChange={(items) => patch({ items })}
+            blank={() => ({ label: "", value: "" })}
+            addLabel="Add a row"
+            render={(item, set) => (
+              <div className="grid gap-2 sm:grid-cols-[1fr_2fr]">
+                <TextField label="Label" value={item.label} onChange={(label) => set({ label })} placeholder="Sizes" />
+                <TextField label="Value" value={item.value} onChange={(value) => set({ value })} placeholder="XS to XL" />
+              </div>
+            )}
+          />
+          <ListField
+            label="Chips (optional)"
+            values={section.chips}
+            onChange={(chips) => patch({ chips })}
+            hint="Comma separated, e.g. Shea butter, Squalane, Niacinamide"
+            separator=","
+          />
+          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder="See the size chart" />
+        </div>
       );
     case "visit":
       return (

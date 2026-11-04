@@ -34,7 +34,7 @@ export async function logout() {
 const Signup = z.object({
   companyName: z.string().trim().min(2, "Enter your company name."),
   // Pharma is out of scope for V1 (regulated content), so it is not offered at signup.
-  vertical: z.enum(["wine_spirits", "cosmetics", "retail"], { message: "Choose what you make." }),
+  vertical: z.enum(["wine_spirits", "cosmetics", "retail", "electronics"], { message: "Choose what you make." }),
   website: z
     .string()
     .trim()

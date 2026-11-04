@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 400" width="420" height="400">
+  <!-- Illustration of fictional Fernlake Audio Drift wireless headphones in mist gray, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="cup" x1="0" x2="1"><stop offset="0" stop-color="#8d94a0"/><stop offset="0.35" stop-color="#eef1f5"/><stop offset="0.6" stop-color="#c9ced6"/><stop offset="1" stop-color="#8d94a0"/></linearGradient>
+    <linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eef1f5"/><stop offset="1" stop-color="#8d94a0"/></linearGradient>
+  </defs>
+  <path d="M86 236 C78 96 140 34 210 34 C280 34 342 96 334 236" fill="none" stroke="url(#band)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M104 214 C102 116 150 62 210 62 C270 62 318 116 316 214" fill="none" stroke="#2a2f38" stroke-width="12" stroke-linecap="round"/>
+  <path d="M104 214 C102 116 150 62 210 62 C270 62 318 116 316 214" fill="none" stroke="#fff" stroke-opacity="0.08" stroke-width="4" stroke-dasharray="2 5"/>
+  <text x="210" y="46" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="4" fill="#38a3d1">FERNLAKE</text>
+  <!-- yokes -->
+  <rect x="70" y="200" width="30" height="56" rx="10" fill="#8d94a0"/>
+  <rect x="320" y="200" width="30" height="56" rx="10" fill="#8d94a0"/>
+  <!-- left cup -->
+  <rect x="38" y="222" width="96" height="140" rx="44" fill="url(#cup)"/>
+  <rect x="112" y="236" width="30" height="112" rx="15" fill="#2a2f38"/>
+  <rect x="52" y="246" width="10" height="92" rx="5" fill="#fff" fill-opacity="0.25"/>
+  <circle cx="86" cy="292" r="26" fill="none" stroke="#38a3d1" stroke-width="3" stroke-opacity="0.9"/>
+  <!-- right cup -->
+  <rect x="286" y="222" width="96" height="140" rx="44" fill="url(#cup)"/>
+  <rect x="278" y="236" width="30" height="112" rx="15" fill="#2a2f38"/>
+  <rect x="300" y="246" width="10" height="92" rx="5" fill="#fff" fill-opacity="0.25"/>
+  
+  <g>
+    <circle cx="318" cy="286" r="16" fill="#14213d" stroke="#ffffff" stroke-width="1.9"/>
+    <path d="M314.0 280.4a7.2 7.2 0 0 1 0 11.2M318.0 277.2a11.2 11.2 0 0 1 0 17.6M322.0 274.5a15.2 15.2 0 0 1 0 23.0" fill="none" stroke="#e8b04b" stroke-width="1.8" stroke-linecap="round"/>
+  </g>
+</svg>

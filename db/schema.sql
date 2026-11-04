@@ -183,3 +183,8 @@ CREATE TABLE IF NOT EXISTS app_settings (
   value       text NOT NULL,
   updated_at  timestamptz NOT NULL DEFAULT now()
 );
+
+-- New market: consumer electronics. (Drop and re-add so re-running is safe.)
+ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_vertical_check;
+ALTER TABLE companies ADD CONSTRAINT companies_vertical_check
+  CHECK (vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 460" width="220" height="460">
+  <!-- Illustration of a fictional Saltmeadow serum, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#b47a52"/><stop offset="0.3" stop-color="#e8b88c"/><stop offset="0.45" stop-color="#f7d8b8"/><stop offset="0.8" stop-color="#c98d60"/><stop offset="1" stop-color="#9a6240"/></linearGradient>
+    <linearGradient id="c" x1="0" x2="1"><stop offset="0" stop-color="#3a2a26"/><stop offset="0.4" stop-color="#7a5d55"/><stop offset="1" stop-color="#2e211e"/></linearGradient>
+  </defs>
+  <path d="M90 20 Q110 0 130 20 V110 H90 Z" fill="#2e211e"/>
+  <rect x="72" y="104" width="76" height="70" rx="8" fill="url(#c)"/>
+  <path d="M60 196 Q60 176 80 176 H140 Q160 176 160 196 V418 Q160 440 138 440 H82 Q60 440 60 418 Z" fill="url(#g)"/>
+  <rect x="68" y="250" width="84" height="120" rx="4" fill="#fbf4ee"/>
+  <text x="110" y="282" text-anchor="middle" font-family="Georgia, serif" font-size="8.5" letter-spacing="1" fill="#6d4c5c">SALTMEADOW</text>
+  <text x="110" y="314" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#6d4c5c">Dew Drop</text>
+  <text x="110" y="332" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#6d4c5c">Serum</text>
+  <text x="110" y="356" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="9" fill="#9c7f88">30 ml</text>
+  <path d="M72 196 V420" stroke="#fff" stroke-opacity="0.6" stroke-width="5" stroke-linecap="round"/>
+</svg>

@@ -18,5 +18,6 @@ export const VERTICALS = {
   cosmetics: "Cosmetics",
   pharmaceutical: "Pharmaceutical",
   retail: "Retail",
+  electronics: "Consumer Electronics",
 } as const;
 export type Vertical = keyof typeof VERTICALS;

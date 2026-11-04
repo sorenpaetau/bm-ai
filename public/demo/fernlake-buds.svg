@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 400" width="420" height="400">
+  <!-- Illustration of fictional Fernlake Audio earbuds and case, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="case" x1="0" x2="1"><stop offset="0" stop-color="#8d94a0"/><stop offset="0.35" stop-color="#f2f4f7"/><stop offset="1" stop-color="#9aa1ad"/></linearGradient>
+    <radialGradient id="bud" cx="0.35" cy="0.3"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#aeb5c0"/></radialGradient>
+  </defs>
+  <ellipse cx="210" cy="346" rx="150" ry="16" fill="#000" fill-opacity="0.12"/>
+  <rect x="80" y="170" width="260" height="170" rx="70" fill="url(#case)"/>
+  <path d="M84 222 H336" stroke="#7c8390" stroke-width="2.5"/>
+  <circle cx="210" cy="276" r="5" fill="#38a3d1"/>
+  <text x="210" y="312" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="700" letter-spacing="4" fill="#6b7280">FERNLAKE</text>
+  <g>
+    <circle cx="150" cy="120" r="40" fill="url(#bud)"/>
+    <rect x="140" y="140" width="22" height="60" rx="11" fill="#c9ced6"/>
+    <circle cx="150" cy="120" r="16" fill="#2a2f38"/>
+  </g>
+  <g>
+    <circle cx="270" cy="120" r="40" fill="url(#bud)"/>
+    <rect x="258" y="140" width="22" height="60" rx="11" fill="#c9ced6"/>
+    <circle cx="270" cy="120" r="16" fill="#2a2f38"/>
+  </g>
+</svg>

@@ -157,6 +157,20 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
             value={content.hero.subtitle}
             onChange={(v) => update((d) => void (d.hero.subtitle = v || undefined))}
           />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="Suggested retail price (optional)"
+              value={content.hero.price}
+              onChange={(v) => update((d) => void (d.hero.price = v || undefined))}
+              placeholder="$280"
+            />
+            <TextField
+              label="Small print under the price (optional)"
+              value={content.hero.priceNote}
+              onChange={(v) => update((d) => void (d.hero.priceNote = v || undefined))}
+              placeholder="Suggested retail price"
+            />
+          </div>
           <TextField
             label="Main photo link (optional)"
             type="url"

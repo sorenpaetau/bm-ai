@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420" width="400" height="420">
+  <!-- Illustration of a fictional Ashby &amp; Vale cashmere beanie, drawn for the demo page. -->
+  <defs>
+    <linearGradient id="b" x1="0" x2="1"><stop offset="0" stop-color="#55655a"/><stop offset="0.5" stop-color="#7c8d7f"/><stop offset="1" stop-color="#4a584e"/></linearGradient>
+    <radialGradient id="pom" cx="0.4" cy="0.35"><stop offset="0" stop-color="#f4ece0"/><stop offset="1" stop-color="#c9bba6"/></radialGradient>
+    <pattern id="ribv" width="9" height="10" patternUnits="userSpaceOnUse"><path d="M4.5 0V10" stroke="#000" stroke-opacity="0.13" stroke-width="2"/></pattern>
+    <pattern id="knit" width="10" height="14" patternUnits="userSpaceOnUse"><path d="M0 0 L5 7 L10 0 M0 7 L5 14 L10 7" fill="none" stroke="#000" stroke-opacity="0.08" stroke-width="1.3"/></pattern>
+  </defs>
+  <circle cx="200" cy="96" r="44" fill="url(#pom)"/>
+  <path d="M86 300 Q80 130 200 122 Q320 130 314 300 Z" fill="url(#b)"/>
+  <path d="M86 300 Q80 130 200 122 Q320 130 314 300 Z" fill="url(#knit)"/>
+  <rect x="74" y="284" width="252" height="76" rx="14" fill="#6a7b6d"/>
+  <rect x="74" y="284" width="252" height="76" rx="14" fill="url(#ribv)"/>
+  <rect x="74" y="284" width="252" height="8" rx="4" fill="#000" fill-opacity="0.1"/>
+  <rect x="180" y="306" width="40" height="28" rx="3" fill="#f7f1e6"/>
+  <text x="200" y="324" text-anchor="middle" font-family="Georgia, serif" font-size="10" fill="#2b3a55">A&amp;V</text>
+</svg>

@@ -56,8 +56,9 @@ test("blank template rows don't block publishing, but a value with no label does
   const c = starterContent(cosmetics);
   assert.equal(needsReview(c).length, 0);
   assert.deepEqual(publishBlockers(c, true), []);
-  const facts = c.sections[0];
-  if (facts.type === "facts") facts.items.push({ label: "", value: "50 ml" });
+  // Cosmetics pages start with topic boxes (key rows work like fact rows).
+  const first = c.sections[0];
+  if (first.type === "facts" || first.type === "topic") first.items.push({ label: "", value: "50 ml" });
   assert.ok(publishBlockers(c, true).some((b) => b.includes("needs a label")));
 });
 
