@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { LandingContent } from "../landing";
 import { VERTICALS } from "../site";
-import { AiDraft, buildDraftContent, type DraftInput } from "./template";
+import { AiDraft, AiWineDraft, buildDraftContent, type DraftInput } from "./template";
 
 // Writes a first draft of a product landing page with Claude. The result is a DRAFT: every section
 // comes back aiGenerated + not reviewed, and the manufacturer must review it before publishing.
@@ -26,6 +26,12 @@ Rules:
 - Write for a phone screen: short sentences, warm and plain. No hashtags or emoji.
 - Do not repeat the product name in every section.`;
 
+const WINE_GUIDE = `
+This is a wine or spirits page. Shoppers want to know: the brand's story and philosophy, tasting notes (primary fruit, secondary notes such as oak, vanilla or spice, and structure such as tannin and acidity), whether it is a single varietal or a blend, the vintage, and the estate (who makes it, how they farm and harvest, how much they make).
+- Facts: use these labels where you can fill them: "Alcohol", "Best time to drink", "Aging potential", "Food pairing", "Grape", "Region". Alcohol, drinking window and aging only if the description gives them. Never fill "Rating", "Suggested retail" or "Awards".
+- Typical flavors, structure and food pairings for the grape and region are fine as general_knowledge.
+- The blend percentages, the vintage weather and the estate's farming and harvest practices must come from the description. If it doesn't say, leave them empty.`;
+
 function userPrompt(input: DraftInput) {
   return `Brand: ${input.companyName}
 Product category: ${VERTICALS[input.vertical]}
@@ -39,6 +45,7 @@ ${input.description}
 
 export async function draftLandingContent(input: DraftInput): Promise<LandingContent> {
   const client = new Anthropic();
+  const wine = input.vertical === "wine_spirits";
   let response;
   try {
     response = await client.beta.messages.parse({
@@ -47,8 +54,8 @@ export async function draftLandingContent(input: DraftInput): Promise<LandingCon
       // If a safety check declines the request, let the API retry on another model automatically.
       betas: ["server-side-fallback-2026-07-01"],
       fallbacks: "default",
-      output_config: { effort: "medium", format: betaZodOutputFormat(AiDraft) },
-      system: SYSTEM,
+      output_config: { effort: "medium", format: betaZodOutputFormat(wine ? AiWineDraft : AiDraft) },
+      system: wine ? SYSTEM + WINE_GUIDE : SYSTEM,
       messages: [{ role: "user", content: userPrompt(input) }],
     });
   } catch (err) {

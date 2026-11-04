@@ -35,6 +35,39 @@ export function LogoMark({ className = "" }: { className?: string }) {
   );
 }
 
+/**
+ * The full B&M.ai logo: the mark, "B&M.ai", and "Brand & Marketing" spelled out underneath.
+ * `tone="dark"` is for dark backgrounds. Sizes: "md" for headers, "lg" for the login panel.
+ */
+export function Wordmark({
+  tone = "light",
+  size = "md",
+  name = "B&M.ai",
+  className = "",
+}: {
+  tone?: "light" | "dark";
+  size?: "sm" | "md" | "lg";
+  name?: string;
+  className?: string;
+}) {
+  const mark = { sm: "h-9 w-9", md: "h-11 w-11", lg: "h-12 w-12" }[size];
+  const title = { sm: "text-xl", md: "text-[1.6rem]", lg: "text-3xl" }[size];
+  const sub = { sm: "text-[8.5px]", md: "text-[9.5px]", lg: "text-[11px]" }[size];
+  return (
+    <span className={`flex items-center gap-3 ${className}`}>
+      <LogoMark className={`${mark} shrink-0 ${tone === "dark" ? "text-white/10" : "text-brand"}`} />
+      <span className="flex flex-col leading-none">
+        <span className={`font-serif ${title} font-semibold tracking-tight ${tone === "dark" ? "text-white" : "text-ink"}`}>{name}</span>
+        <span
+          className={`mt-1 ${sub} font-semibold uppercase tracking-[0.24em] whitespace-nowrap ${tone === "dark" ? "text-gold" : "text-accent"}`}
+        >
+          Brand &amp; Marketing
+        </span>
+      </span>
+    </span>
+  );
+}
+
 export const TapIcon = (p: IconProps) => (
   <Icon {...p}>
     <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
@@ -179,5 +212,60 @@ export const LinkIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1" />
     <path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1" />
+  </Icon>
+);
+
+export const LeafIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 19c0-8 5-14 15-15-1 10-7 15-15 15Z" />
+    <path d="M5 19c3-4 6-7 10-9" />
+  </Icon>
+);
+
+export const StarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+  </Icon>
+);
+
+export const ListIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="4" y="3.5" width="16" height="17" rx="2.5" />
+    <path d="M8 8.5h8M8 12h8M8 15.5h5" />
+  </Icon>
+);
+
+export const TagIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3.5 12.2V4.5a1 1 0 0 1 1-1h7.7l8.3 8.3a1.5 1.5 0 0 1 0 2.1l-6.6 6.6a1.5 1.5 0 0 1-2.1 0z" />
+    <circle cx="8.3" cy="8.3" r="1.5" />
+  </Icon>
+);
+
+export const BedIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3.5 19V6M3.5 14.5h17V19M20.5 14.5v-3a3 3 0 0 0-3-3h-7v6" />
+    <circle cx="7" cy="11" r="1.8" />
+  </Icon>
+);
+
+export const ForkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M7 3v6a2 2 0 0 0 4 0V3M9 3v18" />
+    <path d="M17 21V3c-2 1.5-3 4-3 7s1 4 3 4" />
+  </Icon>
+);
+
+export const CompassIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="m15.5 8.5-2 5-5 2 2-5z" />
+  </Icon>
+);
+
+export const ClockIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
   </Icon>
 );

@@ -40,6 +40,43 @@ export const AiDraft = z.object({
 });
 export type AiDraft = z.infer<typeof AiDraft>;
 
+/**
+ * The wine and spirits draft: everything in AiDraft plus the wine page sections from Jens's
+ * "Wine and Spirits Landing page (Version 2)": tasting notes, the blend, the vintage and the estate.
+ * Prices, ratings, memberships, gift sets, events and visit details are left for the winery to add.
+ */
+export const AiWineDraft = AiDraft.extend({
+  tasting: z
+    .object({
+      body: z.string().describe("2 to 3 sentences: primary fruit, secondary notes (oak, spice) and structure (tannin, acidity)"),
+      flavors: z.array(z.string()).describe("4 to 8 one- or two-word flavors and aromas, e.g. Blackberry, Cassis, Vanilla"),
+      structure: z
+        .array(z.object({ label: z.string(), level: z.number().int().describe("1 (low) to 5 (high)") }))
+        .describe("Body, Tannin, Acidity and Sweetness, each rated 1 to 5. Empty for spirits if it doesn't fit"),
+      basis,
+    })
+    .describe("Tasting notes"),
+  blend: z
+    .array(z.object({ name: z.string(), percent: z.number() }))
+    .describe("The grapes and their percentages, ONLY if the description gives them. Otherwise an empty list"),
+  vintage: z
+    .object({
+      year: z.string().describe("The vintage year from the product name or description, or empty"),
+      body: z.string().describe("What the year was like for growing, ONLY from the description. Otherwise empty"),
+      basis,
+    })
+    .describe("The vintage"),
+  estate: z
+    .object({
+      body: z.string().describe("1 or 2 sentences on the winery, estate grown or sourced. Empty if the description says nothing"),
+      items: z
+        .array(z.object({ title: z.string(), body: z.string(), basis }))
+        .describe("Only practices the description mentions: farming (organic, dry farmed...), harvest (by hand...), winemaking, production size. Short titles like 'Our farming'"),
+    })
+    .describe("About the estate. Never invent people's names"),
+});
+export type AiWineDraft = z.infer<typeof AiWineDraft>;
+
 export const SOURCE_LABELS = {
   description: "Your product description",
   general_knowledge: "AI general knowledge: please check",
@@ -86,7 +123,8 @@ function shell(input: DraftInput, sections: Section[], optin: { headline: string
 }
 
 /** Every AI-written section is marked aiGenerated and not reviewed, so it shows "needs review". */
-export function buildDraftContent(draft: AiDraft, input: DraftInput): LandingContent {
+export function buildDraftContent(draft: AiDraft | AiWineDraft, input: DraftInput): LandingContent {
+  if (isAlcohol(input.vertical) && "tasting" in draft) return wineContent(input, draft);
   const ai = { visible: true, aiGenerated: true, reviewed: false };
   const sections: Section[] = [
     {
@@ -106,25 +144,32 @@ export function buildDraftContent(draft: AiDraft, input: DraftInput): LandingCon
       images: [],
       sources: sourcesFor([draft.story.basis]),
     },
-    ...draft.moreSections.map(
-      (s, i): Section => ({
-        ...ai,
-        id: `more-${i + 1}`,
-        type: "story",
-        title: s.title,
-        body: s.body,
-        images: [],
-        sources: sourcesFor([s.basis]),
-      }),
-    ),
+    ...moreSections(draft),
   ];
   const content = shell(input, sections, draft.optin);
   content.hero.subtitle = draft.subtitle || undefined;
   return content;
 }
 
+function moreSections(draft: AiDraft): Section[] {
+  return draft.moreSections.map(
+    (s, i): Section => ({
+      visible: true,
+      aiGenerated: true,
+      reviewed: false,
+      id: `more-${i + 1}`,
+      type: "story",
+      title: s.title,
+      body: s.body,
+      images: [],
+      sources: sourcesFor([s.basis]),
+    }),
+  );
+}
+
 /** A plain starter page the manufacturer fills in by hand (used when AI is off or fails). */
 export function starterContent(input: DraftInput): LandingContent {
+  if (isAlcohol(input.vertical)) return wineContent(input);
   const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] };
   return shell(
     input,
@@ -138,9 +183,134 @@ export function starterContent(input: DraftInput): LandingContent {
       },
       { ...own, id: "story", type: "story", title: "Our story", body: input.description, images: [] },
     ],
-    {
-      headline: isAlcohol(input.vertical) ? "Register this bottle" : "Register your product",
-      prompt: `Get news, offers and invites from ${input.companyName}.`,
-    },
+    starterOptin(input),
   );
+}
+
+function starterOptin(input: DraftInput) {
+  return {
+    headline: isAlcohol(input.vertical) ? "Register this bottle" : "Register your product",
+    prompt: `Get news, offers and invites from ${input.companyName}.`,
+  };
+}
+
+/** The fact box rows every wine page starts with. The big three are shown as tiles. */
+export const WINE_FACTS: Array<{ label: string; highlight?: boolean }> = [
+  { label: "Rating", highlight: true },
+  { label: "Suggested retail", highlight: true },
+  { label: "Alcohol", highlight: true },
+  { label: "Best time to drink" },
+  { label: "Aging potential" },
+  { label: "Awards" },
+  { label: "Food pairing" },
+];
+
+const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * The full wine page (Jens's "Wine and Spirits Landing page, Version 2"): story, tasting notes with
+ * the blend and vintage, the fact box, other wines and the webstore, gift sets, specials, memberships,
+ * the estate, events and visit info. The AI fills in what it can from the description; everything
+ * else starts blank, and blank sections stay off the live page until the winery fills them in.
+ */
+export function wineContent(input: DraftInput, draft?: AiWineDraft): LandingContent {
+  const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] as string[] };
+  const ai = (bases: Array<keyof typeof SOURCE_LABELS>) =>
+    draft ? { visible: true, aiGenerated: true, reviewed: false, sources: sourcesFor(bases) } : own;
+  const brand = input.companyName;
+
+  // Fact box: what the AI found, plus the standard wine rows it didn't cover (left blank to fill in).
+  const aiFacts = draft?.facts ?? [];
+  const facts = [
+    ...WINE_FACTS.map((row) => {
+      const found = aiFacts.find((f) => sameLabel(f.label, row.label));
+      return { label: row.label, value: found?.value ?? "", ...(row.highlight ? { highlight: true } : {}) };
+    }),
+    ...aiFacts.filter((f) => !WINE_FACTS.some((row) => sameLabel(row.label, f.label))).map(({ label, value }) => ({ label, value })),
+  ];
+
+  const tasting = draft?.tasting;
+  const year = draft?.vintage.year || /\b(19|20)\d{2}\b/.exec(input.productName)?.[0] || "";
+  const estate = draft?.estate;
+
+  const sections: Section[] = [
+    {
+      ...ai(draft ? [draft.story.basis] : []),
+      id: "story",
+      type: "story",
+      title: draft?.story.title || "Our story",
+      navLabel: "Our story",
+      body: draft?.story.body ?? input.description,
+      images: [],
+    },
+    {
+      ...(tasting ? ai([tasting.basis, ...(draft?.vintage.body ? [draft.vintage.basis] : [])]) : own),
+      id: "tasting",
+      type: "tasting",
+      title: "Tasting notes",
+      navLabel: "Taste",
+      body: tasting?.body ?? "",
+      flavors: tasting?.flavors ?? [],
+      structure: (tasting?.structure ?? []).map((s) => ({ label: s.label, level: Math.min(5, Math.max(1, Math.round(s.level))) })),
+      blend: (draft?.blend ?? []).filter((b) => b.percent > 0 && b.percent <= 100),
+      vintage: { year, body: draft?.vintage.body ?? "" },
+    },
+    {
+      ...(aiFacts.length ? ai(aiFacts.map((f) => f.basis)) : own),
+      id: "facts",
+      type: "facts",
+      title: "The fact box",
+      navLabel: "Fact box",
+      items: facts,
+    },
+    ...(draft ? moreSections(draft) : []),
+    {
+      ...own,
+      id: "wines",
+      type: "products",
+      title: `More from ${brand}`,
+      navLabel: "Our wines",
+      items: [{ name: "" }],
+      link: input.website ? { label: "Visit our webstore", url: input.website } : undefined,
+    },
+    { ...own, id: "gifts", type: "products", title: "Gift sets", navLabel: "Gift sets", items: [{ name: "" }] },
+    { ...own, id: "specials", type: "offers", title: "Current specials", navLabel: "Specials", items: [{ title: "" }] },
+    {
+      ...own,
+      id: "club",
+      type: "memberships",
+      title: "Wine memberships",
+      navLabel: "Memberships",
+      tiers: ["Bronze", "Silver", "Gold"].map((name) => ({ name, perks: [] })),
+    },
+    {
+      ...(estate && (estate.body || estate.items.length) ? ai([...estate.items.map((i) => i.basis), "description"]) : own),
+      id: "estate",
+      type: "maker",
+      title: `A little more about ${brand}`,
+      navLabel: "The estate",
+      body: estate?.body || undefined,
+      stats: ["Founded", "Acres of vines", "Bottles a year"].map((label) => ({ label, value: "" })),
+      people: [{ name: "", role: "Winemaker" }],
+      items: (estate?.items ?? []).map(({ title, body }) => ({ title, body })),
+      images: [],
+    },
+    { ...own, id: "events", type: "events", title: "Upcoming events", navLabel: "Events", items: [] },
+    {
+      ...own,
+      id: "visit",
+      type: "visit",
+      title: "Visit us",
+      navLabel: "Visit",
+      address: "",
+      map: true,
+      experiences: [{ title: "" }],
+      nearby: [],
+      links: [],
+    },
+  ];
+
+  const content = shell(input, sections, draft?.optin ?? starterOptin(input));
+  content.hero.subtitle = draft?.subtitle || undefined;
+  return content;
 }

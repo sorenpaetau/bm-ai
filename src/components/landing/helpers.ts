@@ -56,22 +56,94 @@ export function eventDateParts(value: string): { month: string; day: string; lab
 /**
  * Which sections a page shows. Hidden sections never show. On the live page, AI-written sections the
  * manufacturer hasn't reviewed yet are held back too (CLAUDE.md: "AI content is a draft"). The editor
- * preview shows them with a "needs review" badge. Event sections with no upcoming events are dropped.
+ * preview shows them with a "needs review" badge. Blank rows are dropped (templates start with empty
+ * rows for the brand to fill in), and a section with nothing left in it is not shown at all. Event
+ * sections with no upcoming events are dropped.
  */
 export function sectionsToShow(sections: Section[], opts: { preview?: boolean; now?: Date } = {}): Section[] {
   const out: Section[] = [];
   for (const section of sections) {
     if (!section.visible) continue;
     if (!opts.preview && section.aiGenerated && !section.reviewed) continue;
-    if (section.type === "events") {
-      const items = upcomingEvents(section.items, opts.now);
-      if (items.length === 0) continue;
-      out.push({ ...section, items });
-    } else {
-      out.push(section);
-    }
+    const tidy = tidySection(section.type === "events" ? { ...section, items: upcomingEvents(section.items, opts.now) } : section);
+    if (tidy) out.push(tidy);
   }
   return out;
+}
+
+const filled = (v: string | undefined | null) => Boolean(v && v.trim());
+
+/** The section without its blank rows, or null if nothing worth showing is left. */
+export function tidySection(section: Section): Section | null {
+  switch (section.type) {
+    case "facts": {
+      const items = section.items.filter((i) => filled(i.label) && filled(i.value));
+      return items.length ? { ...section, items } : null;
+    }
+    case "story":
+      return filled(section.body) || section.images.some((i) => filled(i.url)) ? section : null;
+    case "tasting": {
+      const t = {
+        ...section,
+        flavors: section.flavors.filter(filled),
+        structure: section.structure.filter((s) => filled(s.label) && s.level > 0),
+        blend: section.blend.filter((b) => filled(b.name) && b.percent > 0),
+        vintage: section.vintage && (filled(section.vintage.year) || filled(section.vintage.body)) ? section.vintage : undefined,
+      };
+      return filled(t.body) || t.flavors.length || t.structure.length || t.blend.length || t.vintage ? t : null;
+    }
+    case "products": {
+      const items = section.items.filter((i) => filled(i.name));
+      return items.length ? { ...section, items } : null;
+    }
+    case "offers":
+    case "events": {
+      const items = section.items.filter((i) => filled(i.title));
+      return items.length ? ({ ...section, items } as Section) : null;
+    }
+    case "memberships": {
+      const tiers = section.tiers
+        .filter((t) => filled(t.name) && (filled(t.price) || t.perks.some(filled) || filled(t.url)))
+        .map((t) => ({ ...t, perks: t.perks.filter(filled) }));
+      return tiers.length ? { ...section, tiers } : null;
+    }
+    case "maker": {
+      const m = {
+        ...section,
+        people: section.people.filter((p) => filled(p.name)),
+        items: section.items.filter((i) => filled(i.title) && filled(i.body)),
+        stats: section.stats.filter((s) => filled(s.label) && filled(s.value)),
+        images: section.images.filter((i) => filled(i.url)),
+      };
+      return filled(m.body) || m.people.length || m.items.length || m.stats.length || m.images.length ? m : null;
+    }
+    case "visit": {
+      const v = {
+        ...section,
+        experiences: section.experiences.filter((e) => filled(e.title)),
+        nearby: section.nearby.filter((n) => filled(n.name)),
+        links: section.links.filter((l) => filled(l.label) && filled(l.url)),
+      };
+      return filled(v.address) || filled(v.body) || filled(v.hours) || filled(v.phone) || v.experiences.length || v.nearby.length || v.links.length
+        ? v
+        : null;
+    }
+  }
+}
+
+/** Google Maps embed for an address. Only loaded after the visitor taps "Show map". */
+export function mapEmbedUrl(address: string): string {
+  return `https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=13&output=embed`;
+}
+
+/** Bronze, silver and gold tiers get medal colours; anything else uses the brand's accent. */
+export function medalColor(name: string): string | null {
+  const n = name.toLowerCase();
+  if (/bron[szc]e|copper/.test(n)) return "#b0703c";
+  if (/silver/.test(n)) return "#9ea4ad";
+  if (/gold/.test(n)) return "#c9a227";
+  if (/platinum|diamond/.test(n)) return "#6f7f91";
+  return null;
 }
 
 /**

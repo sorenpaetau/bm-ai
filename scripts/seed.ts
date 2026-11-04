@@ -48,6 +48,15 @@ async function main() {
                                  ELSE jsonb_set(published_content, '{hero,imageUrl}', ${image}) END
       WHERE id = ${product.id}`;
   }
+  if (product) {
+    // Demo databases seeded before the full wine page (tasting notes, memberships, estate, visit info)
+    // get the new demo content once. After that, edits made in the portal are left alone.
+    const json = sql.json(DEMO_CONTENT);
+    await sql`
+      UPDATE products SET content = ${json}, published_content = ${json}, published_at = now(), updated_at = now()
+      WHERE id = ${product.id}
+        AND NOT coalesce(published_content->'sections', '[]'::jsonb) @> '[{"type":"tasting"}]'::jsonb`;
+  }
   if (!product) {
     [product] = await sql<{ id: string }[]>`
       INSERT INTO products (company_id, sku, name, description, slug, status, content, published_content, published_at)

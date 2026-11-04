@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { MARKETING_NAV, SITE } from "@/lib/site";
-import { LogoMark } from "./icons";
+import { Wordmark } from "./icons";
 import { MobileMenu } from "./marketing/mobile-menu";
 import { NavLinks } from "./marketing/nav-links";
 import { ButtonLink, Container } from "./ui";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link href="/" className={`flex items-center gap-2.5 ${className}`} aria-label={`${SITE.name} home`}>
-      <LogoMark className="h-8 w-8 text-brand" />
-      <span className="font-serif text-xl font-semibold tracking-tight text-ink">{SITE.name}</span>
+    <Link href="/" className={`flex shrink-0 items-center ${className}`} aria-label={`${SITE.name} home`}>
+      <Wordmark name={SITE.name} size="sm" className="sm:hidden" />
+      <Wordmark name={SITE.name} className="hidden sm:flex" />
     </Link>
   );
 }
@@ -17,7 +17,7 @@ export function Logo({ className = "" }: { className?: string }) {
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-paper/80 backdrop-blur-xl backdrop-saturate-150">
-      <Container className="flex h-16 items-center justify-between gap-4">
+      <Container className="flex h-[4.5rem] items-center justify-between gap-4">
         <Logo />
         <NavLinks items={MARKETING_NAV} />
         <div className="flex items-center gap-2">
@@ -28,7 +28,8 @@ export function SiteHeader() {
             </Link>
           </span>
           <ButtonLink href="/starter-kit" className="whitespace-nowrap">
-            Free starter kit
+            <span className="sm:hidden">Starter kit</span>
+            <span className="hidden sm:inline">Free starter kit</span>
           </ButtonLink>
           <MobileMenu
             items={[...MARKETING_NAV, { href: "/starter-kit", label: "Free starter kit" }, { href: "/login", label: "Client portal" }]}
