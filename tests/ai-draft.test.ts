@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import { z } from "zod";
 import { benchJob, parseAnswer } from "../src/lib/ai/bench";
 import { brandPhotos, carryOverBrandMedia } from "../src/lib/ai/brand-media";
-import { cleanLinks, draftRequest } from "../src/lib/ai/brief";
-import { addFindingNotes, checkDraft } from "../src/lib/ai/checks";
+import { cleanLinks, draftRequest, pickedPhotoToInput } from "../src/lib/ai/brief";
+import { addFindingNotes, checkDraft, HERO, OPTIN } from "../src/lib/ai/checks";
 import { buildDraftContent, starterContent, type AiMarketDraft, type DraftInput } from "../src/lib/ai/template";
 import { LandingContent } from "../src/lib/landing";
 
@@ -183,4 +183,31 @@ test("the test bench job carries the exact system prompt, brand message and answ
   assert.ok(job.includes("/tmp/answer.json"));
   assert.deepEqual(parseAnswer('```json\n{"a":1}\n```'), { a: 1 });
   assert.equal(parseAnswer("not json"), null);
+});
+
+test("when a photo couldn't be sent, the AI's pick still points at the right brand photo", () => {
+  // Brand photos 1 and 3 were sent (as the AI's Photo 1 and Photo 2); photo 2 couldn't be loaded.
+  assert.equal((pickedPhotoToInput({ heroPhoto: 2 }, [0, 2]) as { heroPhoto: number }).heroPhoto, 3);
+  assert.equal((pickedPhotoToInput({ heroPhoto: 1 }, [1]) as { heroPhoto: number }).heroPhoto, 2);
+  assert.equal((pickedPhotoToInput({ heroPhoto: 5 }, [0]) as { heroPhoto: number }).heroPhoto, 0, "a pick of a photo we never sent means none");
+  assert.deepEqual(pickedPhotoToInput({ subtitle: "x" }, []), { subtitle: "x" });
+});
+
+test("the line under the product name and the sign-up box are checked too, and fall back to safe text", () => {
+  const content = buildDraftContent(
+    skinDraft({ subtitle: "Treats eczema", optin: { headline: "Join", prompt: "Members rated it 5 stars." } }),
+    skin,
+  );
+  const findings = checkDraft(content, skin);
+  assert.ok(findings.some((f) => f.sectionId === HERO && f.level === "problem"));
+  assert.ok(findings.some((f) => f.sectionId === OPTIN && f.level === "problem"));
+  const fixed = addFindingNotes(content, findings);
+  assert.equal(fixed.hero.subtitle, undefined);
+  assert.equal(fixed.optin.prompt, "Get news and invites from Saltmeadow.");
+  assert.ok(LandingContent.safeParse(fixed).success);
+
+  // A sign-up offer the brand itself gave is fine.
+  const offer = { ...skin, description: `${skin.description} Register for 15% off your next order.` };
+  const ok = buildDraftContent(skinDraft({ optin: { headline: "Register", prompt: "Register for 15% off your next order." } }), offer);
+  assert.ok(!checkDraft(ok, offer).some((f) => f.sectionId === OPTIN), JSON.stringify(checkDraft(ok, offer)));
 });

@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { LandingContent } from "../landing";
 import { BenchWaiting, benchWriter } from "./bench";
-import { draftRequest, type DraftRequest } from "./brief";
+import { draftRequest, pickedPhotoToInput, type DraftRequest } from "./brief";
 import { addFindingNotes, checkDraft } from "./checks";
 import { buildDraftContent, type AiDraft, type AiMarketDraft, type DraftInput } from "./template";
 
@@ -63,7 +63,8 @@ export async function draftLandingContent(input: DraftInput, options: DraftOptio
     }
   } else {
     const photos = await loadPhotos(request, options.loadPhoto ?? httpsPhotos);
-    answer = await claudeWriter(request, photos);
+    const sent = await claudeWriter(request, photos.map((p) => p.loaded));
+    answer = pickedPhotoToInput(sent, photos.map((p) => p.index));
   }
 
   const parsed = request.schema.safeParse(answer);
@@ -75,11 +76,11 @@ export async function draftLandingContent(input: DraftInput, options: DraftOptio
 }
 
 async function loadPhotos(request: DraftRequest, load: PhotoLoader) {
-  const out: LoadedPhoto[] = [];
-  for (const photo of request.photos) {
+  const out: Array<{ loaded: LoadedPhoto; index: number }> = [];
+  for (const [index, photo] of request.photos.entries()) {
     try {
       const loaded = await load(photo.url);
-      if (loaded && ("url" in loaded || SENDABLE.has(loaded.mediaType))) out.push(loaded);
+      if (loaded && ("url" in loaded || SENDABLE.has(loaded.mediaType))) out.push({ loaded, index });
     } catch (err) {
       console.warn("Couldn't load a brand photo for the AI draft", photo.url, err);
     }

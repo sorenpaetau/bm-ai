@@ -74,9 +74,15 @@ export function checkDraft(content: LandingContent, input: DraftInput, extra: st
   const inSource = (match: string) => source.includes(norm(match));
   const findings: Finding[] = [];
 
-  for (const section of content.sections.filter((s) => s.aiGenerated)) {
-    const text = sectionText(section);
-    const push = (level: Finding["level"], message: string) => findings.push({ level, sectionId: section.id, message });
+  // Every AI-written section, plus the AI-written line under the product name and the sign-up box.
+  const parts = [
+    ...content.sections.filter((s) => s.aiGenerated).map((s) => ({ id: s.id, text: sectionText(s) })),
+    ...(content.hero.subtitle ? [{ id: HERO, text: content.hero.subtitle }] : []),
+    { id: OPTIN, text: `${content.optin.headline}\n${content.optin.prompt}` },
+  ];
+
+  for (const { id, text } of parts) {
+    const push = (level: Finding["level"], message: string) => findings.push({ level, sectionId: id, message });
     const notGiven = (re: RegExp) => [...new Set((text.match(re) ?? []).map((m) => m.trim()))].filter((m) => !inSource(m));
 
     const found = (re: RegExp) => [...new Set((text.match(re) ?? []).map((m) => m.trim()))];
@@ -115,14 +121,25 @@ export function checkDraft(content: LandingContent, input: DraftInput, extra: st
   return findings;
 }
 
+/** Finding ids for the two AI-written lines outside the sections. */
+export const HERO = "(hero)";
+export const OPTIN = "(sign-up)";
+
 /**
  * Puts each finding into its section's "Where this came from" note, which the manufacturer sees in
- * the editor next to "I've checked this section" (customers never see it).
+ * the editor next to "I've checked this section" (customers never see it). The line under the
+ * product name and the sign-up box have no such note, so if either breaks a rule it is replaced with
+ * a safe default instead.
  */
 export function addFindingNotes(content: LandingContent, findings: Finding[]): LandingContent {
   if (!findings.length) return content;
+  const broken = (id: string) => findings.some((f) => f.sectionId === id && f.level === "problem");
   return {
     ...content,
+    hero: broken(HERO) ? { ...content.hero, subtitle: undefined } : content.hero,
+    optin: broken(OPTIN)
+      ? { ...content.optin, headline: "Stay connected", prompt: `Get news and invites from ${content.hero.brand}.` }
+      : content.optin,
     sections: content.sections.map((s) => {
       const mine = findings.filter((f) => f.sectionId === s.id);
       return mine.length ? { ...s, sources: [...s.sources, ...mine.map((f) => `Please check: ${f.message}`)] } : s;
