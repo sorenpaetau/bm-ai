@@ -6,18 +6,34 @@ import { marketFor, type MarketTemplate } from "./markets";
 // Turns what the AI writes (AiDraft) into the shared LandingContent shape, and builds the plain
 // starter page used when no AI key is configured. Pure functions, so they are unit tested.
 
+/**
+ * What the brand gives us to write a page from. The portal's new-product form and the page builder
+ * fill this in; the AI writer (draft.ts), the free test bench (scripts/ai-bench.ts) and the plain
+ * starter page all read it.
+ */
 export type DraftInput = {
   companyName: string;
   vertical: Vertical;
   productName: string;
   description: string;
   website?: string | null;
+  /** The brand's own web pages the AI may read (product page, about page). Max MAX_LINKS. */
+  links?: string[];
+  /** Photos the brand uploaded ("/media/<id>" or https). Max MAX_PHOTOS. Never web images. */
+  photos?: DraftPhoto[];
+  /** Suggested retail price exactly as the brand typed it, e.g. "$45". Shown as is; the AI never writes prices. */
+  price?: string | null;
 };
 
+export type DraftPhoto = { url: string; alt?: string };
+
+export const MAX_LINKS = 5;
+export const MAX_PHOTOS = 6;
+
 const basis = z
-  .enum(["description", "general_knowledge"])
+  .enum(["description", "brand_pages", "brand_photos", "general_knowledge"])
   .describe(
-    '"description" if it comes straight from the manufacturer\'s own text, "general_knowledge" if you added it from what is generally known about this kind of product',
+    'Where this came from. If a section mixes sources, give the least certain one (general_knowledge beats brand_photos beats brand_pages beats description), so the brand knows what to check. "description" if it comes straight from the manufacturer\'s own text, "brand_pages" if it comes from the brand\'s own web pages you were given, "brand_photos" if it is something clearly visible in the brand\'s photos, "general_knowledge" if you added it from what is generally known about this kind of product',
   );
 
 /** What we ask Claude for. Text only: no prices, ratings, events or images (see the system prompt). */
@@ -36,7 +52,7 @@ export const AiDraft = z.object({
     .describe("1 or 2 extra short sections, e.g. tasting notes, how to use, the region"),
   optin: z.object({
     headline: z.string().describe("Sign-up box headline, e.g. 'Register this bottle'"),
-    prompt: z.string().describe("One sentence on why to sign up. Do not promise discounts the brand did not mention."),
+    prompt: z.string().describe("One sentence on why to sign up. If the brand offers something for signing up, say it exactly as the brand did (this is the one place a brand's own offer may appear). Never promise anything the brand did not mention."),
   }),
 });
 export type AiDraft = z.infer<typeof AiDraft>;
@@ -59,20 +75,20 @@ export const AiWineDraft = AiDraft.extend({
     .describe("Tasting notes"),
   blend: z
     .array(z.object({ name: z.string(), percent: z.number() }))
-    .describe("The grapes and their percentages, ONLY if the description gives them. Otherwise an empty list"),
+    .describe("The grapes and their percentages, ONLY if the brand gives them (description or its pages). Otherwise an empty list"),
   vintage: z
     .object({
       year: z.string().describe("The vintage year from the product name or description, or empty"),
-      body: z.string().describe("What the year was like for growing, ONLY from the description. Otherwise empty"),
+      body: z.string().describe("What the year was like for growing, ONLY from the brand (description or its pages). Otherwise empty"),
       basis,
     })
     .describe("The vintage"),
   estate: z
     .object({
-      body: z.string().describe("1 or 2 sentences on the winery, estate grown or sourced. Empty if the description says nothing"),
+      body: z.string().describe("1 or 2 sentences on the winery, estate grown or sourced. Empty if the brand says nothing"),
       items: z
         .array(z.object({ title: z.string(), body: z.string(), basis }))
-        .describe("Only practices the description mentions: farming (organic, dry farmed...), harvest (by hand...), winemaking, production size. Short titles like 'Our farming'"),
+        .describe("Only practices the brand mentions (description or its pages): farming (organic, dry farmed...), harvest (by hand...), winemaking, production size. Short titles like 'Our farming'"),
     })
     .describe("About the estate. Never invent people's names"),
 });
@@ -95,7 +111,7 @@ export function aiMarketDraftSchema(market: MarketTemplate) {
           body: z.string().describe("1 to 3 short sentences for a shopper"),
           items: z
             .array(z.object({ label: z.string(), value: z.string() }))
-            .describe("Short label/value rows, e.g. Sizes: XS to XL. Only facts from the description"),
+            .describe("Short label/value rows, e.g. Sizes: XS to XL. Only facts the brand gave"),
           chips: z.array(z.string()).describe("Optional one- to three-word chips, e.g. ingredient names or devices it works with. Often empty"),
           basis,
         }),
@@ -121,8 +137,13 @@ export type AiMarketDraft = {
 
 export const SOURCE_LABELS = {
   description: "Your product description",
+  brand_pages: "Your web pages",
+  brand_photos: "Your photos",
   general_knowledge: "AI general knowledge: please check",
 } as const;
+
+/** Every draft may also name the photo to show big at the top (1 to N, 0 for none). */
+type PhotoPick = { heroPhoto?: number };
 
 const THEMES: Record<Vertical, LandingContent["theme"]> = {
   wine_spirits: { primary: "#5b1a2b", accent: "#c9a227", font: "serif" },
@@ -158,7 +179,7 @@ function shell(input: DraftInput, sections: Section[], optin: { headline: string
     theme: THEMES[input.vertical],
     hero: { brand: input.companyName, title: input.productName },
     sections,
-    buttons: input.website ? [{ label: "Visit our website", url: input.website, style: "secondary", kind: "link" }] : [],
+    buttons: input.website ? [{ label: "Visit our website", url: input.website, style: "secondary", kind: "link", slot: "website" }] : [],
     // CLAUDE.md: the age gate defaults on for wine and spirits.
     ageGate: { enabled: isAlcohol(input.vertical), minimumAge: 21 },
     disclaimer: isAlcohol(input.vertical) ? "Please enjoy responsibly." : undefined,
@@ -167,7 +188,24 @@ function shell(input: DraftInput, sections: Section[], optin: { headline: string
 }
 
 /** Every AI-written section is marked aiGenerated and not reviewed, so it shows "needs review". */
-export function buildDraftContent(draft: AiDraft | AiWineDraft | AiMarketDraft, input: DraftInput): LandingContent {
+export function buildDraftContent(draft: (AiDraft | AiWineDraft | AiMarketDraft) & PhotoPick, input: DraftInput): LandingContent {
+  return withBrandInputs(draftByKind(draft, input), input, draft.heroPhoto);
+}
+
+/**
+ * Adds what the brand typed or uploaded as is: the price and the hero photo. The AI only picks which
+ * of the brand's own photos goes on top; it never adds an image the brand didn't upload.
+ */
+export function withBrandInputs(content: LandingContent, input: DraftInput, heroPhoto?: number): LandingContent {
+  const photos = (input.photos ?? []).slice(0, MAX_PHOTOS);
+  const pick = heroPhoto && heroPhoto >= 1 && heroPhoto <= photos.length ? photos[heroPhoto - 1] : photos[0];
+  if (pick && !content.hero.imageUrl) content.hero.imageUrl = pick.url;
+  const price = input.price?.trim();
+  if (price && !content.hero.price) content.hero.price = price;
+  return content;
+}
+
+function draftByKind(draft: AiDraft | AiWineDraft | AiMarketDraft, input: DraftInput): LandingContent {
   const market = marketFor(input.vertical);
   if (market && "topics" in draft) return marketContent(input, market, draft);
   if ("topics" in draft) throw new Error(`No market template for ${input.vertical}`);
@@ -216,6 +254,10 @@ function moreSections(draft: AiDraft): Section[] {
 
 /** A plain starter page the manufacturer fills in by hand (used when AI is off or fails). */
 export function starterContent(input: DraftInput): LandingContent {
+  return withBrandInputs(plainStarter(input), input);
+}
+
+function plainStarter(input: DraftInput): LandingContent {
   if (isAlcohol(input.vertical)) return wineContent(input);
   const market = marketFor(input.vertical);
   if (market) return marketContent(input, market);
@@ -424,6 +466,6 @@ export function marketContent(input: DraftInput, market: MarketTemplate, draft?:
 
   const content = shell(input, sections, draft?.optin ?? starterOptin(input));
   content.hero.subtitle = draft?.subtitle || undefined;
-  if (input.website) content.buttons = [{ label: "Go to website", url: input.website, style: "secondary", kind: "link" }];
+  if (input.website) content.buttons = [{ label: "Go to website", url: input.website, style: "secondary", kind: "link", slot: "website" }];
   return content;
 }

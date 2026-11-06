@@ -208,3 +208,6 @@ CREATE TABLE IF NOT EXISTS uploads (
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS uploads_company_idx ON uploads (company_id, created_at DESC);
+
+-- AI page drafts: the brand's own web pages the AI writer may read (product page, about page). Max 5.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS brand_links text[] NOT NULL DEFAULT '{}';

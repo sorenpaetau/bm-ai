@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 !.env.example
+
+# AI draft test bench jobs and answers (npm run ai:bench)
+.ai-bench/

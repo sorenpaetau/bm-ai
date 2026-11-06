@@ -139,7 +139,7 @@ const COSMETICS: MarketTemplate = {
   noun: "product",
   optinHeadline: "Register your product",
   guide:
-    "This is a beauty or skincare page. Never claim it treats, cures or prevents any condition (acne, eczema, wrinkles as a medical issue). Testing claims (dermatologist tested, hypoallergenic, non-comedogenic), certifications (cruelty-free, Leaping Bunny, vegan) and clinical results must come word for word from the description, or be left out.",
+    "This is a beauty or skincare page. Never claim it treats, cures or prevents any condition (acne, eczema, wrinkles as a medical issue). Testing claims (dermatologist tested, hypoallergenic, non-comedogenic), certifications (cruelty-free, Leaping Bunny, vegan) and clinical results must come word for word from the brand (its description or its own pages), or be left out.",
   topics: [
     {
       id: "key-ingredients",
@@ -348,7 +348,7 @@ export function marketFor(vertical: Vertical): MarketTemplate | undefined {
 
 /** The topic-box guide for a retail, cosmetics or electronics page, from Jens's market docs. */
 export function marketGuide(market: MarketTemplate) {
-  const rule = { describe: "description, plus widely known facts about this kind of product (basis general_knowledge)", brand: "ONLY the description. Otherwise leave this topic out" };
+  const rule = { describe: "description, plus widely known facts about this kind of product (basis general_knowledge)", brand: "ONLY what the brand gave you (description, its own pages, its photos). Otherwise leave this topic out" };
   const topics = market.topics
     .filter((t) => t.ai !== "never")
     .map((t) => `- "${t.id}" (${t.title}): ${t.guide} Source: ${rule[t.ai as "describe" | "brand"]}.${t.rows.length ? ` Useful row labels: ${t.rows.map((r) => `"${r}"`).join(", ")}.` : ""}`)
@@ -356,8 +356,8 @@ export function marketGuide(market: MarketTemplate) {
   const never = market.topics.filter((t) => t.ai === "never").map((t) => t.title);
   return `
 ${market.guide}
-The page is a set of topic boxes, one per thing shoppers want to know. Each box has a short answer shown big, one to three sentences, and optional label/value rows and chips. Fill the topics you can:
+The page is a set of topic boxes, one per thing shoppers want to know. Each box has a short answer shown big (2 to 6 words), a body of one to three sentences, and optional label/value rows and chips. Fill the topics you can:
 ${topics}
 Do not write ${never.join(" or ")}: the brand adds real ones.
-The story is the brand's short history and what it stands for, only from the description.`;
+The story is the brand's short history and what it stands for, only from what the brand gave you.`;
 }
