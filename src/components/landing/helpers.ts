@@ -73,15 +73,26 @@ export function sectionsToShow(sections: Section[], opts: { preview?: boolean; n
 
 const filled = (v: string | undefined | null) => Boolean(v && v.trim());
 
-/** The section without its blank rows, or null if nothing worth showing is left. */
+/**
+ * The section without its blank rows and photos, or null if nothing worth showing is left. Photos alone
+ * are enough for a topic box or a story ("upload pictures" under every topic); other sections need
+ * their own content first.
+ */
 export function tidySection(section: Section): Section | null {
+  const images = (section.images ?? []).filter((i) => filled(i.url));
+  const tidy = tidyFields(section, images.length > 0);
+  if (!tidy) return null;
+  return section.images === undefined && images.length === 0 ? tidy : { ...tidy, images };
+}
+
+function tidyFields(section: Section, hasImages: boolean): Section | null {
   switch (section.type) {
     case "facts": {
       const items = section.items.filter((i) => filled(i.label) && filled(i.value));
       return items.length ? { ...section, items } : null;
     }
     case "story":
-      return filled(section.body) || section.images.some((i) => filled(i.url)) ? section : null;
+      return filled(section.body) || hasImages ? section : null;
     case "tasting": {
       const t = {
         ...section,
@@ -113,9 +124,8 @@ export function tidySection(section: Section): Section | null {
         people: section.people.filter((p) => filled(p.name)),
         items: section.items.filter((i) => filled(i.title) && filled(i.body)),
         stats: section.stats.filter((s) => filled(s.label) && filled(s.value)),
-        images: section.images.filter((i) => filled(i.url)),
       };
-      return filled(m.body) || m.people.length || m.items.length || m.stats.length || m.images.length ? m : null;
+      return filled(m.body) || m.people.length || m.items.length || m.stats.length || hasImages ? m : null;
     }
     case "topic": {
       const t = {
@@ -123,7 +133,7 @@ export function tidySection(section: Section): Section | null {
         items: section.items.filter((i) => filled(i.label) && filled(i.value)),
         chips: section.chips.filter(filled),
       };
-      return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length ? t : null;
+      return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length || hasImages ? t : null;
     }
     case "visit": {
       const v = {

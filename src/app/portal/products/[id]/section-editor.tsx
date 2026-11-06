@@ -4,7 +4,9 @@ import { useState } from "react";
 import { tidySection } from "@/components/landing/helpers";
 import { inputClass } from "@/components/ui";
 import type { Section, SectionType } from "@/lib/landing";
+import type { TopicExample } from "../../_lib/builder";
 import { ItemList, TextArea, TextField, Toggle } from "./fields";
+import { PhotoField, PhotoStrip } from "./photos";
 
 export const SECTION_TYPES: Record<SectionType, { label: string; hint: string }> = {
   facts: { label: "Fact box", hint: "Short label and value pairs, e.g. Alcohol: 14.5%. Star the big ones to show them as tiles." },
@@ -85,13 +87,19 @@ export function blankSection(type: SectionType): Section {
 type Props = {
   section: Section;
   onChange: (section: Section) => void;
+  /** Like onChange, but works from the newest saved version (photo uploads finish after a delay). */
+  onUpdate: (fn: (section: Section) => Section) => void;
+  /** Its place on the page, shown as a big number so the form reads top to bottom like the page. */
+  number: number;
+  /** Example answers from a finished demo page in the same market, shown greyed out. */
+  example?: TopicExample;
   onMove: (delta: -1 | 1) => void;
   onRemove: () => void;
   first: boolean;
   last: boolean;
 };
 
-export function SectionEditor({ section, onChange, onMove, onRemove, first, last }: Props) {
+export function SectionEditor({ section, onChange, onUpdate, number, example, onMove, onRemove, first, last }: Props) {
   const needsReview = section.aiGenerated && !section.reviewed;
   // `patch` keeps the section's own type; casting is safe because each editor only patches its own fields.
   const patch = (p: Partial<Section>) => onChange({ ...section, ...p } as Section);
@@ -103,6 +111,9 @@ export function SectionEditor({ section, onChange, onMove, onRemove, first, last
       }`}
     >
       <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white" aria-hidden="true">
+          {number}
+        </span>
         <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-700">{SECTION_TYPES[section.type].label}</span>
         {needsReview && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">AI draft · Needs review</span>}
         {section.aiGenerated && section.reviewed && (
@@ -135,7 +146,12 @@ export function SectionEditor({ section, onChange, onMove, onRemove, first, last
 
       <div className="space-y-4">
         <div className="grid gap-2 sm:grid-cols-[2fr_1fr]">
-          <TextField label="Section heading" value={section.title} onChange={(title) => patch({ title })} />
+          <TextField
+            label="Heading"
+            value={section.title}
+            onChange={(title) => patch({ title })}
+            placeholder={section.type === "topic" ? "e.g. Size & fit" : undefined}
+          />
           <TextField
             label="Jump button name (optional)"
             value={section.navLabel}
@@ -143,7 +159,12 @@ export function SectionEditor({ section, onChange, onMove, onRemove, first, last
             placeholder="e.g. Taste"
           />
         </div>
-        <SectionFields section={section} patch={patch} />
+        <SectionFields section={section} patch={patch} update={onUpdate} example={example} />
+        <PhotoStrip
+          images={section.images ?? []}
+          onChange={(fn) => onUpdate((s) => ({ ...s, images: fn(s.images ?? []) }) as Section)}
+          {...PHOTO_STRIP_WORDING[section.type]}
+        />
       </div>
 
       {section.aiGenerated && (
@@ -175,7 +196,48 @@ export function SectionEditor({ section, onChange, onMove, onRemove, first, last
   );
 }
 
-function SectionFields({ section, patch }: { section: Section; patch: (p: Partial<Section>) => void }) {
+/** "e.g. XS, S, M, L, XL" for a row whose label matches the demo page, or a general example. */
+function rowExample(example: TopicExample | undefined, label: string): string | undefined {
+  if (!example) return "e.g. XS to XL";
+  const value = example.rows[label.trim().toLowerCase()];
+  return value ? `e.g. ${value}` : undefined;
+}
+
+/**
+ * Puts a finished upload on the row it was meant for. The row is found by its place in the list, but
+ * only if it is still the same row (same name and same old photo); if the brand removed or reordered
+ * rows while the photo uploaded, the photo is dropped rather than landing on the wrong row.
+ */
+function setPhotoAt<T extends { name: string; imageUrl?: string }>(rows: T[], index: number, was: T, imageUrl: string | undefined): T[] {
+  const row = rows[index];
+  if (!row || row.name !== was.name || row.imageUrl !== was.imageUrl) return rows;
+  return rows.map((r, j) => (j === index ? { ...r, imageUrl } : r));
+}
+
+/** What the pictures area under a section is for, in the brand's words. */
+const PHOTO_STRIP_WORDING: Partial<Record<SectionType, { label: string; hint: string }>> = {
+  story: {
+    label: "Pictures for your story",
+    hint: "Optional. The people who make it, your workshop or farm, your history. Only use photos your company owns.",
+  },
+  maker: {
+    label: "Pictures of the maker",
+    hint: "Optional. Your team at work, the vineyard, the workshop. Only use photos your company owns.",
+  },
+};
+
+function SectionFields({
+  section,
+  patch,
+  update,
+  example,
+}: {
+  section: Section;
+  patch: (p: Partial<Section>) => void;
+  /** For photo uploads, which finish later: applies the change to the newest version of the section. */
+  update: (fn: (section: Section) => Section) => void;
+  example?: TopicExample;
+}) {
   switch (section.type) {
     case "facts":
       return (
@@ -208,7 +270,6 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
       return (
         <div className="space-y-3">
           <TextArea label="Text" rows={5} value={section.body} onChange={(body) => patch({ body })} hint="Leave a blank line between paragraphs." />
-          <ImagesField images={section.images} onChange={(images) => patch({ images })} />
         </div>
       );
     case "tasting":
@@ -277,7 +338,7 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
             onChange={(items) => patch({ items })}
             blank={(): Item<typeof section> => ({ name: "" })}
             addLabel="Add a product"
-            render={(item, set) => (
+            render={(item, set, index) => (
               <div className="grid gap-2 sm:grid-cols-3">
                 <TextField label="Name" value={item.name} onChange={(name) => set({ name })} />
                 <TextField label="Price (optional)" value={item.price} onChange={(price) => set({ price: price || undefined })} placeholder="$42" />
@@ -288,12 +349,15 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
                   value={item.description}
                   onChange={(d) => set({ description: d || undefined })}
                 />
-                <TextField
-                  label="Photo link (optional)"
-                  type="url"
-                  value={item.imageUrl}
-                  onChange={(imageUrl) => set({ imageUrl: imageUrl || undefined })}
-                />
+                <div className="sm:col-span-3">
+                  <PhotoField
+                    label="Photo (optional)"
+                    value={item.imageUrl}
+                    onChange={(imageUrl) =>
+                      update((s) => (s.type === "products" ? { ...s, items: setPhotoAt(s.items, index, item, imageUrl) } : s))
+                    }
+                  />
+                </div>
               </div>
             )}
           />
@@ -377,14 +441,20 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
             onChange={(people) => patch({ people })}
             blank={(): Person => ({ name: "" })}
             addLabel="Add a person (e.g. your winemaker)"
-            render={(p, set) => (
+            render={(p, set, index) => (
               <div className="space-y-2">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <TextField label="Name" value={p.name} onChange={(name) => set({ name })} />
                   <TextField label="Role (optional)" value={p.role} onChange={(role) => set({ role: role || undefined })} placeholder="Winemaker" />
                 </div>
                 <TextArea label="About them (optional)" rows={2} value={p.body} onChange={(body) => set({ body: body || undefined })} />
-                <TextField label="Photo link (optional)" type="url" value={p.imageUrl} onChange={(imageUrl) => set({ imageUrl: imageUrl || undefined })} />
+                <PhotoField
+                  label="Photo (optional)"
+                  value={p.imageUrl}
+                  onChange={(imageUrl) =>
+                    update((s) => (s.type === "maker" ? { ...s, people: setPhotoAt(s.people, index, p, imageUrl) } : s))
+                  }
+                />
               </div>
             )}
           />
@@ -401,7 +471,6 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
               </div>
             )}
           />
-          <ImagesField images={section.images} onChange={(images) => patch({ images })} />
         </div>
       );
     case "events":
@@ -432,7 +501,7 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
               label="Short answer, shown big"
               value={section.answer}
               onChange={(answer) => patch({ answer })}
-              placeholder="e.g. 100% cashmere"
+              placeholder={example?.answer ? `e.g. ${example.answer}` : "e.g. 100% cashmere"}
             />
             <label className="block space-y-1">
               <span className="text-xs font-medium text-muted">Picture</span>
@@ -445,7 +514,13 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
               </select>
             </label>
           </div>
-          <TextArea label="Details (optional)" rows={3} value={section.body} onChange={(body) => patch({ body })} />
+          <TextArea
+            label="Details (optional)"
+            rows={3}
+            value={section.body}
+            onChange={(body) => patch({ body })}
+            placeholder={example?.body ? `e.g. ${example.body}` : undefined}
+          />
           <p className="text-xs font-medium text-muted">Key facts</p>
           <ItemList
             items={section.items}
@@ -455,7 +530,12 @@ function SectionFields({ section, patch }: { section: Section; patch: (p: Partia
             render={(item, set) => (
               <div className="grid gap-2 sm:grid-cols-[1fr_2fr]">
                 <TextField label="Label" value={item.label} onChange={(label) => set({ label })} placeholder="Sizes" />
-                <TextField label="Value" value={item.value} onChange={(value) => set({ value })} placeholder="XS to XL" />
+                <TextField
+                  label="Value"
+                  value={item.value}
+                  onChange={(value) => set({ value })}
+                  placeholder={rowExample(example, item.label)}
+                />
               </div>
             )}
           />
@@ -554,7 +634,6 @@ type Tier = Extract<Section, { type: "memberships" }>["tiers"][number];
 type Person = Extract<Section, { type: "maker" }>["people"][number];
 type Experience = Extract<Section, { type: "visit" }>["experiences"][number];
 type Nearby = Extract<Section, { type: "visit" }>["nearby"][number];
-type Image = Extract<Section, { type: "story" }>["images"][number];
 
 /** A list of short strings edited as one text box (comma separated, or one per line). */
 function ListField({
@@ -624,25 +703,5 @@ function LevelField({ value, onChange }: { value: number; onChange: (v: number) 
         ))}
       </select>
     </label>
-  );
-}
-
-function ImagesField({ images, onChange }: { images: Image[]; onChange: (images: Image[]) => void }) {
-  return (
-    <div className="space-y-2">
-      <p className="text-xs font-medium text-muted">Photos (optional, only photos your company owns)</p>
-      <ItemList
-        items={images}
-        onChange={onChange}
-        blank={(): Image => ({ url: "", alt: "" })}
-        addLabel="Add a photo"
-        render={(img, set) => (
-          <div className="grid gap-2 sm:grid-cols-2">
-            <TextField label="Photo link" type="url" value={img.url} onChange={(url) => set({ url })} />
-            <TextField label="What it shows" value={img.alt} onChange={(alt) => set({ alt })} placeholder="Our vineyard at harvest" />
-          </div>
-        )}
-      />
-    </div>
   );
 }

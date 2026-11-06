@@ -140,14 +140,24 @@ export function LandingView({
               </p>
             )}
           </div>
-          {heroImage && (
-            <img
-              src={heroImage}
-              alt={hero.title}
-              fetchPriority="high"
-              className="relative mx-auto mt-6 max-h-[52vh] w-full animate-rise object-contain drop-shadow-[0_24px_30px_rgb(0_0_0/0.45)]"
-            />
-          )}
+          {heroImage &&
+            (isDrawing(heroImage) ? (
+              <img
+                src={heroImage}
+                alt={hero.title}
+                fetchPriority="high"
+                className="relative mx-auto mt-6 max-h-[52vh] w-full animate-rise object-contain drop-shadow-[0_24px_30px_rgb(0_0_0/0.45)]"
+              />
+            ) : (
+              // A brand's own photo: shown whole, with soft rounded corners. A cut-out product on a
+              // see-through background still floats, because the corners only round the empty space.
+              <img
+                src={heroImage}
+                alt={hero.title}
+                fetchPriority="high"
+                className="relative mx-auto mt-6 block h-auto max-h-[56vh] w-auto max-w-[calc(100%-2.5rem)] animate-rise rounded-[1.5rem] object-contain drop-shadow-[0_20px_24px_rgb(0_0_0/0.4)]"
+              />
+            ))}
           <div className={`animate-rise px-6 text-center [animation-delay:80ms] ${heroImage ? "pt-4 pb-24" : "pt-10 pb-24"}`}>
             <h1 className={`${heading} text-[2.75rem] leading-[1.02] tracking-[-0.02em] sm:text-6xl`}>{hero.title}</h1>
             {hero.subtitle && (
@@ -225,6 +235,11 @@ export function LandingView({
       </main>
     </div>
   );
+}
+
+/** Our own demo drawings (SVG) float on the page; anything else is treated as a photo. */
+function isDrawing(url: string) {
+  return /\.svg(\?|#|$)/i.test(url);
 }
 
 /**
@@ -488,6 +503,8 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
         {section.title}
       </h2>
       <SectionBody section={section} />
+      <ImageStrip images={section.images ?? []} className="mt-5" />
+      {"link" in section && <SectionLink link={section.link} />}
     </section>
   );
 }
@@ -509,20 +526,22 @@ function Paragraphs({ text, className = "text-[17px] leading-relaxed text-ink/85
   );
 }
 
-function ImageStrip({ images }: { images: Array<{ url: string; alt: string }> }) {
+/** The brand's photos for a section: one full-width photo, or a row to swipe through. */
+function ImageStrip({ images, className = "" }: { images: Array<{ url: string; alt: string }>; className?: string }) {
   const list = images.flatMap((img) => {
     const src = safeUrl(img.url);
     return src ? [{ src, alt: img.alt }] : [];
   });
   if (list.length === 0) return null;
   return (
-    <div className="-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pt-2 [scrollbar-width:none] sm:-mx-7 sm:scroll-px-7 sm:px-7">
+    <div className={`-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pt-2 [scrollbar-width:none] sm:-mx-7 sm:scroll-px-7 sm:px-7 ${className}`}>
       {list.map((img, i) => (
         <img
           key={i}
           src={img.src}
           alt={img.alt}
           loading="lazy"
+          decoding="async"
           className={`h-56 snap-start rounded-2xl bg-[var(--lp-tint)] object-cover ${list.length === 1 ? "w-full" : "w-4/5 shrink-0"}`}
         />
       ))}
@@ -607,7 +626,6 @@ function SectionBody({ section }: { section: Section }) {
               {p}
             </p>
           ))}
-          <ImageStrip images={section.images} />
         </div>
       );
 
@@ -740,7 +758,6 @@ function SectionBody({ section }: { section: Section }) {
                 );
               })}
             </ul>
-            <SectionLink link={section.link} />
           </>
         );
       }
@@ -778,7 +795,6 @@ function SectionBody({ section }: { section: Section }) {
               );
             })}
           </ul>
-          <SectionLink link={section.link} />
         </>
       );
     }
@@ -815,7 +831,6 @@ function SectionBody({ section }: { section: Section }) {
               );
             })}
           </ul>
-          <SectionLink link={section.link} />
         </>
       );
 
@@ -881,7 +896,6 @@ function SectionBody({ section }: { section: Section }) {
               );
             })}
           </ul>
-          <SectionLink link={section.link} />
         </div>
       );
 
@@ -999,7 +1013,6 @@ function SectionBody({ section }: { section: Section }) {
             </ul>
           )}
 
-          <ImageStrip images={section.images} />
         </div>
       );
 
@@ -1039,7 +1052,6 @@ function SectionBody({ section }: { section: Section }) {
               ))}
             </dl>
           )}
-          <SectionLink link={section.link} />
         </div>
       );
 

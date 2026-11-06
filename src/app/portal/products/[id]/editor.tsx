@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { LandingContent, Section, SectionType } from "@/lib/landing";
 import { Button, inputClass } from "@/components/ui";
+import { otherButtonIndexes, quickLinkUrl, setQuickLink, type TopicExample } from "../../_lib/builder";
 import { publishBlockers } from "../../_lib/publish";
 import { publish, saveDraft } from "../actions";
 import { ItemList, Panel, TextArea, TextField, Toggle } from "./fields";
+import { PhotoField, PhotoProductContext } from "./photos";
 import { blankSection, SECTION_TYPES, SectionEditor } from "./section-editor";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
@@ -17,11 +19,13 @@ type Props = {
   live: boolean;
   liveIsCurrent: boolean;
   verified: boolean;
+  /** Example answers for topic boxes, keyed by topic id (from the demo page for this market). */
+  examples?: Record<string, TopicExample>;
 };
 
 const AUTOSAVE_MS = 1200;
 
-export function Editor({ productId, slug, initial, live, liveIsCurrent, verified }: Props) {
+export function Editor({ productId, slug, initial, live, liveIsCurrent, verified, examples = {} }: Props) {
   const [content, setContent] = useState(initial);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -93,9 +97,17 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
   }
 
   const setSection = (i: number) => (section: Section) => update((d) => void (d.sections[i] = section));
+  // Photo uploads finish a moment later, so find the section by id in the newest version.
+  const updateSection = (id: string) => (fn: (section: Section) => Section) =>
+    update((d) => {
+      const k = d.sections.findIndex((s) => s.id === id);
+      if (k >= 0) d.sections[k] = fn(d.sections[k]);
+    });
   const [newType, setNewType] = useState<SectionType>("story");
+  const others = otherButtonIndexes(content.buttons);
 
   return (
+    <PhotoProductContext.Provider value={productId}>
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-5">
         {/* Status and publish bar */}
@@ -147,7 +159,22 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           )}
         </div>
 
-        <Panel title="Top of the page" description="The first thing customers see after they tap.">
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
+          <p className="font-semibold">Fill in the blanks, top to bottom</p>
+          <p className="mt-1">
+            This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each topic
+            button. Add pictures anywhere you see the camera. Anything you leave empty simply stays off your page.
+          </p>
+        </div>
+
+        <Panel title="Step 1 · Main photo and name" description="The first thing shoppers see after they tap the sticker.">
+          <PhotoField
+            size="hero"
+            label="Main photo"
+            value={content.hero.imageUrl}
+            onChange={(url) => update((d) => void (d.hero.imageUrl = url))}
+            hint="A clear photo of the product itself. A plain or see-through background looks best. Only use photos your company owns."
+          />
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField label="Brand name" value={content.hero.brand} onChange={(v) => update((d) => void (d.hero.brand = v))} />
             <TextField label="Product name" value={content.hero.title} onChange={(v) => update((d) => void (d.hero.title = v))} />
@@ -171,27 +198,84 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
               placeholder="Suggested retail price"
             />
           </div>
-          <TextField
-            label="Main photo link (optional)"
-            type="url"
-            value={content.hero.imageUrl}
-            onChange={(v) => update((d) => void (d.hero.imageUrl = v || undefined))}
-            hint="Use only photos your company owns. Photo uploads are coming soon."
-          />
+        </Panel>
+
+        <Panel
+          title="Step 2 · Webstore and website buttons"
+          description="The two big buttons right under the photo. Leave one empty and that button won't show."
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <TextField
+              label="Your webstore link"
+              type="url"
+              value={quickLinkUrl(content, "webstore")}
+              onChange={(v) => update((d) => void (d.buttons = setQuickLink(d.buttons, "webstore", v)))}
+              placeholder="https://yourbrand.com/shop"
+              hint="Shows as “Go to webstore”."
+            />
+            <TextField
+              label="Your website link"
+              type="url"
+              value={quickLinkUrl(content, "website")}
+              onChange={(v) => update((d) => void (d.buttons = setQuickLink(d.buttons, "website", v)))}
+              placeholder="https://yourbrand.com"
+              hint="Shows as “Go to website”."
+            />
+          </div>
+          <details className="rounded-lg border border-line p-3" open={others.length > 0}>
+            <summary className="cursor-pointer text-sm font-medium">More buttons (optional)</summary>
+            <p className="mt-1 mb-3 text-xs text-muted">For example “Book a tasting” or “Call us”.</p>
+            <ItemList
+              items={others.map((i) => content.buttons[i])}
+              onChange={(next) =>
+                update((d) => void (d.buttons = [...d.buttons.filter((_, i) => !otherButtonIndexes(d.buttons).includes(i)), ...next]))
+              }
+              blank={() => ({ label: "", url: "", style: "secondary" as const, kind: "link" as const })}
+              addLabel="Add a button"
+              render={(b, set) => (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <TextField label="Button text" value={b.label} onChange={(label) => set({ label })} placeholder="Book a tasting" />
+                  <TextField label="Link" type="url" value={b.url} onChange={(url) => set({ url })} placeholder="https://" />
+                  <label className="block space-y-1">
+                    <span className="text-xs font-medium text-muted">What it links to</span>
+                    <select value={b.kind} onChange={(e) => set({ kind: e.target.value as typeof b.kind })} className={inputClass}>
+                      <option value="link">A web page</option>
+                      <option value="shopify">My online shop (Shopify)</option>
+                      <option value="phone">A phone number (tel:)</option>
+                      <option value="email">An email address (mailto:)</option>
+                    </select>
+                  </label>
+                  <label className="block space-y-1">
+                    <span className="text-xs font-medium text-muted">Style</span>
+                    <select value={b.style} onChange={(e) => set({ style: e.target.value as typeof b.style })} className={inputClass}>
+                      <option value="primary">Solid (main action)</option>
+                      <option value="secondary">Outline</option>
+                    </select>
+                  </label>
+                </div>
+              )}
+            />
+          </details>
         </Panel>
 
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <h2 className="font-semibold">Page sections</h2>
-              <p className="text-sm text-muted">Shown in this order. Hidden sections stay saved but customers don&apos;t see them.</p>
+              <h2 className="font-semibold">Step 3 · Your topics</h2>
+              <p className="text-sm text-muted">
+                Each box below gets its own jump button under the photo, in this order. Give a short answer, a few details and pictures. Empty
+                boxes stay off the page, and hidden ones stay saved but shoppers don&apos;t see them.
+              </p>
             </div>
           </div>
           {content.sections.map((section, i) => (
             <SectionEditor
               key={section.id}
               section={section}
+              number={i + 1}
+              example={examples[section.id]}
               onChange={setSection(i)}
+              onUpdate={updateSection(section.id)}
               first={i === 0}
               last={i === content.sections.length - 1}
               onMove={(delta) =>
@@ -204,6 +288,10 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
             />
           ))}
           <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-dashed border-line p-4">
+            <Button type="button" onClick={() => update((d) => void d.sections.push({ ...blankSection("topic"), title: "" }))}>
+              + Add a topic
+            </Button>
+            <span className="text-xs text-muted">or add a different kind of box:</span>
             <select value={newType} onChange={(e) => setNewType(e.target.value as SectionType)} className={`${inputClass} w-auto`}>
               {Object.entries(SECTION_TYPES).map(([type, { label }]) => (
                 <option key={type} value={type}>
@@ -218,38 +306,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           </div>
         </div>
 
-        <Panel title="Buttons" description="Big buttons near the top, e.g. Buy this wine, Book a tasting.">
-          <ItemList
-            items={content.buttons}
-            onChange={(buttons) => update((d) => void (d.buttons = buttons))}
-            blank={() => ({ label: "", url: "", style: "primary" as const, kind: "link" as const })}
-            addLabel="Add a button"
-            render={(b, set) => (
-              <div className="grid gap-2 sm:grid-cols-2">
-                <TextField label="Button text" value={b.label} onChange={(label) => set({ label })} placeholder="Buy this wine" />
-                <TextField label="Link" type="url" value={b.url} onChange={(url) => set({ url })} placeholder="https://" />
-                <label className="block space-y-1">
-                  <span className="text-xs font-medium text-muted">What it links to</span>
-                  <select value={b.kind} onChange={(e) => set({ kind: e.target.value as typeof b.kind })} className={inputClass}>
-                    <option value="link">A web page</option>
-                    <option value="shopify">My online shop (Shopify)</option>
-                    <option value="phone">A phone number (tel:)</option>
-                    <option value="email">An email address (mailto:)</option>
-                  </select>
-                </label>
-                <label className="block space-y-1">
-                  <span className="text-xs font-medium text-muted">Style</span>
-                  <select value={b.style} onChange={(e) => set({ style: e.target.value as typeof b.style })} className={inputClass}>
-                    <option value="primary">Solid (main action)</option>
-                    <option value="secondary">Outline</option>
-                  </select>
-                </label>
-              </div>
-            )}
-          />
-        </Panel>
-
-        <Panel title="Sign-up box" description="Lets customers register the product and join your list. This is how you stay in touch with them.">
+        <Panel title="Step 4 · Sign-up box" description="Lets shoppers register the product and join your list. This is how you stay in touch with them.">
           <Toggle label="Show the sign-up box" checked={content.optin.enabled} onChange={(v) => update((d) => void (d.optin.enabled = v))} />
           {content.optin.enabled && (
             <>
@@ -278,7 +335,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           )}
         </Panel>
 
-        <Panel title="Look and rules">
+        <Panel title="Step 5 · Logo, colours and rules">
           <div className="grid gap-3 sm:grid-cols-3">
             <ColorField label="Main colour" value={content.theme.primary} onChange={(v) => update((d) => void (d.theme.primary = v))} />
             <ColorField label="Accent colour" value={content.theme.accent} onChange={(v) => update((d) => void (d.theme.accent = v))} />
@@ -294,11 +351,11 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
               </select>
             </label>
           </div>
-          <TextField
-            label="Logo link (optional)"
-            type="url"
+          <PhotoField
+            label="Logo (optional)"
             value={content.theme.logoUrl}
-            onChange={(v) => update((d) => void (d.theme.logoUrl = v || undefined))}
+            onChange={(url) => update((d) => void (d.theme.logoUrl = url))}
+            hint="Shown at the top of the page instead of your name in capitals. A logo on a see-through background works best."
           />
           <div className="flex flex-wrap items-center gap-4">
             <Toggle label="Ask customers to confirm their age" checked={content.ageGate.enabled} onChange={(v) => update((d) => void (d.ageGate.enabled = v))} />
@@ -322,6 +379,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
 
       <Preview productId={productId} version={previewVersion} />
     </div>
+    </PhotoProductContext.Provider>
   );
 }
 
