@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { after, NextResponse, type NextRequest } from "next/server";
 import { recordTap, VISITOR_COOKIE, VISITOR_COOKIE_MAX_AGE } from "@/lib/analytics";
+import { signTap, TAP_COOKIE, TAP_PROOF_MAX_AGE } from "@/lib/tap-proof";
 import { coarseLocation, findTagForRedirect, isBot, normalizeCode, parseDevice, safeDestination, sourceFromQuery } from "@/lib/tags";
 
 // The redirect layer (see CLAUDE.md). Every physical tag and QR code points here. We log the tap,
@@ -20,6 +21,14 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ code
   const override = safeDestination(tag.destinationUrl);
   const destination = override ?? (tag.slug && tag.isLive ? `/p/${tag.slug}?t=${tag.code}` : "/t?status=pending");
   const res = redirect(req, destination);
+  // Proof for the product page's "Genuine product" certificate that this visit came through a real tap.
+  res.cookies.set(TAP_COOKIE, signTap(tag.code), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/p",
+    maxAge: TAP_PROOF_MAX_AGE,
+  });
 
   const existing = req.cookies.get(VISITOR_COOKIE)?.value;
   let visitorId = existing && /^[A-Za-z0-9_-]{8,64}$/.test(existing) ? existing : null;

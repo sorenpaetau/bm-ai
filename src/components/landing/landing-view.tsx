@@ -282,7 +282,7 @@ function GenuineCard({ check, brand, noun }: { check: GenuineCheck; brand: strin
           </div>
         </div>
         <p className="mt-4 text-[15px] leading-snug text-ink/80">
-          The sticker on this {noun} is registered to {brand} and checked by {SITE.logoName}. It&apos;s the real thing, not a copy.
+          You just tapped the sticker on this {noun}, and {SITE.logoName} confirmed it is registered to {brand}.
         </p>
         <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
           {facts.map((f) => (
@@ -293,7 +293,8 @@ function GenuineCard({ check, brand, noun }: { check: GenuineCheck; brand: strin
           ))}
         </dl>
         <p className="mt-3 text-[12px] leading-snug text-muted">
-          Bought it new, but the sticker has a long history? Ask the seller, or contact {brand}.
+          Stickers can be copied, so check the history: if you bought this new but the sticker has been checked many times, ask
+          the seller or contact {brand}.
         </p>
       </div>
     </section>

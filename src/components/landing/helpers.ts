@@ -303,9 +303,10 @@ export function validateOptin(
 /**
  * What the "Genuine product" certificate shows. Worked out on the server from the tag the visitor
  * tapped (the `t` code /t/[code] adds to the page link):
- * - "verified": the tag is real, switched on, and registered to this exact product.
+ * - "verified": the visit came through a real tap (`tapped`, see src/lib/tap-proof.ts) on a tag that is
+ *   switched on and registered to this exact product.
  * - "unmatched": a tag code came with the visit but it isn't this product's tag (or is switched off).
- * - "none": no tag came with the visit, e.g. someone opened the page from a shared link.
+ * - "none": no proven tap, e.g. someone opened the page from a shared or copied link.
  */
 export type GenuineCheck =
   | { status: "verified"; tagCode: string; scans: number; firstScanAt: Date | null; sample?: boolean }
@@ -315,9 +316,15 @@ export type GenuineCheck =
 /** The tag facts behind a check, as read from the database. */
 export type TagFacts = { productId: string | null; active: boolean; scans: number; firstScanAt: Date | null };
 
-export function genuineCheck(tagCode: string | null | undefined, productId: string, tag: TagFacts | null): GenuineCheck {
+export function genuineCheck(
+  tagCode: string | null | undefined,
+  productId: string,
+  tag: TagFacts | null,
+  tapped: boolean,
+): GenuineCheck {
   if (!tagCode) return { status: "none" };
   if (!tag || !tag.active || tag.productId !== productId) return { status: "unmatched", tagCode };
+  if (!tapped) return { status: "none" };
   return { status: "verified", tagCode, scans: tag.scans, firstScanAt: tag.firstScanAt };
 }
 

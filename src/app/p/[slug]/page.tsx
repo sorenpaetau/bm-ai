@@ -5,6 +5,7 @@ import { AgeGate } from "@/components/landing/age-gate";
 import { getPublishedProduct, getTagFacts } from "@/components/landing/data";
 import { AGE_COOKIE, ageConfirmed, ageGateFor, cleanTagCode, genuineCheck, paragraphs, safeColor, safeUrl } from "@/components/landing/helpers";
 import { LandingView, landingThemeStyle } from "@/components/landing/landing-view";
+import { TAP_COOKIE, verifyTap } from "@/lib/tap-proof";
 
 // The public product page a consumer lands on after tapping a tag (via /t/[code]). Shows the
 // published content only; drafts are previewed in the portal with <LandingView preview />.
@@ -39,7 +40,10 @@ export default async function ProductPage({ params, searchParams }: Props) {
 
   const tagCode = cleanTagCode(Array.isArray(query.t) ? query.t[0] : query.t) ?? undefined;
   // The "Genuine product" certificate: is the tag the visitor tapped registered to this product?
-  const genuine = genuineCheck(tagCode, product.id, tagCode ? await getTagFacts(tagCode) : null);
+  // Only a visit that came through /t/[code] (signed cookie) counts; a copied ?t= link does not.
+  const jar = await cookies();
+  const tapped = Boolean(tagCode && verifyTap(jar.get(TAP_COOKIE)?.value, tagCode));
+  const genuine = genuineCheck(tagCode, product.id, tagCode ? await getTagFacts(tagCode) : null, tapped);
   const page = (
     <LandingView content={product.content} slug={product.slug} tagCode={tagCode} vertical={product.vertical} genuine={genuine} />
   );
@@ -47,7 +51,7 @@ export default async function ProductPage({ params, searchParams }: Props) {
   const gate = ageGateFor(product.raw, product.content, product.vertical);
   if (!gate.enabled) return page;
 
-  const confirmed = ageConfirmed((await cookies()).get(AGE_COOKIE)?.value, gate.minimumAge);
+  const confirmed = ageConfirmed(jar.get(AGE_COOKIE)?.value, gate.minimumAge);
   return (
     <AgeGate
       minimumAge={gate.minimumAge}
