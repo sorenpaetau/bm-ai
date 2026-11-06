@@ -97,7 +97,31 @@ test("the rule checker catches invented prices, ratings and medical claims", () 
   assert.ok(about("texture").some((m) => m.includes("emoji")));
 });
 
-test("wine drafts can't claim drinking is good for you, and a real blend isn't flagged", () => {
+const wineDraft = (blend: Array<{ name: string; percent: number }>, story = "Grown on our hillside.") =>
+  buildDraftContent(
+    {
+      subtitle: "Napa Valley",
+      facts: [{ label: "Alcohol", value: "14.5%", basis: "description" }],
+      story: { title: "Our story", body: story, basis: "description" },
+      moreSections: [],
+      optin: { headline: "Register this bottle", prompt: "Hear about new releases." },
+      tasting: { body: "Blackberry and cedar.", flavors: ["Blackberry"], structure: [], basis: "general_knowledge" },
+      blend,
+      vintage: { year: "2023", body: "", basis: "description" },
+      estate: { body: "", items: [] },
+    },
+    wine,
+  );
+
+test("an invented blend is flagged, a blend the brand gave is not", () => {
+  const given = { ...wine, description: `${wine.description} 92% Cabernet Sauvignon, 8% Merlot.` };
+  const real = checkDraft(wineDraft([{ name: "Cabernet Sauvignon", percent: 92 }, { name: "Merlot", percent: 8 }]), given);
+  assert.ok(!real.some((f) => f.sectionId === "tasting"), JSON.stringify(real));
+  const made = checkDraft(wineDraft([{ name: "Cabernet Sauvignon", percent: 91 }, { name: "Merlot", percent: 9 }]), wine);
+  assert.ok(made.some((f) => f.sectionId === "tasting" && f.message.includes("91%")), JSON.stringify(made));
+});
+
+test("wine drafts can't claim drinking is good for you", () => {
   const content = buildDraftContent(
     {
       subtitle: "Napa Valley",
@@ -106,7 +130,7 @@ test("wine drafts can't claim drinking is good for you, and a real blend isn't f
       moreSections: [],
       optin: { headline: "Register this bottle", prompt: "Hear about new releases." },
       tasting: { body: "Blackberry and cedar.", flavors: ["Blackberry"], structure: [], basis: "general_knowledge" },
-      blend: [{ name: "Cabernet Sauvignon", percent: 100 }],
+      blend: [],
       vintage: { year: "2023", body: "", basis: "description" },
       estate: { body: "", items: [] },
     },
@@ -114,7 +138,6 @@ test("wine drafts can't claim drinking is good for you, and a real blend isn't f
   );
   const findings = checkDraft(content, wine);
   assert.ok(findings.some((f) => f.sectionId === "story" && f.level === "problem" && f.message.includes("health claim")));
-  assert.ok(!findings.some((f) => f.sectionId === "tasting"), JSON.stringify(findings));
   assert.ok(!findings.some((f) => f.sectionId === "facts"), "14.5% is in the description");
 });
 

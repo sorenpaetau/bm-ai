@@ -91,14 +91,14 @@ export function checkDraft(content: LandingContent, input: DraftInput, extra: st
     const ratings = found(RATING);
     if (ratings.length) push("problem", `Mentions a rating or award (${ratings.join(", ")}). Only add real ones yourself, in the fact box or reviews.`);
 
-    const percents = notGiven(PERCENT).filter((p) => !(section.type === "tasting" && section.blend.some((b) => p.startsWith(String(b.percent)))));
+    // Blend percentages are AI-written too, so they're checked like any other percentage.
+    const percents = notGiven(PERCENT);
     if (percents.length) push("check", `Has a percentage (${percents.join(", ")}) we couldn't find in your description. Is it right?`);
 
-    // Blend percentages are numbers too, but they're checked above as percentages.
-    const numbers = notGiven(NUMBER).filter((n) => !percents.some((p) => p.startsWith(n)) && !allMoney.some((m) => m.includes(n)) && !ratings.some((r) => r.includes(n)));
-    const newNumbers = numbers.filter((n) => !(section.type === "tasting" && section.blend.some((b) => String(b.percent) === n)));
-    if (newNumbers.length && (input.vertical === "electronics" || input.vertical === "cosmetics" || haveAllSources))
-      push("check", `Has numbers (${newNumbers.slice(0, 6).join(", ")}) we couldn't find in your description. Check each one.`);
+    // Numbers already reported above (as a percentage, price or rating) aren't reported twice.
+    const numbers = notGiven(NUMBER).filter((n) => ![...percents, ...allMoney, ...ratings].some((m) => m.includes(n)));
+    if (numbers.length && (input.vertical === "electronics" || input.vertical === "cosmetics" || haveAllSources))
+      push("check", `Has numbers (${numbers.slice(0, 6).join(", ")}) we couldn't find in your description. Check each one.`);
 
     if (input.vertical === "cosmetics" || input.vertical === "pharmaceutical") {
       const medical = [...new Set(text.match(MEDICAL) ?? [])];

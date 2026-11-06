@@ -104,6 +104,7 @@ async function claude(names: string[]) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("Set ANTHROPIC_API_KEY to compare with the real Claude API.");
   process.env.AI_WRITER = "claude";
   const { draftLandingContent } = await import("../src/lib/ai/draft");
+  let failed = 0;
   for (const { name, brief } of await briefs(names)) {
     // The real writer reads real links. These brands are made up, so hand it the page text in the description.
     const pages = (brief.pages ?? []).map((p) => `From ${p.url}:\n${p.text}`).join("\n\n");
@@ -111,8 +112,12 @@ async function claude(names: string[]) {
     const content = await draftLandingContent(input);
     await mkdir(runDir(name), { recursive: true });
     await writeFile(path.join(runDir(name), "page-claude.json"), JSON.stringify(content, null, 2));
-    report({ name: `${name} (Claude API)`, ok: true, content, findings: checkDraft(content, brief, (brief.pages ?? []).map((p) => p.text)) });
+    const findings = checkDraft(content, brief, (brief.pages ?? []).map((p) => p.text));
+    const ok = !findings.some((f) => f.level === "problem");
+    if (!ok) failed++;
+    report({ name: `${name} (Claude API)`, ok, content, findings });
   }
+  if (failed) process.exitCode = 1;
 }
 
 async function preview(names: string[]) {
