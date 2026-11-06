@@ -16,7 +16,8 @@ export type Finding = {
 };
 
 const MONEY = /(?:[$€£]\s?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur|euros)\b)/gi;
-const RATING = /\b(?:\d{2,3}\s?(?:points?|pts)|\d(?:\.\d)?\s?(?:\/\s?5|out of 5|stars?)|rated|award[- ]?winning|awards?|medals?|best[- ]?sell(?:er|ing)|#\s?1)\b/gi;
+// Review scores and awards. Not technical ratings such as "IP67-rated" or "rated to 50 m".
+const RATING = /\b(?:\d{2,3}\s?(?:points?|pts)|\d(?:\.\d)?\s?(?:\/\s?5|out of 5|stars?)|(?:highly|top|best|five[- ]star|well)[- ]rated|rated\s+(?:by|as|the\s+best|#)|award[- ]?winning|awards?|medals?|best[- ]?sell(?:er|ing)|#\s?1)\b/gi;
 const PERCENT = /\b\d+(?:\.\d+)?\s?%/g;
 const NUMBER = /\b\d+(?:[.,]\d+)?\b/g;
 const MEDICAL = /\b(?:cures?|treats?|treatment|heals?|prevents?|clinically proven|acne|eczema|psoriasis|rosacea|dermatitis)\b/gi;

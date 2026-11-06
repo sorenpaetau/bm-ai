@@ -233,3 +233,14 @@ test("website buttons on drafts fill the page builder's website box", () => {
     assert.equal(website[0].url, "https://test.example");
   }
 });
+
+test("technical ratings like IP67-rated aren't treated as review scores", () => {
+  const ratingOf = (body: string) =>
+    checkDraft(
+      buildDraftContent(skinDraft({ topics: [{ id: "texture", answer: "Rich", body, items: [], chips: [], basis: "description" }] }), skin),
+      skin,
+    ).filter((f) => f.message.startsWith("Mentions a rating"));
+  assert.equal(ratingOf("IP67-rated and rated to 50 m.").length, 0);
+  assert.equal(ratingOf("Top-rated by shoppers.").length, 1);
+  assert.equal(ratingOf("Highly rated in reviews.").length, 1);
+});
