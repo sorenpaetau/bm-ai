@@ -159,7 +159,7 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, on
             placeholder="e.g. Taste"
           />
         </div>
-        <SectionFields section={section} patch={patch} example={example} />
+        <SectionFields section={section} patch={patch} update={onUpdate} example={example} />
         <PhotoStrip
           images={section.images ?? []}
           onChange={(fn) => onUpdate((s) => ({ ...s, images: fn(s.images ?? []) }) as Section)}
@@ -215,7 +215,18 @@ const PHOTO_STRIP_WORDING: Partial<Record<SectionType, { label: string; hint: st
   },
 };
 
-function SectionFields({ section, patch, example }: { section: Section; patch: (p: Partial<Section>) => void; example?: TopicExample }) {
+function SectionFields({
+  section,
+  patch,
+  update,
+  example,
+}: {
+  section: Section;
+  patch: (p: Partial<Section>) => void;
+  /** For photo uploads, which finish later: applies the change to the newest version of the section. */
+  update: (fn: (section: Section) => Section) => void;
+  example?: TopicExample;
+}) {
   switch (section.type) {
     case "facts":
       return (
@@ -316,7 +327,7 @@ function SectionFields({ section, patch, example }: { section: Section; patch: (
             onChange={(items) => patch({ items })}
             blank={(): Item<typeof section> => ({ name: "" })}
             addLabel="Add a product"
-            render={(item, set) => (
+            render={(item, set, index) => (
               <div className="grid gap-2 sm:grid-cols-3">
                 <TextField label="Name" value={item.name} onChange={(name) => set({ name })} />
                 <TextField label="Price (optional)" value={item.price} onChange={(price) => set({ price: price || undefined })} placeholder="$42" />
@@ -328,7 +339,13 @@ function SectionFields({ section, patch, example }: { section: Section; patch: (
                   onChange={(d) => set({ description: d || undefined })}
                 />
                 <div className="sm:col-span-3">
-                  <PhotoField label="Photo (optional)" value={item.imageUrl} onChange={(imageUrl) => set({ imageUrl })} />
+                  <PhotoField
+                    label="Photo (optional)"
+                    value={item.imageUrl}
+                    onChange={(imageUrl) =>
+                      update((s) => (s.type === "products" ? { ...s, items: s.items.map((it, j) => (j === index ? { ...it, imageUrl } : it)) } : s))
+                    }
+                  />
                 </div>
               </div>
             )}
@@ -413,14 +430,20 @@ function SectionFields({ section, patch, example }: { section: Section; patch: (
             onChange={(people) => patch({ people })}
             blank={(): Person => ({ name: "" })}
             addLabel="Add a person (e.g. your winemaker)"
-            render={(p, set) => (
+            render={(p, set, index) => (
               <div className="space-y-2">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <TextField label="Name" value={p.name} onChange={(name) => set({ name })} />
                   <TextField label="Role (optional)" value={p.role} onChange={(role) => set({ role: role || undefined })} placeholder="Winemaker" />
                 </div>
                 <TextArea label="About them (optional)" rows={2} value={p.body} onChange={(body) => set({ body: body || undefined })} />
-                <PhotoField label="Photo (optional)" value={p.imageUrl} onChange={(imageUrl) => set({ imageUrl })} />
+                <PhotoField
+                  label="Photo (optional)"
+                  value={p.imageUrl}
+                  onChange={(imageUrl) =>
+                    update((s) => (s.type === "maker" ? { ...s, people: s.people.map((it, j) => (j === index ? { ...it, imageUrl } : it)) } : s))
+                  }
+                />
               </div>
             )}
           />
