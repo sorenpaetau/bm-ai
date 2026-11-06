@@ -55,8 +55,11 @@ import {
   readableInk,
   safeColor,
   safeUrl,
+  scanSummary,
   sectionsToShow,
+  shortDate,
   tapNoun,
+  type GenuineCheck,
 } from "./helpers";
 import { MapCard } from "./map-card";
 import { OptinForm } from "./optin-form";
@@ -77,6 +80,7 @@ export function LandingView({
   tagCode,
   now,
   vertical,
+  genuine,
 }: {
   content: LandingContent;
   preview?: boolean;
@@ -88,8 +92,12 @@ export function LandingView({
   now?: Date;
   /** The brand's market, e.g. "wine_spirits". Only changes small wording such as "this bottle". */
   vertical?: string;
+  /** The "Genuine product" check for the tag the visitor tapped. The preview shows a sample. */
+  genuine?: GenuineCheck;
 }) {
   const { theme, hero } = content;
+  const check: GenuineCheck =
+    genuine ?? (preview ? { status: "verified", tagCode: "", scans: 1, firstScanAt: null, sample: true } : { status: "none" });
   const style = landingThemeStyle(theme);
 
   const sections = sectionsToShow(content.sections, { preview, now });
@@ -132,14 +140,24 @@ export function LandingView({
               </p>
             )}
           </div>
-          {heroImage && (
-            <img
-              src={heroImage}
-              alt={hero.title}
-              fetchPriority="high"
-              className="relative mx-auto mt-6 max-h-[52vh] w-full animate-rise object-contain drop-shadow-[0_24px_30px_rgb(0_0_0/0.45)]"
-            />
-          )}
+          {heroImage &&
+            (isDrawing(heroImage) ? (
+              <img
+                src={heroImage}
+                alt={hero.title}
+                fetchPriority="high"
+                className="relative mx-auto mt-6 max-h-[52vh] w-full animate-rise object-contain drop-shadow-[0_24px_30px_rgb(0_0_0/0.45)]"
+              />
+            ) : (
+              // A brand's own photo: shown whole, with soft rounded corners. A cut-out product on a
+              // see-through background still floats, because the corners only round the empty space.
+              <img
+                src={heroImage}
+                alt={hero.title}
+                fetchPriority="high"
+                className="relative mx-auto mt-6 block h-auto max-h-[56vh] w-auto max-w-[calc(100%-2.5rem)] animate-rise rounded-[1.5rem] object-contain drop-shadow-[0_20px_24px_rgb(0_0_0/0.4)]"
+              />
+            ))}
           <div className={`animate-rise px-6 text-center [animation-delay:80ms] ${heroImage ? "pt-4 pb-24" : "pt-10 pb-24"}`}>
             <h1 className={`${heading} text-[2.75rem] leading-[1.02] tracking-[-0.02em] sm:text-6xl`}>{hero.title}</h1>
             {hero.subtitle && (
@@ -165,6 +183,8 @@ export function LandingView({
             ))}
           </div>
         )}
+
+        <GenuineCard check={check} brand={hero.brand} noun={tapNoun(vertical)} />
 
         {jumpLinks.length > 2 && <JumpNav links={jumpLinks} />}
 
@@ -214,6 +234,108 @@ export function LandingView({
         </footer>
       </main>
     </div>
+  );
+}
+
+/** Our own demo drawings (SVG) float on the page; anything else is treated as a photo. */
+function isDrawing(url: string) {
+  return /\.svg(\?|#|$)/i.test(url);
+}
+
+/**
+ * The "Genuine product" certificate. When the visitor arrived by tapping a sticker registered to this
+ * product, it reads as a certificate of authenticity with the sticker's history (a copied sticker shows
+ * up as a long history the buyer didn't expect). Otherwise it says how to check, or warns on a mismatch.
+ */
+function GenuineCard({ check, brand, noun }: { check: GenuineCheck; brand: string; noun: string }) {
+  if (check.status === "none") {
+    return (
+      <p className="reveal mx-4 mt-6 flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-3 text-[13px] leading-snug text-ink/75 ring-1 ring-black/[0.05] sm:mx-5">
+        <ShieldIcon className="h-5 w-5 shrink-0 text-[var(--lp-primary)]" />
+        <span>
+          <span className="font-semibold text-ink">Official {brand} page.</span> To check that your {noun} is genuine, tap the
+          sticker on it.
+        </span>
+      </p>
+    );
+  }
+
+  if (check.status === "unmatched") {
+    return (
+      <section
+        aria-label="Genuine product check"
+        className="mx-4 mt-6 flex gap-4 rounded-[1.75rem] bg-amber-50 p-5 text-amber-950 ring-1 ring-amber-300 sm:mx-5"
+      >
+        <ShieldIcon className="mt-0.5 h-7 w-7 shrink-0 text-amber-600" />
+        <div>
+          <h2 className="font-semibold">We couldn&apos;t confirm this {noun}</h2>
+          <p className="mt-1 text-[14px] leading-snug">
+            The sticker you tapped isn&apos;t registered to this {noun}. If you bought it new, check with the seller or contact{" "}
+            {brand}.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  const facts = [
+    { label: "Sticker no.", value: check.sample ? "Shown on tap" : check.tagCode },
+    { label: "First checked", value: check.firstScanAt ? shortDate(check.firstScanAt) : "Today" },
+    { label: "History", value: scanSummary(check.scans) },
+  ];
+  return (
+    <section
+      aria-label="Genuine product certificate"
+      className="reveal relative mx-4 mt-6 overflow-hidden rounded-[1.75rem] bg-white p-1.5 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-12px_rgb(0_0_0/0.12)] ring-1 ring-black/[0.04] sm:mx-5"
+    >
+      <div className="rounded-[1.4rem] border border-dashed border-[color-mix(in_oklab,var(--lp-accent)_55%,transparent)] bg-[radial-gradient(90%_80%_at_0%_0%,var(--lp-accent-soft),transparent)] p-5">
+        <div className="flex items-center gap-4">
+          <Seal className="h-[4.5rem] w-[4.5rem] shrink-0" />
+          <div>
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.24em] text-[var(--lp-primary)]">Certificate of authenticity</p>
+            <h2 className={`${heading} mt-1 text-[1.45rem] leading-tight tracking-[-0.01em]`}>Genuine {brand} product</h2>
+          </div>
+        </div>
+        <p className="mt-4 text-[15px] leading-snug text-ink/80">
+          You just tapped the sticker on this {noun}, and {SITE.logoName} confirmed it is registered to {brand}.
+        </p>
+        <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+          {facts.map((f) => (
+            <div key={f.label} className="rounded-xl bg-[var(--lp-tint)] px-2 py-2.5">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{f.label}</dt>
+              <dd className="mt-1 text-[13px] font-semibold leading-tight text-ink">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-[12px] leading-snug text-muted">
+          Stickers can be copied, so check the history: if you bought this new but the sticker has been checked many times, ask
+          the seller or contact {brand}.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/** A rosette seal with a check mark, drawn in the brand's accent color. */
+function Seal({ className = "" }: { className?: string }) {
+  const points = Array.from({ length: 32 }, (_, i) => {
+    const r = i % 2 === 0 ? 31 : 27;
+    const a = (Math.PI * i) / 16;
+    return `${(32 + r * Math.sin(a)).toFixed(2)},${(32 - r * Math.cos(a)).toFixed(2)}`;
+  }).join(" ");
+  return (
+    <svg viewBox="0 0 64 64" className={className} role="img" aria-label="Verified seal">
+      <polygon points={points} style={{ fill: "var(--lp-accent)" }} />
+      <circle cx="32" cy="32" r="21" fill="none" style={{ stroke: "var(--lp-on-accent)" }} strokeOpacity="0.55" strokeWidth="1.2" />
+      <path
+        d="M22.5 32.5l6.5 6.5 12.5-13"
+        fill="none"
+        style={{ stroke: "var(--lp-on-accent)" }}
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -381,6 +503,8 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
         {section.title}
       </h2>
       <SectionBody section={section} />
+      <ImageStrip images={section.images ?? []} className="mt-5" />
+      {"link" in section && <SectionLink link={section.link} />}
     </section>
   );
 }
@@ -402,20 +526,22 @@ function Paragraphs({ text, className = "text-[17px] leading-relaxed text-ink/85
   );
 }
 
-function ImageStrip({ images }: { images: Array<{ url: string; alt: string }> }) {
+/** The brand's photos for a section: one full-width photo, or a row to swipe through. */
+function ImageStrip({ images, className = "" }: { images: Array<{ url: string; alt: string }>; className?: string }) {
   const list = images.flatMap((img) => {
     const src = safeUrl(img.url);
     return src ? [{ src, alt: img.alt }] : [];
   });
   if (list.length === 0) return null;
   return (
-    <div className="-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pt-2 [scrollbar-width:none] sm:-mx-7 sm:scroll-px-7 sm:px-7">
+    <div className={`-mx-6 flex snap-x scroll-px-6 gap-3 overflow-x-auto px-6 pt-2 [scrollbar-width:none] sm:-mx-7 sm:scroll-px-7 sm:px-7 ${className}`}>
       {list.map((img, i) => (
         <img
           key={i}
           src={img.src}
           alt={img.alt}
           loading="lazy"
+          decoding="async"
           className={`h-56 snap-start rounded-2xl bg-[var(--lp-tint)] object-cover ${list.length === 1 ? "w-full" : "w-4/5 shrink-0"}`}
         />
       ))}
@@ -500,7 +626,6 @@ function SectionBody({ section }: { section: Section }) {
               {p}
             </p>
           ))}
-          <ImageStrip images={section.images} />
         </div>
       );
 
@@ -633,7 +758,6 @@ function SectionBody({ section }: { section: Section }) {
                 );
               })}
             </ul>
-            <SectionLink link={section.link} />
           </>
         );
       }
@@ -671,7 +795,6 @@ function SectionBody({ section }: { section: Section }) {
               );
             })}
           </ul>
-          <SectionLink link={section.link} />
         </>
       );
     }
@@ -708,7 +831,6 @@ function SectionBody({ section }: { section: Section }) {
               );
             })}
           </ul>
-          <SectionLink link={section.link} />
         </>
       );
 
@@ -774,7 +896,6 @@ function SectionBody({ section }: { section: Section }) {
               );
             })}
           </ul>
-          <SectionLink link={section.link} />
         </div>
       );
 
@@ -892,7 +1013,6 @@ function SectionBody({ section }: { section: Section }) {
             </ul>
           )}
 
-          <ImageStrip images={section.images} />
         </div>
       );
 
@@ -932,7 +1052,6 @@ function SectionBody({ section }: { section: Section }) {
               ))}
             </dl>
           )}
-          <SectionLink link={section.link} />
         </div>
       );
 

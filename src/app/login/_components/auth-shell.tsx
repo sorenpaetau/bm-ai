@@ -23,7 +23,7 @@ export function AuthShell({ title, subtitle, children, footer }: {
           className="absolute -top-32 -right-32 -z-10 h-[30rem] w-[30rem] rounded-full bg-[radial-gradient(closest-side,rgb(122_36_56/0.6),transparent)] blur-3xl"
         />
         <Link href="/" className="flex w-fit items-center" aria-label={`${SITE.name} home`}>
-          <Wordmark tone="dark" size="lg" name={SITE.name} />
+          <Wordmark tone="dark" size="lg" />
         </Link>
         <div className="max-w-md space-y-6">
           <p className="font-serif text-5xl leading-[1.05] font-medium tracking-[-0.02em]">
@@ -47,7 +47,7 @@ export function AuthShell({ title, subtitle, children, footer }: {
       <div className="relative isolate flex flex-col items-center justify-center px-5 py-12">
         <div aria-hidden="true" className="bg-grid-light mask-radial absolute inset-0 -z-10 lg:hidden" />
         <Link href="/" className="mb-8 flex items-center lg:hidden" aria-label={`${SITE.name} home`}>
-          <Wordmark size="lg" name={SITE.name} />
+          <Wordmark size="lg" />
         </Link>
         <div className="w-full max-w-md animate-rise rounded-3xl border border-line/80 bg-surface p-7 shadow-[var(--shadow-lift)] sm:p-9">
           <h1 className="font-serif text-3xl font-medium tracking-[-0.01em]">{title}</h1>

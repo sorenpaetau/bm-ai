@@ -1,4 +1,5 @@
 import type { SVGProps } from "react";
+import { SITE } from "@/lib/site";
 
 // Small line icons (24px grid, 1.75 stroke) shared across the site. Inline SVG keeps pages fast.
 
@@ -36,13 +37,13 @@ export function LogoMark({ className = "" }: { className?: string }) {
 }
 
 /**
- * The full B&M.ai logo: the mark, "B&M.ai", and "Brand & Marketing" spelled out underneath.
+ * The full logo: the mark, "B&M", and "Brand & Marketing" spelled out underneath.
  * `tone="dark"` is for dark backgrounds. Sizes: "md" for headers, "lg" for the login panel.
  */
 export function Wordmark({
   tone = "light",
   size = "md",
-  name = "B&M.ai",
+  name = SITE.logoName,
   className = "",
 }: {
   tone?: "light" | "dark";
@@ -51,7 +52,7 @@ export function Wordmark({
   className?: string;
 }) {
   const mark = { sm: "h-9 w-9", md: "h-11 w-11", lg: "h-12 w-12" }[size];
-  const title = { sm: "text-xl", md: "text-[1.6rem]", lg: "text-3xl" }[size];
+  const title = { sm: "text-2xl", md: "text-[1.9rem]", lg: "text-[2.1rem]" }[size];
   const sub = { sm: "text-[8.5px]", md: "text-[9.5px]", lg: "text-[11px]" }[size];
   return (
     <span className={`flex items-center gap-3 ${className}`}>

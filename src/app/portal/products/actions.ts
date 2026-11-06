@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { aiConfigured, DraftError, draftLandingContent } from "@/lib/ai/draft";
+import { aiConfigured, DraftError, draftLandingContent, httpsPhotos, type PhotoLoader } from "@/lib/ai/draft";
 import { cleanLinks } from "@/lib/ai/brief";
 import { starterContent, type DraftInput } from "@/lib/ai/template";
 import { requireUser } from "@/lib/auth";
@@ -14,6 +14,7 @@ import type { Vertical } from "@/lib/site";
 import { safeContent } from "../_lib/content";
 import { publishBlockers } from "../_lib/publish";
 import { brandPhotos, carryOverBrandMedia } from "@/lib/ai/brand-media";
+import { readUpload, uploadIdFromUrl } from "@/lib/uploads";
 
 export type ActionState = { error?: string; ok?: string; values?: Record<string, string> };
 
@@ -57,6 +58,14 @@ const NewProduct = z.object({
 });
 
 /** One link per line (or separated by spaces or commas). Anything that isn't a web address is ignored. */
+/** Lets the AI see the brand's uploaded photos (/media/<id>) as well as https ones. */
+const uploadedPhotos: PhotoLoader = async (url) => {
+  const id = uploadIdFromUrl(url);
+  if (!id) return httpsPhotos(url);
+  const upload = await readUpload(id);
+  return upload ? { mediaType: upload.mediaType, data: upload.bytes.toString("base64") } : null;
+};
+
 function linksFrom(raw: string) {
   return cleanLinks(raw.split(/[\s,]+/).filter(Boolean));
 }
@@ -67,7 +76,7 @@ async function draftFor(input: DraftInput, useAi: boolean) {
   if (!aiConfigured()) return { content: starterContent(input), drafted: "ai-off" };
   if (!useAi) return { content: starterContent(input), drafted: "starter" };
   try {
-    return { content: await draftLandingContent(input), drafted: "ai" };
+    return { content: await draftLandingContent(input, { loadPhoto: uploadedPhotos }), drafted: "ai" };
   } catch (err) {
     if (!(err instanceof DraftError)) console.error("AI draft failed", err);
     return { content: starterContent(input), drafted: "ai-failed" };
@@ -166,7 +175,7 @@ export async function redraft(productId: string): Promise<ActionState> {
       links: product.brandLinks,
       photos: current ? brandPhotos(current) : [],
       price: current?.hero.price ?? null,
-    });
+    }, { loadPhoto: uploadedPhotos });
     const content = current ? carryOverBrandMedia(current, fresh) : fresh;
     await sql`UPDATE products SET content = ${sql.json(content)}, updated_at = now() WHERE id = ${productId}`;
   } catch (err) {

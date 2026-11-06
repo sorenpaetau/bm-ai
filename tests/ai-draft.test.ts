@@ -224,3 +224,12 @@ test("numbers must match whole: 5 ml is not the brand's 50 ml", () => {
   );
   assert.ok(checkDraft(draft, skin).some((f) => f.sectionId === "how-to-use" && f.message.includes("numbers (5)")));
 });
+
+test("website buttons on drafts fill the page builder's website box", () => {
+  for (const vertical of ["wine_spirits", "retail", "cosmetics", "electronics"] as const) {
+    const content = starterContent({ companyName: "Test Co", vertical, productName: "Thing", description: "A thing.", website: "https://test.example" });
+    const website = content.buttons.filter((b) => b.slot === "website");
+    assert.equal(website.length, 1, vertical);
+    assert.equal(website[0].url, "https://test.example");
+  }
+});

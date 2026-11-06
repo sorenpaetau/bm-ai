@@ -179,7 +179,7 @@ function shell(input: DraftInput, sections: Section[], optin: { headline: string
     theme: THEMES[input.vertical],
     hero: { brand: input.companyName, title: input.productName },
     sections,
-    buttons: input.website ? [{ label: "Visit our website", url: input.website, style: "secondary", kind: "link" }] : [],
+    buttons: input.website ? [{ label: "Visit our website", url: input.website, style: "secondary", kind: "link", slot: "website" }] : [],
     // CLAUDE.md: the age gate defaults on for wine and spirits.
     ageGate: { enabled: isAlcohol(input.vertical), minimumAge: 21 },
     disclaimer: isAlcohol(input.vertical) ? "Please enjoy responsibly." : undefined,
@@ -466,6 +466,6 @@ export function marketContent(input: DraftInput, market: MarketTemplate, draft?:
 
   const content = shell(input, sections, draft?.optin ?? starterOptin(input));
   content.hero.subtitle = draft?.subtitle || undefined;
-  if (input.website) content.buttons = [{ label: "Go to website", url: input.website, style: "secondary", kind: "link" }];
+  if (input.website) content.buttons = [{ label: "Go to website", url: input.website, style: "secondary", kind: "link", slot: "website" }];
   return content;
 }

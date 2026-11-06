@@ -73,15 +73,26 @@ export function sectionsToShow(sections: Section[], opts: { preview?: boolean; n
 
 const filled = (v: string | undefined | null) => Boolean(v && v.trim());
 
-/** The section without its blank rows, or null if nothing worth showing is left. */
+/**
+ * The section without its blank rows and photos, or null if nothing worth showing is left. Photos alone
+ * are enough for a topic box or a story ("upload pictures" under every topic); other sections need
+ * their own content first.
+ */
 export function tidySection(section: Section): Section | null {
+  const images = (section.images ?? []).filter((i) => filled(i.url));
+  const tidy = tidyFields(section, images.length > 0);
+  if (!tidy) return null;
+  return section.images === undefined && images.length === 0 ? tidy : { ...tidy, images };
+}
+
+function tidyFields(section: Section, hasImages: boolean): Section | null {
   switch (section.type) {
     case "facts": {
       const items = section.items.filter((i) => filled(i.label) && filled(i.value));
       return items.length ? { ...section, items } : null;
     }
     case "story":
-      return filled(section.body) || section.images.some((i) => filled(i.url)) ? section : null;
+      return filled(section.body) || hasImages ? section : null;
     case "tasting": {
       const t = {
         ...section,
@@ -113,9 +124,8 @@ export function tidySection(section: Section): Section | null {
         people: section.people.filter((p) => filled(p.name)),
         items: section.items.filter((i) => filled(i.title) && filled(i.body)),
         stats: section.stats.filter((s) => filled(s.label) && filled(s.value)),
-        images: section.images.filter((i) => filled(i.url)),
       };
-      return filled(m.body) || m.people.length || m.items.length || m.stats.length || m.images.length ? m : null;
+      return filled(m.body) || m.people.length || m.items.length || m.stats.length || hasImages ? m : null;
     }
     case "topic": {
       const t = {
@@ -123,7 +133,7 @@ export function tidySection(section: Section): Section | null {
         items: section.items.filter((i) => filled(i.label) && filled(i.value)),
         chips: section.chips.filter(filled),
       };
-      return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length ? t : null;
+      return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length || hasImages ? t : null;
     }
     case "visit": {
       const v = {
@@ -296,4 +306,45 @@ export function validateOptin(
   if (input.consent !== "on" && input.consent !== "true") errors.consent = "Please tick the box to agree.";
 
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, values };
+}
+
+// ---------- Genuine product check ----------
+
+/**
+ * What the "Genuine product" certificate shows. Worked out on the server from the tag the visitor
+ * tapped (the `t` code /t/[code] adds to the page link):
+ * - "verified": the visit came through a real tap (`tapped`, see src/lib/tap-proof.ts) on a tag that is
+ *   switched on and registered to this exact product.
+ * - "unmatched": a tag code came with the visit but it isn't this product's tag (or is switched off).
+ * - "none": no proven tap, e.g. someone opened the page from a shared or copied link.
+ */
+export type GenuineCheck =
+  | { status: "verified"; tagCode: string; scans: number; firstScanAt: Date | null; sample?: boolean }
+  | { status: "unmatched"; tagCode: string }
+  | { status: "none" };
+
+/** The tag facts behind a check, as read from the database. */
+export type TagFacts = { productId: string | null; active: boolean; scans: number; firstScanAt: Date | null };
+
+export function genuineCheck(
+  tagCode: string | null | undefined,
+  productId: string,
+  tag: TagFacts | null,
+  tapped: boolean,
+): GenuineCheck {
+  if (!tagCode) return { status: "none" };
+  if (!tag || !tag.active || tag.productId !== productId) return { status: "unmatched", tagCode };
+  if (!tapped) return { status: "none" };
+  return { status: "verified", tagCode, scans: tag.scans, firstScanAt: tag.firstScanAt };
+}
+
+/** "Checked 1 time" / "Checked 12 times"; a brand-new tag reads as the first check. */
+export function scanSummary(scans: number): string {
+  if (scans <= 1) return "This is the first check";
+  return `Checked ${scans.toLocaleString("en-US")} times`;
+}
+
+/** A short date like "Nov 6, 2026" in the business's report time zone. */
+export function shortDate(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" });
 }

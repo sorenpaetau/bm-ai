@@ -15,16 +15,22 @@ const provenance = {
   sources: z.array(z.string()).default([]),
 };
 
+const image = z.object({ url: z.string(), alt: z.string().default("") });
+export type LandingImage = z.infer<typeof image>;
+
 const base = {
   id: z.string(),
   title: z.string(),
   /** Short name for the jump button under the big photo, e.g. "Taste". Falls back to the title. */
   navLabel: z.string().optional(),
   visible: z.boolean().default(true),
+  /**
+   * Photos the brand uploaded for this section, shown as a strip at the bottom of its card ("upload
+   * pictures" under every topic). Brand-owned photos only: the AI never fills this in.
+   */
+  images: z.array(image).optional(),
   ...provenance,
 };
-
-const image = z.object({ url: z.string(), alt: z.string().default("") });
 
 /** An optional "see more" link at the bottom of a section, e.g. "Visit our webstore". */
 const sectionLink = z.object({ label: z.string(), url: z.string() }).optional();
@@ -202,6 +208,11 @@ export const ActionButton = z.object({
   style: z.enum(["primary", "secondary"]).default("primary"),
   /** "shopify" buttons are the Phase 1 Shopify redirect; analytics counts their clicks separately. */
   kind: z.enum(["link", "shopify", "phone", "email"]).default("link"),
+  /**
+   * The two quick buttons under the big photo that every page has: "Go to webstore" and "Go to website".
+   * The page builder fills these from its two link fields. Other buttons have no slot.
+   */
+  slot: z.enum(["webstore", "website"]).optional(),
 });
 export type ActionButton = z.infer<typeof ActionButton>;
 

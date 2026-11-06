@@ -42,17 +42,19 @@ export function TextArea({
   onChange,
   rows = 4,
   hint,
+  placeholder,
 }: {
   label: string;
   value: string | undefined;
   onChange: (value: string) => void;
   rows?: number;
   hint?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="block space-y-1">
       <span className="text-xs font-medium text-muted">{label}</span>
-      <textarea rows={rows} value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={inputClass} />
+      <textarea rows={rows} value={value ?? ""} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className={inputClass} />
       {hint && <span className="block text-xs text-muted">{hint}</span>}
     </label>
   );
@@ -79,13 +81,13 @@ export function ItemList<T>({
   onChange: (items: T[]) => void;
   blank: () => T;
   addLabel: string;
-  render: (item: T, set: (patch: Partial<T>) => void) => React.ReactNode;
+  render: (item: T, set: (patch: Partial<T>) => void, index: number) => React.ReactNode;
 }) {
   return (
     <div className="space-y-3">
       {items.map((item, i) => (
         <div key={i} className="relative rounded-lg border border-line bg-paper p-3 pr-10">
-          {render(item, (patch) => onChange(items.map((it, j) => (j === i ? { ...it, ...patch } : it))))}
+          {render(item, (patch) => onChange(items.map((it, j) => (j === i ? { ...it, ...patch } : it))), i)}
           <button
             type="button"
             onClick={() => onChange(items.filter((_, j) => j !== i))}
