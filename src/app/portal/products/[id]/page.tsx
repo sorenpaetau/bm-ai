@@ -14,8 +14,8 @@ import { DetailsPanel } from "./details";
 import { Editor } from "./editor";
 
 export const metadata: Metadata = { title: "Edit page" };
-// Writing a fresh AI draft can take up to a minute.
-export const maxDuration = 120;
+// Writing an AI draft takes about a minute, longer when it reads the brand's pages.
+export const maxDuration = 300;
 
 type Row = {
   id: string;

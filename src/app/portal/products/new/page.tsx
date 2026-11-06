@@ -5,8 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { NewProductForm } from "./new-product-form";
 
 export const metadata: Metadata = { title: "Add a product" };
-// Writing an AI draft can take up to a minute.
-export const maxDuration = 120;
+// Writing an AI draft takes about a minute, longer when it reads the brand's pages.
+export const maxDuration = 300;
 
 export default async function NewProductPage() {
   await requireUser();
