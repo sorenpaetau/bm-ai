@@ -297,3 +297,37 @@ export function validateOptin(
 
   return Object.keys(errors).length ? { ok: false, errors } : { ok: true, values };
 }
+
+// ---------- Genuine product check ----------
+
+/**
+ * What the "Genuine product" certificate shows. Worked out on the server from the tag the visitor
+ * tapped (the `t` code /t/[code] adds to the page link):
+ * - "verified": the tag is real, switched on, and registered to this exact product.
+ * - "unmatched": a tag code came with the visit but it isn't this product's tag (or is switched off).
+ * - "none": no tag came with the visit, e.g. someone opened the page from a shared link.
+ */
+export type GenuineCheck =
+  | { status: "verified"; tagCode: string; scans: number; firstScanAt: Date | null; sample?: boolean }
+  | { status: "unmatched"; tagCode: string }
+  | { status: "none" };
+
+/** The tag facts behind a check, as read from the database. */
+export type TagFacts = { productId: string | null; active: boolean; scans: number; firstScanAt: Date | null };
+
+export function genuineCheck(tagCode: string | null | undefined, productId: string, tag: TagFacts | null): GenuineCheck {
+  if (!tagCode) return { status: "none" };
+  if (!tag || !tag.active || tag.productId !== productId) return { status: "unmatched", tagCode };
+  return { status: "verified", tagCode, scans: tag.scans, firstScanAt: tag.firstScanAt };
+}
+
+/** "Checked 1 time" / "Checked 12 times"; a brand-new tag reads as the first check. */
+export function scanSummary(scans: number): string {
+  if (scans <= 1) return "This is the first check";
+  return `Checked ${scans.toLocaleString("en-US")} times`;
+}
+
+/** A short date like "Nov 6, 2026" in the business's report time zone. */
+export function shortDate(date: Date): string {
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Los_Angeles" });
+}

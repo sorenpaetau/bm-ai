@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { AgeGate } from "@/components/landing/age-gate";
-import { getPublishedProduct } from "@/components/landing/data";
-import { AGE_COOKIE, ageConfirmed, ageGateFor, cleanTagCode, paragraphs, safeColor, safeUrl } from "@/components/landing/helpers";
+import { getPublishedProduct, getTagFacts } from "@/components/landing/data";
+import { AGE_COOKIE, ageConfirmed, ageGateFor, cleanTagCode, genuineCheck, paragraphs, safeColor, safeUrl } from "@/components/landing/helpers";
 import { LandingView, landingThemeStyle } from "@/components/landing/landing-view";
 
 // The public product page a consumer lands on after tapping a tag (via /t/[code]). Shows the
@@ -38,7 +38,11 @@ export default async function ProductPage({ params, searchParams }: Props) {
   if (!product) notFound();
 
   const tagCode = cleanTagCode(Array.isArray(query.t) ? query.t[0] : query.t) ?? undefined;
-  const page = <LandingView content={product.content} slug={product.slug} tagCode={tagCode} vertical={product.vertical} />;
+  // The "Genuine product" certificate: is the tag the visitor tapped registered to this product?
+  const genuine = genuineCheck(tagCode, product.id, tagCode ? await getTagFacts(tagCode) : null);
+  const page = (
+    <LandingView content={product.content} slug={product.slug} tagCode={tagCode} vertical={product.vertical} genuine={genuine} />
+  );
 
   const gate = ageGateFor(product.raw, product.content, product.vertical);
   if (!gate.enabled) return page;

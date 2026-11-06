@@ -1,6 +1,8 @@
 // Site-wide constants. Change the domain or contact email here, nowhere else.
 export const SITE = {
   name: "B&M.ai",
+  /** What the logo says, with "Brand & Marketing" spelled out underneath (Jens, Nov 6 2026). */
+  logoName: "B&M",
   tagline: "Simple and Easy AI Marketing Platform for Manufacturers and Consumers",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   contactEmail: "contact@brandnmarketing.com",

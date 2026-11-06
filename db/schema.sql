@@ -188,3 +188,6 @@ CREATE TABLE IF NOT EXISTS app_settings (
 ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_vertical_check;
 ALTER TABLE companies ADD CONSTRAINT companies_vertical_check
   CHECK (vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));
+
+-- Genuine product check (Nov 2026): the landing page counts a tag's scans and finds its first one.
+CREATE INDEX IF NOT EXISTS taps_tag_time_idx ON taps (tag_code, created_at);

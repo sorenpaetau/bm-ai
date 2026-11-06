@@ -8,8 +8,8 @@ import { ButtonLink, Container } from "./ui";
 export function Logo({ className = "" }: { className?: string }) {
   return (
     <Link href="/" className={`flex shrink-0 items-center ${className}`} aria-label={`${SITE.name} home`}>
-      <Wordmark name={SITE.name} size="sm" className="sm:hidden" />
-      <Wordmark name={SITE.name} className="hidden sm:flex" />
+      <Wordmark size="sm" className="sm:hidden" />
+      <Wordmark className="hidden sm:flex" />
     </Link>
   );
 }
