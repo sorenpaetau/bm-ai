@@ -55,8 +55,11 @@ import {
   readableInk,
   safeColor,
   safeUrl,
+  scanSummary,
   sectionsToShow,
+  shortDate,
   tapNoun,
+  type GenuineCheck,
 } from "./helpers";
 import { MapCard } from "./map-card";
 import { OptinForm } from "./optin-form";
@@ -77,6 +80,7 @@ export function LandingView({
   tagCode,
   now,
   vertical,
+  genuine,
 }: {
   content: LandingContent;
   preview?: boolean;
@@ -88,8 +92,12 @@ export function LandingView({
   now?: Date;
   /** The brand's market, e.g. "wine_spirits". Only changes small wording such as "this bottle". */
   vertical?: string;
+  /** The "Genuine product" check for the tag the visitor tapped. The preview shows a sample. */
+  genuine?: GenuineCheck;
 }) {
   const { theme, hero } = content;
+  const check: GenuineCheck =
+    genuine ?? (preview ? { status: "verified", tagCode: "", scans: 1, firstScanAt: null, sample: true } : { status: "none" });
   const style = landingThemeStyle(theme);
 
   const sections = sectionsToShow(content.sections, { preview, now });
@@ -176,6 +184,8 @@ export function LandingView({
           </div>
         )}
 
+        <GenuineCard check={check} brand={hero.brand} noun={tapNoun(vertical)} />
+
         {jumpLinks.length > 2 && <JumpNav links={jumpLinks} />}
 
         <div className="mt-6 space-y-4 px-4 sm:px-5">
@@ -230,6 +240,103 @@ export function LandingView({
 /** Our own demo drawings (SVG) float on the page; anything else is treated as a photo. */
 function isDrawing(url: string) {
   return /\.svg(\?|#|$)/i.test(url);
+}
+
+/**
+ * The "Genuine product" certificate. When the visitor arrived by tapping a sticker registered to this
+ * product, it reads as a certificate of authenticity with the sticker's history (a copied sticker shows
+ * up as a long history the buyer didn't expect). Otherwise it says how to check, or warns on a mismatch.
+ */
+function GenuineCard({ check, brand, noun }: { check: GenuineCheck; brand: string; noun: string }) {
+  if (check.status === "none") {
+    return (
+      <p className="reveal mx-4 mt-6 flex items-center gap-3 rounded-2xl bg-white/70 px-4 py-3 text-[13px] leading-snug text-ink/75 ring-1 ring-black/[0.05] sm:mx-5">
+        <ShieldIcon className="h-5 w-5 shrink-0 text-[var(--lp-primary)]" />
+        <span>
+          <span className="font-semibold text-ink">Official {brand} page.</span> To check that your {noun} is genuine, tap the
+          sticker on it.
+        </span>
+      </p>
+    );
+  }
+
+  if (check.status === "unmatched") {
+    return (
+      <section
+        aria-label="Genuine product check"
+        className="mx-4 mt-6 flex gap-4 rounded-[1.75rem] bg-amber-50 p-5 text-amber-950 ring-1 ring-amber-300 sm:mx-5"
+      >
+        <ShieldIcon className="mt-0.5 h-7 w-7 shrink-0 text-amber-600" />
+        <div>
+          <h2 className="font-semibold">We couldn&apos;t confirm this {noun}</h2>
+          <p className="mt-1 text-[14px] leading-snug">
+            The sticker you tapped isn&apos;t registered to this {noun}. If you bought it new, check with the seller or contact{" "}
+            {brand}.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  const facts = [
+    { label: "Sticker no.", value: check.sample ? "Shown on tap" : check.tagCode },
+    { label: "First checked", value: check.firstScanAt ? shortDate(check.firstScanAt) : "Today" },
+    { label: "History", value: scanSummary(check.scans) },
+  ];
+  return (
+    <section
+      aria-label="Genuine product certificate"
+      className="reveal relative mx-4 mt-6 overflow-hidden rounded-[1.75rem] bg-white p-1.5 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-12px_rgb(0_0_0/0.12)] ring-1 ring-black/[0.04] sm:mx-5"
+    >
+      <div className="rounded-[1.4rem] border border-dashed border-[color-mix(in_oklab,var(--lp-accent)_55%,transparent)] bg-[radial-gradient(90%_80%_at_0%_0%,var(--lp-accent-soft),transparent)] p-5">
+        <div className="flex items-center gap-4">
+          <Seal className="h-[4.5rem] w-[4.5rem] shrink-0" />
+          <div>
+            <p className="text-[10.5px] font-semibold uppercase tracking-[0.24em] text-[var(--lp-primary)]">Certificate of authenticity</p>
+            <h2 className={`${heading} mt-1 text-[1.45rem] leading-tight tracking-[-0.01em]`}>Genuine {brand} product</h2>
+          </div>
+        </div>
+        <p className="mt-4 text-[15px] leading-snug text-ink/80">
+          You just tapped the sticker on this {noun}, and {SITE.logoName} confirmed it is registered to {brand}.
+        </p>
+        <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
+          {facts.map((f) => (
+            <div key={f.label} className="rounded-xl bg-[var(--lp-tint)] px-2 py-2.5">
+              <dt className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">{f.label}</dt>
+              <dd className="mt-1 text-[13px] font-semibold leading-tight text-ink">{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-[12px] leading-snug text-muted">
+          Stickers can be copied, so check the history: if you bought this new but the sticker has been checked many times, ask
+          the seller or contact {brand}.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+/** A rosette seal with a check mark, drawn in the brand's accent color. */
+function Seal({ className = "" }: { className?: string }) {
+  const points = Array.from({ length: 32 }, (_, i) => {
+    const r = i % 2 === 0 ? 31 : 27;
+    const a = (Math.PI * i) / 16;
+    return `${(32 + r * Math.sin(a)).toFixed(2)},${(32 - r * Math.cos(a)).toFixed(2)}`;
+  }).join(" ");
+  return (
+    <svg viewBox="0 0 64 64" className={className} role="img" aria-label="Verified seal">
+      <polygon points={points} style={{ fill: "var(--lp-accent)" }} />
+      <circle cx="32" cy="32" r="21" fill="none" style={{ stroke: "var(--lp-on-accent)" }} strokeOpacity="0.55" strokeWidth="1.2" />
+      <path
+        d="M22.5 32.5l6.5 6.5 12.5-13"
+        fill="none"
+        style={{ stroke: "var(--lp-on-accent)" }}
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 /** The brand's colors and heading font as CSS variables (--lp-*). The age gate uses them too. */

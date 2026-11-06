@@ -189,6 +189,9 @@ ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_vertical_check;
 ALTER TABLE companies ADD CONSTRAINT companies_vertical_check
   CHECK (vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));
 
+-- Genuine product check (Nov 2026): the landing page counts a tag's scans and finds its first one.
+CREATE INDEX IF NOT EXISTS taps_tag_time_idx ON taps (tag_code, created_at);
+
 -- Photos brands upload in the page builder (main photo, a strip of pictures under each topic, logo,
 -- product and people photos). The browser shrinks each photo to at most 1600px and strips its
 -- metadata (e.g. GPS) before upload, so they are small. Served at /media/{id} with a long cache.
