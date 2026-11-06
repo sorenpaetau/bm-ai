@@ -9,7 +9,7 @@ export function SiteFooter() {
       <Container className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[1.6fr_1fr_1fr]">
         <div className="max-w-sm space-y-4">
           <Link href="/" className="flex w-fit items-center" aria-label={`${SITE.name} home`}>
-            <Wordmark name={SITE.name} />
+            <Wordmark />
           </Link>
           <p>A small tag on every product. One tap opens its story, and you finally meet the people who buy it.</p>
         </div>

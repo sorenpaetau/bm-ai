@@ -24,7 +24,7 @@ export default async function PortalLayout({ children }: { children: React.React
             <div className="flex min-w-0 items-center gap-3">
               <Link href="/portal" className="flex shrink-0 items-center gap-2" aria-label={`${SITE.name} portal home`}>
                 <LogoMark className="h-9 w-9 text-brand sm:hidden" />
-                <Wordmark size="sm" name={SITE.name} className="hidden sm:flex" />
+                <Wordmark size="sm" className="hidden sm:flex" />
               </Link>
               <span aria-hidden="true" className="hidden h-6 w-px bg-line sm:block" />
               <span className="flex min-w-0 items-center gap-2 rounded-full bg-paper py-1 pr-3 pl-1 text-sm font-medium text-ink ring-1 ring-line ring-inset">
