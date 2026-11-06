@@ -7,6 +7,8 @@ import { starterContent } from "@/lib/ai/template";
 import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { Vertical } from "@/lib/site";
+import { DEMO_MARKETS } from "@/lib/demo-markets";
+import { topicExamples } from "../../_lib/builder";
 import { safeContent } from "../../_lib/content";
 import { archiveProduct, redraft, unpublish, updateDetails } from "../actions";
 import { ConfirmSubmit } from "../../_components/confirm-submit";
@@ -97,6 +99,7 @@ export default async function EditProductPage({
         live={p.status === "published"}
         liveIsCurrent={Boolean(p.liveIsCurrent)}
         verified={Boolean(p.verifiedAt)}
+        examples={topicExamples(DEMO_MARKETS.find((m) => m.company.vertical === p.vertical)?.content.sections ?? [])}
       />
 
       <section className="rounded-2xl border border-line bg-surface p-4 sm:p-5 lg:max-w-[calc(100%-404px)]">

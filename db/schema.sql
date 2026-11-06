@@ -188,3 +188,20 @@ CREATE TABLE IF NOT EXISTS app_settings (
 ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_vertical_check;
 ALTER TABLE companies ADD CONSTRAINT companies_vertical_check
   CHECK (vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));
+
+-- Photos brands upload in the page builder (main photo, a strip of pictures under each topic, logo,
+-- product and people photos). The browser shrinks each photo to at most 1600px and strips its
+-- metadata (e.g. GPS) before upload, so they are small. Served at /media/{id} with a long cache.
+CREATE TABLE IF NOT EXISTS uploads (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id    uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  product_id    uuid REFERENCES products(id) ON DELETE SET NULL,
+  uploaded_by   uuid REFERENCES users(id) ON DELETE SET NULL,
+  content_type  text NOT NULL CHECK (content_type IN ('image/jpeg', 'image/png', 'image/webp')),
+  bytes         bytea NOT NULL,
+  size_bytes    integer NOT NULL,
+  width         integer,
+  height        integer,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS uploads_company_idx ON uploads (company_id, created_at DESC);

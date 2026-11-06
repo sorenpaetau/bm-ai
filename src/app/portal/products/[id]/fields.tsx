@@ -42,17 +42,19 @@ export function TextArea({
   onChange,
   rows = 4,
   hint,
+  placeholder,
 }: {
   label: string;
   value: string | undefined;
   onChange: (value: string) => void;
   rows?: number;
   hint?: string;
+  placeholder?: string;
 }) {
   return (
     <label className="block space-y-1">
       <span className="text-xs font-medium text-muted">{label}</span>
-      <textarea rows={rows} value={value ?? ""} onChange={(e) => onChange(e.target.value)} className={inputClass} />
+      <textarea rows={rows} value={value ?? ""} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} className={inputClass} />
       {hint && <span className="block text-xs text-muted">{hint}</span>}
     </label>
   );

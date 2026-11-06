@@ -1,3 +1,4 @@
+import { tidySection } from "@/components/landing/helpers";
 import type { LandingContent } from "@/lib/landing";
 
 // Rules for publishing a draft. Pure, so the editor can show them live and the server re-checks them.
@@ -14,6 +15,7 @@ export function publishBlockers(content: LandingContent, companyVerified: boolea
   if (!content.hero.title.trim()) out.push("Add a product name at the top of the page.");
   for (const s of content.sections) {
     if (!s.visible) continue;
+    if (!s.title.trim() && tidySection(s)) out.push("Every topic you've filled in needs a heading (it's also the jump button's name).");
     // Blank rows and empty sections are simply left off the live page (templates start with blank
     // rows to fill in), so they don't block publishing. A value with no label would read oddly, though.
     if ((s.type === "facts" || s.type === "topic") && s.items.some((i) => !i.label.trim() && i.value.trim()))
