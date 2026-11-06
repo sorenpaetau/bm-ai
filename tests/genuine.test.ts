@@ -35,11 +35,31 @@ test("genuine check: a copied link without a real tap gets no certificate", () =
 
 test("tap proof: accepts a fresh signature for the same tag only", () => {
   const now = Date.UTC(2026, 10, 6, 21, 0, 0);
-  const proof = signTap("DEMO2023", now);
+  const proof = signTap("DEMO2023", now)!;
   assert.equal(verifyTap(proof, "DEMO2023", now + 60_000), true);
   assert.equal(verifyTap(proof, "DEMOKNIT", now), false);
   assert.equal(verifyTap(proof, "DEMO2023", now + (TAP_PROOF_MAX_AGE + 5) * 1000), false);
   assert.equal(verifyTap(proof.replace(/.$/, (c) => (c === "A" ? "B" : "A")), "DEMO2023", now), false);
   assert.equal(verifyTap(proof.replace(/\.\d+\./, ".1."), "DEMO2023", now), false);
   assert.equal(verifyTap(undefined, "DEMO2023", now), false);
+});
+
+test("tap proof: fails closed in production with no private secret", () => {
+  const env = process.env as Record<string, string | undefined>;
+  const saved = { NODE_ENV: env.NODE_ENV, TAP_SECRET: env.TAP_SECRET, DATABASE_URL: env.DATABASE_URL, POSTGRES_URL: env.POSTGRES_URL };
+  try {
+    delete env.TAP_SECRET;
+    delete env.DATABASE_URL;
+    delete env.POSTGRES_URL;
+    env.NODE_ENV = "production";
+    assert.equal(signTap("DEMO2023"), null);
+    env.POSTGRES_URL = "postgres://private@db/x";
+    const proof = signTap("DEMO2023");
+    assert.ok(proof && verifyTap(proof, "DEMO2023"));
+  } finally {
+    for (const [k, v] of Object.entries(saved)) {
+      if (v === undefined) delete env[k];
+      else env[k] = v;
+    }
+  }
 });
