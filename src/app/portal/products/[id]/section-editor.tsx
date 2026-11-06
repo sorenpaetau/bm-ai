@@ -203,6 +203,17 @@ function rowExample(example: TopicExample | undefined, label: string): string | 
   return value ? `e.g. ${value}` : undefined;
 }
 
+/**
+ * Puts a finished upload on the row it was meant for. The row is found by its place in the list, but
+ * only if it is still the same row (same name and same old photo); if the brand removed or reordered
+ * rows while the photo uploaded, the photo is dropped rather than landing on the wrong row.
+ */
+function setPhotoAt<T extends { name: string; imageUrl?: string }>(rows: T[], index: number, was: T, imageUrl: string | undefined): T[] {
+  const row = rows[index];
+  if (!row || row.name !== was.name || row.imageUrl !== was.imageUrl) return rows;
+  return rows.map((r, j) => (j === index ? { ...r, imageUrl } : r));
+}
+
 /** What the pictures area under a section is for, in the brand's words. */
 const PHOTO_STRIP_WORDING: Partial<Record<SectionType, { label: string; hint: string }>> = {
   story: {
@@ -343,7 +354,7 @@ function SectionFields({
                     label="Photo (optional)"
                     value={item.imageUrl}
                     onChange={(imageUrl) =>
-                      update((s) => (s.type === "products" ? { ...s, items: s.items.map((it, j) => (j === index ? { ...it, imageUrl } : it)) } : s))
+                      update((s) => (s.type === "products" ? { ...s, items: setPhotoAt(s.items, index, item, imageUrl) } : s))
                     }
                   />
                 </div>
@@ -441,7 +452,7 @@ function SectionFields({
                   label="Photo (optional)"
                   value={p.imageUrl}
                   onChange={(imageUrl) =>
-                    update((s) => (s.type === "maker" ? { ...s, people: s.people.map((it, j) => (j === index ? { ...it, imageUrl } : it)) } : s))
+                    update((s) => (s.type === "maker" ? { ...s, people: setPhotoAt(s.people, index, p, imageUrl) } : s))
                   }
                 />
               </div>
