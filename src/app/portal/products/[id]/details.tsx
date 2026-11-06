@@ -5,7 +5,7 @@ import { Button, Field, inputClass } from "@/components/ui";
 import type { ActionState } from "../actions";
 
 type Props = {
-  product: { name: string; sku: string; description: string | null };
+  product: { name: string; sku: string; description: string | null; brandLinks: string[] };
   updateAction: (prev: ActionState, form: FormData) => Promise<ActionState>;
   redraftAction: (prev: ActionState) => Promise<ActionState>;
   aiAvailable: boolean;
@@ -29,6 +29,15 @@ export function DetailsPanel({ product, updateAction, redraftAction, aiAvailable
         <Field label="Description" hint="Used by the AI writer. Customers don't see this text directly.">
           <textarea name="description" rows={4} required defaultValue={product.description ?? ""} className={inputClass} />
         </Field>
+        <Field label="Your web pages about it (optional)" hint="Up to 5 links, one per line. The AI writer reads them for facts. It never copies pictures from them.">
+          <textarea
+            name="links"
+            rows={2}
+            defaultValue={product.brandLinks.join("\n")}
+            placeholder="https://yourbrand.com/this-product"
+            className={inputClass}
+          />
+        </Field>
         <div className="flex items-center gap-3">
           <Button type="submit" variant="ghost" disabled={pending}>
             {pending ? "Saving…" : "Save details"}
@@ -49,7 +58,9 @@ export function DetailsPanel({ product, updateAction, redraftAction, aiAvailable
           className="rounded-lg border border-line bg-paper p-3 text-sm"
         >
           <p className="font-medium">Start over with a fresh AI draft</p>
-          <p className="text-muted">Uses the description above. Every section will need review again.</p>
+          <p className="text-muted">
+            Uses the description and links above and the photos on your page. Every section will need review again.
+          </p>
           <Button type="submit" variant="ghost" disabled={redrafting} className="mt-2">
             {redrafting ? "Writing… this can take up to a minute" : "Write a fresh AI draft"}
           </Button>

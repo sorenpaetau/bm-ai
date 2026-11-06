@@ -22,6 +22,7 @@ type Row = {
   sku: string;
   name: string;
   description: string | null;
+  brandLinks: string[];
   slug: string;
   status: string;
   content: unknown;
@@ -58,7 +59,7 @@ export default async function EditProductPage({
   if (!z.uuid().safeParse(id).success) notFound();
 
   const [p] = await sql<Row[]>`
-    SELECT p.id, p.sku, p.name, p.description, p.slug, p.status, p.content,
+    SELECT p.id, p.sku, p.name, p.description, p.brand_links, p.slug, p.status, p.content,
            (p.content = p.published_content) AS live_is_current,
            c.name AS company_name, c.vertical, c.website, c.verified_at
     FROM products p JOIN companies c ON c.id = p.company_id

@@ -4,13 +4,16 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { aiConfigured, DraftError, draftLandingContent } from "@/lib/ai/draft";
+import { cleanLinks } from "@/lib/ai/brief";
 import { starterContent, type DraftInput } from "@/lib/ai/template";
 import { requireUser } from "@/lib/auth";
 import { randomCode, slugify } from "@/lib/codes";
 import { sql } from "@/lib/db";
 import { LandingContent } from "@/lib/landing";
 import type { Vertical } from "@/lib/site";
+import { safeContent } from "../_lib/content";
 import { publishBlockers } from "../_lib/publish";
+import { brandPhotos, carryOverBrandMedia } from "@/lib/ai/brand-media";
 
 export type ActionState = { error?: string; ok?: string; values?: Record<string, string> };
 
@@ -25,8 +28,10 @@ async function currentCompany(companyId: string) {
 async function ownedProduct(productId: string) {
   const user = await requireUser();
   if (!z.uuid().safeParse(productId).success) redirect("/portal");
-  const [product] = await sql<{ id: string; name: string; description: string | null; companyId: string }[]>`
-    SELECT id, name, description, company_id FROM products WHERE id = ${productId} AND company_id = ${user.companyId}`;
+  const [product] = await sql<
+    { id: string; name: string; description: string | null; companyId: string; brandLinks: string[]; content: unknown }[]
+  >`
+    SELECT id, name, description, company_id, brand_links, content FROM products WHERE id = ${productId} AND company_id = ${user.companyId}`;
   if (!product) redirect("/portal");
   return { user, product };
 }
@@ -51,6 +56,13 @@ const NewProduct = z.object({
     .max(4000),
 });
 
+/** One link per line (or separated by spaces or commas). Anything that isn't a web address is ignored. */
+function linksFrom(raw: string) {
+  return cleanLinks(raw.split(/[\s,]+/).filter(Boolean));
+}
+
+const Price = z.string().trim().max(40, "Keep the price short, e.g. $45.");
+
 async function draftFor(input: DraftInput, useAi: boolean) {
   if (!aiConfigured()) return { content: starterContent(input), drafted: "ai-off" };
   if (!useAi) return { content: starterContent(input), drafted: "starter" };
@@ -64,22 +76,40 @@ async function draftFor(input: DraftInput, useAi: boolean) {
 
 export async function createProduct(_prev: ActionState, form: FormData): Promise<ActionState> {
   const user = await requireUser();
-  const values = { name: String(form.get("name") ?? ""), sku: String(form.get("sku") ?? ""), description: String(form.get("description") ?? "") };
+  const values = {
+    name: String(form.get("name") ?? ""),
+    sku: String(form.get("sku") ?? ""),
+    description: String(form.get("description") ?? ""),
+    links: String(form.get("links") ?? ""),
+    price: String(form.get("price") ?? ""),
+  };
   const parsed = NewProduct.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0].message, values };
   const { name, sku, description } = parsed.data;
+  const price = Price.safeParse(values.price);
+  if (!price.success) return { error: price.error.issues[0].message, values };
+  const links = linksFrom(values.links);
+  if (values.links.trim() && !links.length) return { error: "Those links don't look like web addresses. Start each one with https://", values };
 
   const [dupe] = await sql`SELECT 1 FROM products WHERE company_id = ${user.companyId} AND lower(sku) = ${sku.toLowerCase()}`;
   if (dupe) return { error: `You already have a product with SKU ${sku}.`, values };
 
   const company = await currentCompany(user.companyId);
-  const input: DraftInput = { companyName: company.name, vertical: company.vertical, productName: name, description, website: company.website };
+  const input: DraftInput = {
+    companyName: company.name,
+    vertical: company.vertical,
+    productName: name,
+    description,
+    website: company.website,
+    links,
+    price: price.data || null,
+  };
   const { content, drafted } = await draftFor(input, form.get("useAi") === "on");
 
   const slug = await uniqueSlug(slugify(`${company.name} ${name}`));
   const [row] = await sql<{ id: string }[]>`
-    INSERT INTO products (company_id, sku, name, description, slug, content)
-    VALUES (${user.companyId}, ${sku}, ${name}, ${description}, ${slug}, ${sql.json(content)})
+    INSERT INTO products (company_id, sku, name, description, slug, content, brand_links)
+    VALUES (${user.companyId}, ${sku}, ${name}, ${description}, ${slug}, ${sql.json(content)}, ${links})
     RETURNING id`;
   revalidatePath("/portal");
   redirect(`/portal/products/${row.id}?drafted=${drafted}`);
@@ -124,14 +154,20 @@ export async function redraft(productId: string): Promise<ActionState> {
   const { user, product } = await ownedProduct(productId);
   if (!aiConfigured()) return { error: "The AI writer isn't switched on for this site yet." };
   const company = await currentCompany(user.companyId);
+  // The brand's photos and price come from the current draft, so a fresh draft keeps them.
+  const current = safeContent(product.content);
   try {
-    const content = await draftLandingContent({
+    const fresh = await draftLandingContent({
       companyName: company.name,
       vertical: company.vertical,
       productName: product.name,
       description: product.description ?? product.name,
       website: company.website,
+      links: product.brandLinks,
+      photos: current ? brandPhotos(current) : [],
+      price: current?.hero.price ?? null,
     });
+    const content = current ? carryOverBrandMedia(current, fresh) : fresh;
     await sql`UPDATE products SET content = ${sql.json(content)}, updated_at = now() WHERE id = ${productId}`;
   } catch (err) {
     if (err instanceof DraftError) return { error: err.message };
@@ -149,10 +185,15 @@ export async function updateDetails(productId: string, _prev: ActionState, form:
   const parsed = Details.safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { name, sku, description } = parsed.data;
+  const rawLinks = String(form.get("links") ?? "");
+  const links = linksFrom(rawLinks);
+  if (rawLinks.trim() && !links.length) return { error: "Those links don't look like web addresses. Start each one with https://" };
   const [dupe] = await sql`
     SELECT 1 FROM products WHERE company_id = ${user.companyId} AND lower(sku) = ${sku.toLowerCase()} AND id <> ${productId}`;
   if (dupe) return { error: `You already have a product with SKU ${sku}.` };
-  await sql`UPDATE products SET name = ${name}, sku = ${sku}, description = ${description}, updated_at = now() WHERE id = ${productId}`;
+  await sql`
+    UPDATE products SET name = ${name}, sku = ${sku}, description = ${description}, brand_links = ${links}, updated_at = now()
+    WHERE id = ${productId}`;
   revalidatePath(`/portal/products/${productId}`);
   revalidatePath("/portal");
   return { ok: "Saved" };

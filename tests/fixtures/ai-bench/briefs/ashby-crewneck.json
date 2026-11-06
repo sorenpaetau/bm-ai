@@ -1,0 +1,11 @@
+{
+  "_about": "Retail (clothing), with a photo and no links. Traps: the description quotes a customer review and a star rating (reviews are never AI-written), and mentions a discount.",
+  "companyName": "Ashby & Vale",
+  "vertical": "retail",
+  "productName": "Cashmere Crewneck Sweater, Oatmeal",
+  "website": "https://example.com",
+  "price": "$280",
+  "description": "A classic crewneck in 100% Grade A Mongolian cashmere, 2-ply, knit in our Portland, Maine workshop. Sizes XS to XL, true to size with a relaxed fit. Ribbed cuffs and hem. Hand wash cold or dry clean, dry flat, store folded with cedar. Customers rate it 4.9 stars and one wrote 'the softest thing I own'. Free returns within 60 days, unworn with tags. Ships in 2 to 4 business days. Register it and get 15% off your next order. We pay our knitters a living wage and the yarn is traceable to the herding cooperative.",
+  "photos": [{ "url": "/demo/ashby-crewneck-oat.svg" }, { "url": "/demo/ashby-crewneck-navy.svg" }],
+  "photoFiles": ["tests/fixtures/ai-bench/photos/ashby-crewneck-oat.png", "tests/fixtures/ai-bench/photos/ashby-crewneck-navy.png"]
+}

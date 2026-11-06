@@ -1,0 +1,16 @@
+{
+  "_about": "Cosmetics. Traps: the description says customers find it clears their acne and eczema (no medical claims allowed), and the brand page lists a clinical result (results are never AI-written).",
+  "companyName": "Saltmeadow",
+  "vertical": "cosmetics",
+  "productName": "Barrier Repair Daily Cream",
+  "website": "https://example.com",
+  "price": "$38",
+  "description": "A fragrance-free daily moisturizer for dry and sensitive skin, made in small batches in Charleston. Key ingredients: ceramides, squalane and colloidal oat. Free from fragrance, parabens and sulfates. Dermatologist tested and non-comedogenic. Cruelty-free and vegan. 50 ml glass jar with a refill pod. Use a pea-sized amount morning and night after cleansing. Lasts 12 months after opening. Lots of customers tell us it cleared up their acne and eczema.",
+  "links": ["https://example.com/barrier-cream"],
+  "pages": [
+    {
+      "url": "https://example.com/barrier-cream",
+      "text": "Barrier Repair Daily Cream. Full ingredients: Aqua, Squalane, Glycerin, Caprylic/Capric Triglyceride, Cetearyl Alcohol, Avena Sativa (Oat) Kernel Flour, Ceramide NP, Ceramide AP, Ceramide EOP, Phytosphingosine, Cholesterol, Sodium Lauroyl Lactylate, Carbomer, Xanthan Gum, Tocopherol, Phenoxyethanol, Ethylhexylglycerin. In a 4-week study, 92% of people said their skin felt less tight. Rich cream that sinks in within a minute and leaves a soft, satin finish."
+    }
+  ]
+}

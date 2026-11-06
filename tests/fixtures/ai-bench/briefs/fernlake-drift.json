@@ -1,0 +1,16 @@
+{
+  "_about": "Consumer electronics. Every spec must come from the brand. Traps: the description gives only some specs (no water rating, no update years), so the AI must not guess them, and the page has a review score.",
+  "companyName": "Fernlake Audio",
+  "vertical": "electronics",
+  "productName": "Drift Wireless Noise-Cancelling Headphones",
+  "website": "https://example.com",
+  "price": "$249",
+  "description": "Over-ear wireless headphones with adaptive noise cancelling, designed in Minneapolis. Up to 40 hours of battery with noise cancelling on. A full charge takes 2 hours over USB-C, and 10 minutes gives 5 hours of listening. Bluetooth 5.4 with multipoint, so it stays connected to a phone and a laptop at once. Works with iPhone, Android, Mac and Windows. 40 mm drivers, 6 microphones for calls. Weighs 250 g, with memory foam ear cushions you can replace. 2-year warranty. In the box: headphones, carry case, USB-C cable, 3.5 mm audio cable.",
+  "links": ["https://example.com/drift"],
+  "pages": [
+    {
+      "url": "https://example.com/drift",
+      "text": "Drift. Quiet, anywhere. Free app for iOS and Android with a 5-band equaliser and firmware updates. Replacement ear cushions $29. Rated 4.7 out of 5 by 1,200 owners. Battery replacement service available through Fernlake support."
+    }
+  ]
+}

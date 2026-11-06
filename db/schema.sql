@@ -188,3 +188,6 @@ CREATE TABLE IF NOT EXISTS app_settings (
 ALTER TABLE companies DROP CONSTRAINT IF EXISTS companies_vertical_check;
 ALTER TABLE companies ADD CONSTRAINT companies_vertical_check
   CHECK (vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));
+
+-- AI page drafts: the brand's own web pages the AI writer may read (product page, about page). Max 5.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS brand_links text[] NOT NULL DEFAULT '{}';
