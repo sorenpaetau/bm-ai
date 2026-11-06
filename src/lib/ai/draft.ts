@@ -4,7 +4,7 @@ import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { LandingContent } from "../landing";
 import { BenchWaiting, benchWriter } from "./bench";
 import { draftRequest, pickedPhotoToInput, type DraftRequest } from "./brief";
-import { addFindingNotes, checkDraft } from "./checks";
+import { addFindingNotes, checkDraft, type Finding } from "./checks";
 import { buildDraftContent, type AiDraft, type AiMarketDraft, type DraftInput } from "./template";
 
 // Writes a first draft of a product landing page. The result is a DRAFT: every section comes back
@@ -49,6 +49,14 @@ const SENDABLE = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"])
 export const httpsPhotos: PhotoLoader = async (url) => (url.startsWith("https://") ? { url } : null);
 
 export async function draftLandingContent(input: DraftInput, options: DraftOptions = {}): Promise<LandingContent> {
+  return (await draftWithFindings(input, options)).content;
+}
+
+/**
+ * The draft, plus what the rule checker found in the writer's answer before any of it was fixed up
+ * (the test bench uses these to judge the writer, not the cleaned-up page).
+ */
+export async function draftWithFindings(input: DraftInput, options: DraftOptions = {}): Promise<{ content: LandingContent; findings: Finding[] }> {
   const writer = aiWriter();
   if (writer === "off") throw new DraftError("The AI writer isn't switched on for this site yet.");
   const request = draftRequest(input);
@@ -72,7 +80,7 @@ export async function draftLandingContent(input: DraftInput, options: DraftOptio
   const content = buildDraftContent(parsed.data as (AiDraft | AiMarketDraft) & { heroPhoto?: number }, input);
   const findings = checkDraft(content, input);
   if (findings.length) console.warn(`AI draft for "${input.productName}": ${findings.length} thing(s) to check`, findings);
-  return addFindingNotes(content, findings);
+  return { content: addFindingNotes(content, findings), findings };
 }
 
 async function loadPhotos(request: DraftRequest, load: PhotoLoader) {

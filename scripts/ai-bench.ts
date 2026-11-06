@@ -103,16 +103,23 @@ async function check(names: string[]) {
 async function claude(names: string[]) {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error("Set ANTHROPIC_API_KEY to compare with the real Claude API.");
   process.env.AI_WRITER = "claude";
-  const { draftLandingContent } = await import("../src/lib/ai/draft");
+  const { draftWithFindings } = await import("../src/lib/ai/draft");
   let failed = 0;
   for (const { name, brief } of await briefs(names)) {
     // The real writer reads real links. These brands are made up, so hand it the page text in the description.
     const pages = (brief.pages ?? []).map((p) => `From ${p.url}:\n${p.text}`).join("\n\n");
     const input: DraftInput = { ...brief, links: [], description: pages ? `${brief.description}\n\n${pages}` : brief.description };
-    const content = await draftLandingContent(input);
+    // Send the same photo files the test workers look at.
+    const loadPhoto = async (url: string) => {
+      const index = (brief.photos ?? []).findIndex((p) => p.url === url);
+      const file = brief.photoFiles?.[index];
+      if (!file) return null;
+      return { mediaType: "image/png", data: (await readFile(path.resolve(file))).toString("base64") };
+    };
+    // Judge the writer by what it wrote, before the page's safety fallbacks tidy anything up.
+    const { content, findings } = await draftWithFindings(input, { loadPhoto });
     await mkdir(runDir(name), { recursive: true });
     await writeFile(path.join(runDir(name), "page-claude.json"), JSON.stringify(content, null, 2));
-    const findings = checkDraft(content, brief, (brief.pages ?? []).map((p) => p.text));
     const ok = !findings.some((f) => f.level === "problem");
     if (!ok) failed++;
     report({ name: `${name} (Claude API)`, ok, content, findings });

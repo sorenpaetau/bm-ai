@@ -57,6 +57,18 @@ export function sectionText(s: Section): string {
 
 const norm = (v: string) => v.toLowerCase().replace(/\s+/g, " ");
 
+/**
+ * True if `needle` is in `haystack` as a whole value: "5 ml" is not found in "50 ml", and "4" is not
+ * found in "4.5". Edges that are digits must not run on into more digits.
+ */
+export function containsWhole(haystack: string, needle: string) {
+  if (!needle) return false;
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const before = /^\d/.test(needle) ? "(?<![\\d.,])" : "";
+  const after = /\d$/.test(needle) ? "(?![\\d]|[.,]\\d)" : "";
+  return new RegExp(before + escaped + after).test(haystack);
+}
+
 /** What the brand gave us, as one lower-case string to compare against. */
 export function sourceText(input: DraftInput, extra: string[] = []) {
   return norm([input.companyName, input.productName, input.description, input.price ?? "", ...extra].join("\n"));
@@ -71,7 +83,7 @@ export function checkDraft(content: LandingContent, input: DraftInput, extra: st
   const source = sourceText(input, extra);
   // Without the text of the brand's pages we can't tell a fact from its pages from a made-up one.
   const haveAllSources = !input.links?.length || extra.length > 0;
-  const inSource = (match: string) => source.includes(norm(match));
+  const inSource = (match: string) => containsWhole(source, norm(match));
   const findings: Finding[] = [];
 
   // Every AI-written section, plus the AI-written line under the product name and the sign-up box.

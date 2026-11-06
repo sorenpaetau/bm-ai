@@ -4,7 +4,7 @@ import { z } from "zod";
 import { benchJob, parseAnswer } from "../src/lib/ai/bench";
 import { brandPhotos, carryOverBrandMedia } from "../src/lib/ai/brand-media";
 import { cleanLinks, draftRequest, pickedPhotoToInput } from "../src/lib/ai/brief";
-import { addFindingNotes, checkDraft, HERO, OPTIN } from "../src/lib/ai/checks";
+import { addFindingNotes, checkDraft, containsWhole, HERO, OPTIN } from "../src/lib/ai/checks";
 import { buildDraftContent, starterContent, type AiMarketDraft, type DraftInput } from "../src/lib/ai/template";
 import { LandingContent } from "../src/lib/landing";
 
@@ -210,4 +210,17 @@ test("the line under the product name and the sign-up box are checked too, and f
   const offer = { ...skin, description: `${skin.description} Register for 15% off your next order.` };
   const ok = buildDraftContent(skinDraft({ optin: { headline: "Register", prompt: "Register for 15% off your next order." } }), offer);
   assert.ok(!checkDraft(ok, offer).some((f) => f.sectionId === OPTIN), JSON.stringify(checkDraft(ok, offer)));
+});
+
+test("numbers must match whole: 5 ml is not the brand's 50 ml", () => {
+  assert.ok(containsWhole("a 50 ml jar", "50 ml"));
+  assert.ok(!containsWhole("a 50 ml jar", "5 ml"));
+  assert.ok(!containsWhole("14.5% alcohol", "4.5%"));
+  assert.ok(!containsWhole("4.5 stars", "4"));
+  assert.ok(containsWhole("2,400 cases", "2,400"));
+  const draft = buildDraftContent(
+    skinDraft({ topics: [{ id: "how-to-use", answer: "Apply 5 ml daily", body: "", items: [], chips: [], basis: "description" }] }),
+    skin,
+  );
+  assert.ok(checkDraft(draft, skin).some((f) => f.sectionId === "how-to-use" && f.message.includes("numbers (5)")));
 });
