@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { otherButtonIndexes, pagePhotos, quickLinkUrl, setQuickLink, topicExamples } from "../src/app/portal/_lib/builder";
+import { otherButtonIndexes, pagePhotos, quickLinkUrl, setQuickLink, tagQuickLinks, topicExamples } from "../src/app/portal/_lib/builder";
 import { publishBlockers } from "../src/app/portal/_lib/publish";
 import { sectionsToShow } from "../src/components/landing/helpers";
 import { DEMO_MARKETS } from "../src/lib/demo-markets";
@@ -13,7 +13,8 @@ const page = (buttons: unknown[] = [], sections: unknown[] = []) =>
 const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] };
 
 test("the webstore and website links are found on older pages without a slot", () => {
-  const retail = DEMO_MARKETS.find((m) => m.tagCode === "DEMOKNIT")!.content;
+  const demo = DEMO_MARKETS.find((m) => m.tagCode === "DEMOKNIT")!.content;
+  const retail = { ...demo, buttons: tagQuickLinks(demo.buttons) };
   assert.equal(quickLinkUrl(retail, "webstore"), "https://example.com/shop");
   assert.equal(quickLinkUrl(retail, "website"), "https://example.com");
   assert.deepEqual(otherButtonIndexes(retail.buttons), []);
@@ -40,8 +41,16 @@ test("the webstore and website buttons go first, before any other buttons", () =
   assert.equal(buttons[0].kind, "shopify");
 });
 
+test("a custom button being typed under More buttons never turns into the webstore button", () => {
+  let buttons = tagQuickLinks(page([{ label: "", url: "" }]).buttons);
+  buttons = buttons.map((b) => ({ ...b, label: "Shop accessories", kind: "shopify" as const }));
+  assert.deepEqual(otherButtonIndexes(buttons), [0]);
+  assert.equal(quickLinkUrl(page(buttons), "webstore"), "");
+});
+
 test("a website button is added after an existing webstore button", () => {
-  const buttons = setQuickLink(page([{ label: "Go to webstore", url: "https://s.example", kind: "shopify" }]).buttons, "website", "https://w.example");
+  const start = tagQuickLinks(page([{ label: "Go to webstore", url: "https://s.example", kind: "shopify" }]).buttons);
+  const buttons = setQuickLink(start, "website", "https://w.example");
   assert.deepEqual(buttons.map((b) => b.label), ["Go to webstore", "Go to website"]);
 });
 

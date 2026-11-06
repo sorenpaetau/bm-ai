@@ -10,19 +10,29 @@ export const QUICK_LINKS: Record<QuickSlot, { label: string; style: ActionButton
   website: { label: "Go to website", style: "secondary", kind: "link" },
 };
 
-/**
- * Which button is the page's webstore or website button. Pages saved before the builder have no
- * `slot`, so fall back to what the starter templates and demo pages use: a Shopify-style button is the
- * webstore, and a plain link whose label mentions "website" is the website.
- */
+/** Which button is the page's webstore or website button, by its slot. -1 if there is none. */
 export function quickLinkIndex(buttons: ActionButton[], slot: QuickSlot): number {
-  const tagged = buttons.findIndex((b) => b.slot === slot);
-  if (tagged >= 0) return tagged;
-  return buttons.findIndex((b) => {
-    if (b.slot) return false;
-    if (slot === "webstore") return b.kind === "shopify" || (b.kind === "link" && /web\s?store|online shop|\bshop\b/i.test(b.label));
-    return b.kind === "link" && /web\s?site/i.test(b.label);
-  });
+  return buttons.findIndex((b) => b.slot === slot);
+}
+
+/**
+ * Pages saved before the builder have no `slot` on their buttons. Run once when the editor opens: a
+ * Shopify-style button becomes the webstore, and a plain link whose label mentions "website" becomes
+ * the website. Done once, not on every keystroke, so a button the brand is typing into under "More
+ * buttons" (say "Shop accessories") never jumps into the webstore box halfway through.
+ */
+export function tagQuickLinks(buttons: ActionButton[]): ActionButton[] {
+  const guess = (slot: QuickSlot, b: ActionButton) =>
+    slot === "webstore"
+      ? b.kind === "shopify" || (b.kind === "link" && /web\s?store|online shop|\bshop\b/i.test(b.label))
+      : b.kind === "link" && /web\s?site/i.test(b.label);
+  let out = buttons;
+  for (const slot of ["webstore", "website"] as const) {
+    if (quickLinkIndex(out, slot) >= 0) continue;
+    const i = out.findIndex((b) => !b.slot && guess(slot, b));
+    if (i >= 0) out = out.map((b, j) => (j === i ? { ...b, slot } : b));
+  }
+  return out;
 }
 
 export function quickLinkUrl(content: LandingContent, slot: QuickSlot): string {

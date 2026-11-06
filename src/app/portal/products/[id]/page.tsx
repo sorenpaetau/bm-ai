@@ -8,7 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { Vertical } from "@/lib/site";
 import { DEMO_MARKETS } from "@/lib/demo-markets";
-import { topicExamples } from "../../_lib/builder";
+import { tagQuickLinks, topicExamples } from "../../_lib/builder";
 import { safeContent } from "../../_lib/content";
 import { archiveProduct, redraft, unpublish, updateDetails } from "../actions";
 import { ConfirmSubmit } from "../../_components/confirm-submit";
@@ -70,6 +70,7 @@ export default async function EditProductPage({
   const content =
     safeContent(p.content) ??
     starterContent({ companyName: p.companyName, vertical: p.vertical, productName: p.name, description: p.description ?? "", website: p.website });
+  content.buttons = tagQuickLinks(content.buttons);
   const notice = drafted ? NOTICES[drafted] : undefined;
 
   return (
