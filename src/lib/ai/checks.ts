@@ -18,6 +18,10 @@ export type Finding = {
 const MONEY = /(?:[$€£]\s?\d[\d,.]*|\b\d[\d,.]*\s?(?:dollars|usd|eur|euros)\b)/gi;
 // Review scores and awards. Not technical ratings such as "IP67-rated" or "rated to 50 m".
 const RATING = /\b(?:\d{2,3}\s?(?:points?|pts)|\d(?:\.\d)?\s?(?:\/\s?5|out of 5|stars?)|(?:highly|top|best|five[- ]star|well)[- ]rated|rated\s+(?:by|as|the\s+best|#)|award[- ]?winning|awards?|medals?|best[- ]?sell(?:er|ing)|#\s?1)\b/gi;
+// Alcohol content: the winery adds it itself (Jens: not without their consent).
+const ABV = /\b(?:abv|alc(?:ohol)?\.?\s*(?:by\s+vol(?:ume)?\.?\s*)?\d+(?:\.\d+)?\s?%|\d+(?:\.\d+)?\s?%\s*(?:abv|alc\b|alcohol|by\s+vol))/gi;
+// Discounts and sales: the brand fills its own deals box.
+const DISCOUNT = /\b(?:\d+\s?%\s?off|discounts?|on sale|save\s+(?:\d|up to))/gi;
 const PERCENT = /\b\d+(?:\.\d+)?\s?%/g;
 const NUMBER = /\b\d+(?:[.,]\d+)?\b/g;
 const MEDICAL = /\b(?:cures?|treats?|treatment|heals?|prevents?|clinically proven|acne|eczema|psoriasis|rosacea|dermatitis)\b/gi;
@@ -49,6 +53,14 @@ export function sectionText(s: Section): string {
     case "topic":
       add(s.answer, s.body, ...s.chips);
       s.items.filter((i) => i.value.trim()).forEach((i) => add(i.label, i.value));
+      break;
+    case "about":
+      add(s.body);
+      s.parts.forEach((p) => add(p.body ? `${p.title}\n${p.body}` : undefined));
+      break;
+    case "buy":
+      add(s.body);
+      s.items.filter((i) => i.url.trim()).forEach((i) => add(i.name, i.note));
       break;
     default:
       break;
@@ -82,6 +94,7 @@ export function sourceText(input: DraftInput, extra: string[] = []) {
  */
 export function checkDraft(content: LandingContent, input: DraftInput, extra: string[] = []): Finding[] {
   const source = sourceText(input, extra);
+  const ownWords = sourceText(input);
   // Without the text of the brand's pages we can't tell a fact from its pages from a made-up one.
   const haveAllSources = !input.links?.length || extra.length > 0;
   const inSource = (match: string) => containsWhole(source, norm(match));
@@ -109,6 +122,14 @@ export function checkDraft(content: LandingContent, input: DraftInput, extra: st
     // Ratings and awards are never AI-written, even real ones: the brand adds them itself.
     const ratings = found(RATING);
     if (ratings.length) push("problem", `Mentions a rating or award (${ratings.join(", ")}). Only add real ones yourself, in the fact box or reviews.`);
+
+    if (input.vertical === "wine_spirits") {
+      const abv = found(ABV);
+      if (abv.length) push("problem", `Mentions the alcohol content (${abv.join(", ")}). Only add it yourself, in the ABV box.`);
+    }
+    // A sign-up offer the brand typed itself is fine; one copied from its website needs its say-so.
+    const discounts = found(DISCOUNT).filter((m) => !containsWhole(ownWords, norm(m)));
+    if (discounts.length) push("problem", `Mentions a discount or sale (${discounts.join(", ")}). Only add real ones yourself.`);
 
     // Blend percentages are AI-written too, so they're checked like any other percentage.
     const percents = notGiven(PERCENT);

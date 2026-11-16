@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { tidySection } from "@/components/landing/helpers";
+import { tidySection, videoEmbed } from "@/components/landing/helpers";
+import type { WineryBox } from "@/lib/ai/winery";
 import { inputClass } from "@/components/ui";
-import type { Section, SectionType } from "@/lib/landing";
+import type { LandingVideo, Section, SectionType } from "@/lib/landing";
 import type { TopicExample } from "../../_lib/builder";
 import { ItemList, TextArea, TextField, Toggle } from "./fields";
 import { PhotoField, PhotoStrip } from "./photos";
@@ -19,6 +20,8 @@ export const SECTION_TYPES: Record<SectionType, { label: string; hint: string }>
   maker: { label: "The maker", hint: "Your winemaker or founders, how you farm and make it, and key numbers" },
   visit: { label: "Visit us", hint: "Address and map, tastings and tours, nearby places to stay and eat" },
   topic: { label: "Topic box", hint: "One thing shoppers want to know, e.g. Size & fit or Battery: a short answer, details and key rows" },
+  about: { label: "About us", hint: "Your story in a few short parts, each with its own photos and videos" },
+  buy: { label: "Where to buy", hint: "Shops and apps that sell it, e.g. Vivino or Total Wine & More, each with a link" },
 };
 
 /** Pictures a topic box can show (the same names the landing page understands). */
@@ -49,6 +52,15 @@ const TOPIC_ICON_CHOICES: Array<[string, string]> = [
   ["heart", "Heart"],
   ["spark", "Sparkle"],
   ["gift", "Gift"],
+  ["award", "Award"],
+  ["wine", "Wine bottle"],
+  ["percent", "Percent (alcohol)"],
+  ["bed", "Bed (lodging)"],
+  ["fork", "Fork (food)"],
+  ["pin", "Map pin (places)"],
+  ["calendar", "Calendar (events)"],
+  ["quote", "Quote (reviews)"],
+  ["store", "Store"],
 ];
 
 export function blankSection(type: SectionType): Section {
@@ -81,6 +93,10 @@ export function blankSection(type: SectionType): Section {
       return { ...base, type, address: "", map: true, experiences: [], nearby: [], links: [] };
     case "topic":
       return { ...base, type, icon: "list", answer: "", body: "", items: [{ label: "", value: "" }], chips: [] };
+    case "about":
+      return { ...base, type, body: "", parts: [{ id: `part-${base.id}`, title: "", body: "", images: [], videos: [], sources: [] }] };
+    case "buy":
+      return { ...base, type, body: "", items: [{ name: "", url: "" }] };
   }
 }
 
@@ -93,13 +109,15 @@ type Props = {
   number: number;
   /** Example answers from a finished demo page in the same market, shown greyed out. */
   example?: TopicExample;
+  /** For wine pages: the jump-button box this is (Jens's "enter if applicable" boxes). */
+  box?: WineryBox;
   onMove: (delta: -1 | 1) => void;
   onRemove: () => void;
   first: boolean;
   last: boolean;
 };
 
-export function SectionEditor({ section, onChange, onUpdate, number, example, onMove, onRemove, first, last }: Props) {
+export function SectionEditor({ section, onChange, onUpdate, number, example, box, onMove, onRemove, first, last }: Props) {
   const needsReview = section.aiGenerated && !section.reviewed;
   // `patch` keeps the section's own type; casting is safe because each editor only patches its own fields.
   const patch = (p: Partial<Section>) => onChange({ ...section, ...p } as Section);
@@ -114,7 +132,7 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, on
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white" aria-hidden="true">
           {number}
         </span>
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-700">{SECTION_TYPES[section.type].label}</span>
+        <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-700">{box ? "Jump button box" : SECTION_TYPES[section.type].label}</span>
         {needsReview && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">AI draft · Needs review</span>}
         {section.aiGenerated && section.reviewed && (
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-900">AI draft · Reviewed</span>
@@ -159,12 +177,18 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, on
             placeholder="e.g. Taste"
           />
         </div>
-        <SectionFields section={section} patch={patch} update={onUpdate} example={example} />
-        <PhotoStrip
-          images={section.images ?? []}
-          onChange={(fn) => onUpdate((s) => ({ ...s, images: fn(s.images ?? []) }) as Section)}
-          {...PHOTO_STRIP_WORDING[section.type]}
-        />
+        {box && <BoxNote box={box} />}
+        <SectionFields section={section} patch={patch} update={onUpdate} example={example} simple={Boolean(box)} />
+        {section.type !== "about" && (
+          <>
+            <PhotoStrip
+              images={section.images ?? []}
+              onChange={(fn) => onUpdate((s) => ({ ...s, images: fn(s.images ?? []) }) as Section)}
+              {...(box ? BOX_PHOTO_WORDING[box.id] : undefined) ?? PHOTO_STRIP_WORDING[section.type]}
+            />
+            <VideoField videos={section.videos ?? []} onChange={(videos) => patch({ videos })} />
+          </>
+        )}
       </div>
 
       {section.aiGenerated && (
@@ -196,6 +220,68 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, on
   );
 }
 
+/** The "enter if applicable" line under a wine box's heading, and who may fill it in. */
+function BoxNote({ box }: { box: WineryBox }) {
+  return box.ai === "never" ? (
+    <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
+      <span className="font-semibold">Enter if applicable.</span> Only you can fill this in: our AI never writes awards, ratings, reviews,
+      alcohol content or discounts. Leave it empty and this box and its jump button stay off your page.
+    </p>
+  ) : (
+    <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950 ring-1 ring-sky-200 ring-inset">
+      <span className="font-semibold">Enter if applicable.</span>{" "}
+      {box.ai === "site" ? "Our AI fills this from your own website when it can." : "Our AI fills this from your description and website."} Leave it
+      empty and this box and its jump button stay off your page.
+    </p>
+  );
+}
+
+/** Pictures under each wine box, in Jens's words ("other winery products", "gift sets and shop"). */
+const BOX_PHOTO_WORDING: Record<string, { label: string; hint: string }> = {
+  wine: { label: "More pictures of this wine", hint: "Optional. The label, the bottle in the vineyard, a pour. Only use photos your winery owns." },
+  giftsets: { label: "Gift set and shop pictures", hint: "Optional. Your gift boxes and shop items. Only use photos your winery owns." },
+  otherwines: { label: "Pictures of your other wines", hint: "Optional. Your other bottles and products. Only use photos your winery owns." },
+  events: { label: "Event pictures", hint: "Optional. Past events, the barrel room set for dinner. Only use photos your winery owns." },
+  tastingroom: { label: "Tasting room pictures", hint: "Optional. The tasting room, the terrace, the view. Only use photos your winery owns." },
+  awards: { label: "Award pictures", hint: "Optional. A medal or certificate. Only use photos your winery owns." },
+};
+
+/**
+ * YouTube or Vimeo links for a section. Shoppers see a still with a play button; the video only loads
+ * when they tap it. Links we can't play are flagged here and left off the page.
+ */
+export function VideoField({ videos, onChange, label = "Videos for this section" }: { videos: LandingVideo[]; onChange: (videos: LandingVideo[]) => void; label?: string }) {
+  return (
+    <details className="rounded-xl bg-paper/60 p-3 ring-1 ring-line ring-inset" open={videos.length > 0}>
+      <summary className="cursor-pointer text-sm font-semibold">
+        {label} <span className="font-normal text-muted">(optional)</span>
+      </summary>
+      <p className="mt-1 mb-3 text-xs text-muted">
+        Paste a YouTube or Vimeo link to your own video. It shows under this section&apos;s text and pictures, and only plays when tapped.
+      </p>
+      <ItemList
+        items={videos}
+        onChange={onChange}
+        blank={() => ({ url: "", title: "" })}
+        addLabel="Add a video"
+        render={(v, set) => (
+          <div className="grid gap-2 sm:grid-cols-[3fr_2fr]">
+            <TextField
+              label="Video link"
+              type="url"
+              value={v.url}
+              onChange={(url) => set({ url })}
+              placeholder="https://www.youtube.com/watch?v=…"
+              hint={v.url.trim() && !videoEmbed(v.url) ? "We can't play this link. Use a YouTube or Vimeo link." : undefined}
+            />
+            <TextField label="Caption (optional)" value={v.title} onChange={(title) => set({ title })} placeholder="A morning at harvest" />
+          </div>
+        )}
+      />
+    </details>
+  );
+}
+
 /** "e.g. XS, S, M, L, XL" for a row whose label matches the demo page, or a general example. */
 function rowExample(example: TopicExample | undefined, label: string): string | undefined {
   if (!example) return "e.g. XS to XL";
@@ -214,6 +300,14 @@ function setPhotoAt<T extends { name: string; imageUrl?: string }>(rows: T[], in
   return rows.map((r, j) => (j === index ? { ...r, imageUrl } : r));
 }
 
+/** Jens's photo list for "About the winery": the family, the tasting room, the winery. */
+const ABOUT_PHOTO_HINTS: Record<string, string> = {
+  family: "The family, then and now.",
+  region: "The vineyards and the landscape.",
+  winery: "The winery, the cellar or the barrel room.",
+  tastingroom: "The tasting room and the view.",
+};
+
 /** What the pictures area under a section is for, in the brand's words. */
 const PHOTO_STRIP_WORDING: Partial<Record<SectionType, { label: string; hint: string }>> = {
   story: {
@@ -231,12 +325,15 @@ function SectionFields({
   patch,
   update,
   example,
+  simple = false,
 }: {
   section: Section;
   patch: (p: Partial<Section>) => void;
   /** For photo uploads, which finish later: applies the change to the newest version of the section. */
   update: (fn: (section: Section) => Section) => void;
   example?: TopicExample;
+  /** Wine boxes: the short answer, details and rows up front; the rest under "More options". */
+  simple?: boolean;
 }) {
   switch (section.type) {
     case "facts":
@@ -493,26 +590,41 @@ function SectionFields({
           )}
         />
       );
-    case "topic":
+    case "topic": {
+      const iconPicker = (
+        <label className="block space-y-1">
+          <span className="text-xs font-medium text-muted">Picture</span>
+          <select value={section.icon ?? "list"} onChange={(e) => patch({ icon: e.target.value })} className={inputClass}>
+            {TOPIC_ICON_CHOICES.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      );
+      const extras = (
+        <>
+          <ListField
+            label="Chips (optional)"
+            values={section.chips}
+            onChange={(chips) => patch({ chips })}
+            hint={simple ? "Comma separated, e.g. Blackberry, Cassis, Cedar" : "Comma separated, e.g. Shea butter, Squalane, Niacinamide"}
+            separator=","
+          />
+          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder={simple ? "Book a tasting" : "See the size chart"} />
+        </>
+      );
       return (
         <div className="space-y-3">
-          <div className="grid gap-2 sm:grid-cols-[2fr_1fr]">
+          <div className={simple ? "" : "grid gap-2 sm:grid-cols-[2fr_1fr]"}>
             <TextField
               label="Short answer, shown big"
               value={section.answer}
               onChange={(answer) => patch({ answer })}
               placeholder={example?.answer ? `e.g. ${example.answer}` : "e.g. 100% cashmere"}
             />
-            <label className="block space-y-1">
-              <span className="text-xs font-medium text-muted">Picture</span>
-              <select value={section.icon ?? "list"} onChange={(e) => patch({ icon: e.target.value })} className={inputClass}>
-                {TOPIC_ICON_CHOICES.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!simple && iconPicker}
           </div>
           <TextArea
             label="Details (optional)"
@@ -521,7 +633,7 @@ function SectionFields({
             onChange={(body) => patch({ body })}
             placeholder={example?.body ? `e.g. ${example.body}` : undefined}
           />
-          <p className="text-xs font-medium text-muted">Key facts</p>
+          <p className="text-xs font-medium text-muted">{simple ? "Rows (optional)" : "Key facts"}</p>
           <ItemList
             items={section.items}
             onChange={(items) => patch({ items })}
@@ -529,24 +641,93 @@ function SectionFields({
             addLabel="Add a row"
             render={(item, set) => (
               <div className="grid gap-2 sm:grid-cols-[1fr_2fr]">
-                <TextField label="Label" value={item.label} onChange={(label) => set({ label })} placeholder="Sizes" />
+                <TextField label="Label" value={item.label} onChange={(label) => set({ label })} placeholder={simple ? "e.g. a name or a date" : "Sizes"} />
                 <TextField
                   label="Value"
                   value={item.value}
                   onChange={(value) => set({ value })}
-                  placeholder={rowExample(example, item.label)}
+                  placeholder={simple ? undefined : rowExample(example, item.label)}
                 />
               </div>
             )}
           />
-          <ListField
-            label="Chips (optional)"
-            values={section.chips}
-            onChange={(chips) => patch({ chips })}
-            hint="Comma separated, e.g. Shea butter, Squalane, Niacinamide"
-            separator=","
+          {simple ? (
+            <details className="rounded-lg border border-line p-3">
+              <summary className="cursor-pointer text-sm font-medium">More options</summary>
+              <div className="mt-3 space-y-3">
+                {iconPicker}
+                {extras}
+              </div>
+            </details>
+          ) : (
+            extras
+          )}
+        </div>
+      );
+    }
+    case "about":
+      return (
+        <div className="space-y-3">
+          <TextArea
+            label="A line to start with (optional)"
+            rows={2}
+            value={section.body}
+            onChange={(body) => patch({ body })}
+            placeholder="e.g. A family winery on the ridge above St. Helena since 1998."
           />
-          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder="See the size chart" />
+          <p className="text-xs text-muted">
+            Each part shows its text, then its pictures and videos right underneath. Parts you leave empty stay off the page.
+          </p>
+          <ItemList
+            items={section.parts}
+            onChange={(parts) => patch({ parts })}
+            blank={() => ({ id: `part-${Math.random().toString(36).slice(2, 8)}`, title: "", body: "", images: [], videos: [], sources: [] })}
+            addLabel="Add a part"
+            render={(part, set, i) => (
+              <div className="space-y-3">
+                <TextField label="Part heading" value={part.title} onChange={(title) => set({ title })} placeholder="e.g. Our family" />
+                <TextArea label="Text" rows={4} value={part.body} onChange={(body) => set({ body })} />
+                {part.sources.length > 0 && <p className="text-xs text-muted">Where this came from: {part.sources.join(" · ")}. Customers never see this note.</p>}
+                <PhotoStrip
+                  images={part.images}
+                  onChange={(fn) =>
+                    update((s) =>
+                      s.type === "about" ? { ...s, parts: s.parts.map((p) => (p.id === part.id ? { ...p, images: fn(p.images) } : p)) } : s,
+                    )
+                  }
+                  label={`Pictures for “${part.title || `part ${i + 1}`}”`}
+                  hint={`Optional. ${ABOUT_PHOTO_HINTS[part.id] ?? "Shown right under this part's text."} Only use photos your company owns.`}
+                />
+                <VideoField videos={part.videos} onChange={(videos) => set({ videos })} label={`Videos for “${part.title || `part ${i + 1}`}”`} />
+              </div>
+            )}
+          />
+        </div>
+      );
+    case "buy":
+      return (
+        <div className="space-y-3">
+          <TextArea
+            label="A line to start with (optional)"
+            rows={2}
+            value={section.body}
+            onChange={(body) => patch({ body })}
+            placeholder="e.g. Order direct from our shop, or find us at these stores."
+          />
+          <p className="text-xs text-muted">Each shop becomes a button. A shop shows only once it has a link.</p>
+          <ItemList
+            items={section.items}
+            onChange={(items) => patch({ items })}
+            blank={(): Extract<Section, { type: "buy" }>["items"][number] => ({ name: "", url: "" })}
+            addLabel="Add a shop"
+            render={(item, set) => (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <TextField label="Shop or app" value={item.name} onChange={(name) => set({ name })} placeholder="e.g. Total Wine & More" />
+                <TextField label="Link to your wine there" type="url" value={item.url} onChange={(url) => set({ url })} placeholder="https://" />
+                <TextField label="Small print (optional)" value={item.note} onChange={(note) => set({ note: note || undefined })} placeholder="e.g. Ships to 40 states" />
+              </div>
+            )}
+          />
         </div>
       );
     case "visit":

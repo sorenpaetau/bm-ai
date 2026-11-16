@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { LandingContent, Section, SectionType } from "@/lib/landing";
 import { Button, inputClass } from "@/components/ui";
 import { otherButtonIndexes, quickLinkUrl, setQuickLink, type TopicExample } from "../../_lib/builder";
-import { publishBlockers } from "../../_lib/publish";
-import { publish, saveDraft } from "../actions";
+import { publishBlockers, signoffStatement } from "../../_lib/publish";
+import { wineryBox } from "@/lib/ai/winery";
+import { publish, saveDraft, type Signoff } from "../actions";
 import { ItemList, Panel, TextArea, TextField, Toggle } from "./fields";
 import { PhotoField, PhotoProductContext } from "./photos";
 import { blankSection, SECTION_TYPES, SectionEditor } from "./section-editor";
@@ -21,11 +22,16 @@ type Props = {
   verified: boolean;
   /** Example answers for topic boxes, keyed by topic id (from the demo page for this market). */
   examples?: Record<string, TopicExample>;
+  /** Wine pages: the topic boxes are Jens's "enter if applicable" jump-button boxes. */
+  wine?: boolean;
+  companyName: string;
+  /** Who approved the page last time it was published, and when. */
+  lastSignoff?: Signoff | null;
 };
 
 const AUTOSAVE_MS = 1200;
 
-export function Editor({ productId, slug, initial, live, liveIsCurrent, verified, examples = {} }: Props) {
+export function Editor({ productId, slug, initial, live, liveIsCurrent, verified, examples = {}, wine = false, companyName, lastSignoff = null }: Props) {
   const [content, setContent] = useState(initial);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -33,10 +39,13 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
   const [changedSincePublish, setChangedSincePublish] = useState(live && !liveIsCurrent);
   const [previewVersion, setPreviewVersion] = useState(0);
   const [publishing, startPublish] = useTransition();
+  const [approved, setApproved] = useState(false);
+  const [signoff, setSignoff] = useState(lastSignoff);
   const latest = useRef(content);
   latest.current = content;
 
   const blockers = publishBlockers(content, verified);
+  const canPublish = blockers.length === 0 && !(isLive && !changedSincePublish);
 
   // Follow the server when the page is published or taken offline outside the editor.
   useEffect(() => {
@@ -83,11 +92,13 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
 
   function onPublish() {
     startPublish(async () => {
-      const res = await publish(productId, latest.current);
+      const res = await publish(productId, latest.current, approved);
       if (res.error) {
         setMessage({ kind: "error", text: res.error });
         return;
       }
+      if (res.signoff) setSignoff(res.signoff);
+      setApproved(false);
       setSaveState("saved");
       setIsLive(true);
       setChangedSincePublish(false);
@@ -135,11 +146,27 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
                   View live page
                 </a>
               )}
-              <Button type="button" onClick={onPublish} disabled={publishing || blockers.length > 0 || (isLive && !changedSincePublish)}>
+              <Button type="button" onClick={onPublish} disabled={publishing || !canPublish || !approved}>
                 {publishing ? "Publishing…" : isLive ? "Publish changes" : "Publish page"}
               </Button>
             </div>
           </div>
+          {canPublish && (
+            <label className="mt-3 flex items-start gap-2.5 rounded-lg bg-surface p-3 text-sm ring-1 ring-line ring-inset">
+              <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} className="mt-0.5 size-4 shrink-0" />
+              <span>
+                <span className="font-medium">Approve and sign off</span>
+                <span className="block text-muted">{signoffStatement(companyName)}</span>
+                <span className="block text-xs text-muted">We keep a record of who approved the page, when, and exactly what it said.</span>
+              </span>
+            </label>
+          )}
+          {signoff && (
+            <p className="mt-2 text-xs text-muted" suppressHydrationWarning>
+              Last approved by <span className="font-medium text-ink">{signoff.name}</span> on{" "}
+              {new Date(signoff.at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}.
+            </p>
+          )}
           {message && (
             <p role="status" className={`mt-2 text-sm ${message.kind === "ok" ? "text-emerald-800" : "text-red-700"}`}>
               {message.text}
@@ -162,8 +189,9 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
         <div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950">
           <p className="font-semibold">Fill in the blanks, top to bottom</p>
           <p className="mt-1">
-            This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each topic
-            button. Add pictures anywhere you see the camera. Anything you leave empty simply stays off your page.
+            {wine
+              ? "This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each jump button (enter if applicable), About your winery, and Where to buy. Add pictures and videos under any box or paragraph. Anything you leave empty simply stays off your page."
+              : "This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each topic button. Add pictures anywhere you see the camera. Anything you leave empty simply stays off your page."}
           </p>
         </div>
 
@@ -261,10 +289,11 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <h2 className="font-semibold">Step 3 · Your topics</h2>
+              <h2 className="font-semibold">{wine ? "Step 3 · Jump buttons, About and Where to buy" : "Step 3 · Your topics"}</h2>
               <p className="text-sm text-muted">
-                Each box below gets its own jump button under the photo, in this order. Give a short answer, a few details and pictures. Empty
-                boxes stay off the page, and hidden ones stay saved but shoppers don&apos;t see them.
+                {wine
+                  ? "Each box below gets its own jump button under the photo, in this order. Enter what applies: a short answer shows big, with any details, pictures and videos under it. Empty boxes and their buttons stay off the page."
+                  : "Each box below gets its own jump button under the photo, in this order. Give a short answer, a few details and pictures. Empty boxes stay off the page, and hidden ones stay saved but shoppers don't see them."}
               </p>
             </div>
           </div>
@@ -274,6 +303,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
               section={section}
               number={i + 1}
               example={examples[section.id]}
+              box={wine && section.type === "topic" ? wineryBox(section.id) : undefined}
               onChange={setSection(i)}
               onUpdate={updateSection(section.id)}
               first={i === 0}

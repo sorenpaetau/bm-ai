@@ -1,0 +1,151 @@
+{
+  "subtitle": "St. Helena, Napa Valley · Estate grown",
+  "boxes": [
+    {
+      "id": "wine",
+      "answer": "Hillside Cabernet from Napa Valley",
+      "body": "Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite. Firm, fine tannins lead to a long finish. A cool spring and a long, mild autumn gave small berries with deep color.",
+      "items": [
+        { "label": "Grape", "value": "92% Cabernet Sauvignon, 8% Merlot" },
+        { "label": "Vintage", "value": "2023" },
+        { "label": "Region", "value": "Hillside estate above St. Helena, Napa Valley" },
+        { "label": "Aging", "value": "20 months in French oak" },
+        { "label": "Drinking", "value": "Now with a decant, or cellar for 15 years" }
+      ],
+      "chips": ["Blackberry", "Cassis", "Black cherry", "Cedar", "Cocoa", "Graphite"],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/wines/cabernet-sauvignon-2023"]
+    },
+    {
+      "id": "pairing",
+      "answer": "Ribeye, short ribs or aged cheddar",
+      "body": "The winery suggests grilled ribeye, braised short ribs or aged cheddar.",
+      "items": [],
+      "chips": ["Grilled ribeye", "Short ribs", "Aged cheddar"],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/wines/cabernet-sauvignon-2023"]
+    },
+    {
+      "id": "giftsets",
+      "answer": "Three gift sets in our shop",
+      "body": "Gift boxes and bundles from the winery's own shop.",
+      "items": [
+        { "label": "The Ridge Trio", "value": "Cabernet, Chardonnay and Rosé in a wooden box" },
+        { "label": "Holiday Pair", "value": "Two bottles of Cabernet with two crystal glasses" },
+        { "label": "Magnum of Cabernet", "value": "A magnum in a gift tube" }
+      ],
+      "chips": [],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/shop"]
+    },
+    {
+      "id": "otherwines",
+      "answer": "More from the ridge",
+      "body": "",
+      "items": [
+        { "label": "Reserve Cabernet Sauvignon", "value": "From the oldest block on the ridge, made only in the best years" },
+        { "label": "Chardonnay", "value": "Barrel fermented, from the cool lower block" },
+        { "label": "Sauvignon Blanc", "value": "Crisp and bright, made in steel" },
+        { "label": "Rosé of Grenache", "value": "Dry, pale, made for summer" },
+        { "label": "Estate Red Blend", "value": "Cabernet, Merlot and Petit Verdot" }
+      ],
+      "chips": [],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/wines"]
+    },
+    {
+      "id": "tastingroom",
+      "answer": "Thursday to Monday, 10 am to 4 pm",
+      "body": "Tastings are by reservation. Book online or call.",
+      "items": [
+        { "label": "Hours", "value": "Thursday to Monday, 10 am to 4 pm" },
+        { "label": "Reservations", "value": "Required. Book online or call" },
+        { "label": "Address", "value": "1200 Ridgeline Road, St. Helena, CA" }
+      ],
+      "chips": [],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/visit"]
+    },
+    {
+      "id": "events",
+      "answer": "Coming up at the winery",
+      "body": "",
+      "items": [
+        { "label": "December 6, 2026", "value": "Holiday Open House with live jazz" },
+        { "label": "January 24, 2027", "value": "Library vertical tasting of five Cabernet vintages, in the barrel cave" },
+        { "label": "April 10, 2027", "value": "Spring release party" }
+      ],
+      "chips": [],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/events"]
+    },
+    {
+      "id": "lodging",
+      "answer": "Two places we love",
+      "body": "",
+      "items": [
+        { "label": "Valley Oak Inn", "value": "Five minutes away" },
+        { "label": "Cedar House Bed & Breakfast", "value": "In town" }
+      ],
+      "chips": [],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/visit"]
+    },
+    {
+      "id": "restaurants",
+      "answer": "Lunch and dinner nearby",
+      "body": "",
+      "items": [
+        { "label": "Olive & Vine", "value": "Lunch, on Main Street" },
+        { "label": "The Grange", "value": "Dinner" }
+      ],
+      "chips": [],
+      "basis": "brand_pages",
+      "pages": ["https://example.com/visit"]
+    }
+  ],
+  "about": [
+    {
+      "id": "family",
+      "body": "Daniel and Rosa Hale planted their first vines on a steep, rocky ridge above St. Helena in 1998, when everyone told them it was too steep to farm. Today their daughter Maya makes the wines. The whole family still picks at harvest.",
+      "basis": "brand_pages",
+      "pages": ["https://example.com/our-story"]
+    },
+    {
+      "id": "region",
+      "body": "The vineyards sit on a hillside ridge above St. Helena in Napa Valley. The family farms 40 acres organically and dry farms every block, with no irrigation, so the roots go deep. Every cluster is picked by hand in the cool early morning.",
+      "basis": "brand_pages",
+      "pages": ["https://example.com/our-story"]
+    },
+    {
+      "id": "winery",
+      "body": "The wines are made in a stone winery built into the hillside in 2004. Its barrel cave stays cool all year. The winery makes about 3,000 cases a year.",
+      "basis": "brand_pages",
+      "pages": ["https://example.com/our-story"]
+    },
+    {
+      "id": "tastingroom",
+      "body": "The tasting room sits on the terrace above the vines, with views across the valley to the Mayacamas. Choose the Estate tasting of five wines on the terrace, or the 90-minute Vineyard and cellar walk that ends with a barrel tasting. Tastings are by reservation.",
+      "basis": "brand_pages",
+      "pages": ["https://example.com/visit"]
+    }
+  ],
+  "whereToBuy": [
+    {
+      "name": "Vivino",
+      "url": "https://www.vivino.com/",
+      "page": "https://example.com/find-our-wines"
+    },
+    {
+      "name": "Total Wine & More",
+      "url": "https://www.totalwine.com/",
+      "page": "https://example.com/find-our-wines"
+    }
+  ],
+  "shopUrl": "https://example.com/shop",
+  "optin": {
+    "headline": "Register this bottle",
+    "prompt": "Get news from the ridge, first word on new releases and invitations to events at the winery."
+  },
+  "heroPhoto": 1
+}

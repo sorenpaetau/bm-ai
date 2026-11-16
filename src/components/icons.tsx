@@ -387,3 +387,30 @@ export const WrenchIcon = (p: IconProps) => (
     <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.3-3.3a6 6 0 0 1-7.9 7.9l-6.4 6.4a2.1 2.1 0 0 1-3-3l6.4-6.4a6 6 0 0 1 7.9-7.9z" />
   </Icon>
 );
+
+export const AwardIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="9" r="5.5" />
+    <path d="m8.6 13.4-1.6 7.1 5-2.6 5 2.6-1.6-7.1" />
+  </Icon>
+);
+
+export const PercentIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M18.5 5.5 5.5 18.5" />
+    <circle cx="7.5" cy="7.5" r="2.3" />
+    <circle cx="16.5" cy="16.5" r="2.3" />
+  </Icon>
+);
+
+export const QuoteIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4.5 19.5 7 6.5h4.5L9 19.5zM12.5 19.5 15 6.5h4.5L17 19.5z" />
+  </Icon>
+);
+
+export const PlayIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8 5.5v13l10.5-6.5z" />
+  </Icon>
+);

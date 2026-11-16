@@ -3,7 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { betaZodOutputFormat } from "@anthropic-ai/sdk/helpers/beta/zod";
 import type { LandingContent } from "../landing";
 import { BenchWaiting, benchWriter } from "./bench";
-import { draftRequest, pickedPhotoToInput, type DraftRequest } from "./brief";
+import { brandDomains, draftRequest, pickedPhotoToInput, type DraftRequest } from "./brief";
 import { addFindingNotes, checkDraft, type Finding } from "./checks";
 import { buildDraftContent, type AiDraft, type AiMarketDraft, type DraftInput } from "./template";
 
@@ -96,7 +96,9 @@ async function loadPhotos(request: DraftRequest, load: PhotoLoader) {
   return out;
 }
 
-const MAX_CONTINUATIONS = 4;
+const MAX_CONTINUATIONS = 6;
+
+
 
 /** The Claude API writer: one request, with the brand's photos attached and web fetch for its links. */
 async function claudeWriter(request: DraftRequest, photos: LoadedPhoto[]): Promise<unknown> {
@@ -121,9 +123,19 @@ async function claudeWriter(request: DraftRequest, photos: LoadedPhoto[]): Promi
 
   // Web fetch runs on Anthropic's side (our server never fetches brand links), and only on the
   // brand's own sites.
-  const domains = [...new Set(request.links.map((l) => new URL(l).hostname))];
+  // A wine page starts from the winery's home page and finds its other pages itself (visit, history,
+  // wines, shop, events), so it gets more page reads, each a little shorter.
+  const winery = request.kind === "winery";
   const tools: Anthropic.Beta.BetaToolUnion[] = request.links.length
-    ? [{ type: "web_fetch_20260209", name: "web_fetch", max_uses: request.links.length + 2, allowed_domains: domains, max_content_tokens: 20000 }]
+    ? [
+        {
+          type: "web_fetch_20260209",
+          name: "web_fetch",
+          max_uses: winery ? 10 : request.links.length + 2,
+          allowed_domains: brandDomains(request.links),
+          max_content_tokens: winery ? 12000 : 20000,
+        },
+      ]
     : [];
 
   const messages: Anthropic.Beta.BetaMessageParam[] = [{ role: "user", content }];

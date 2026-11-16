@@ -80,9 +80,16 @@ const filled = (v: string | undefined | null) => Boolean(v && v.trim());
  */
 export function tidySection(section: Section): Section | null {
   const images = (section.images ?? []).filter((i) => filled(i.url));
-  const tidy = tidyFields(section, images.length > 0);
+  const videos = playableVideos(section.videos);
+  const tidy = tidyFields(section, images.length > 0 || videos.length > 0);
   if (!tidy) return null;
-  return section.images === undefined && images.length === 0 ? tidy : { ...tidy, images };
+  const out = section.images === undefined && images.length === 0 ? tidy : { ...tidy, images };
+  return section.videos === undefined && videos.length === 0 ? out : { ...out, videos };
+}
+
+/** Only videos we know how to play (YouTube or Vimeo links). */
+function playableVideos<T extends { url: string }>(videos: T[] | undefined): T[] {
+  return (videos ?? []).filter((v) => videoEmbed(v.url) !== null);
 }
 
 function tidyFields(section: Section, hasImages: boolean): Section | null {
@@ -135,6 +142,17 @@ function tidyFields(section: Section, hasImages: boolean): Section | null {
       };
       return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length || hasImages ? t : null;
     }
+    case "about": {
+      const parts = section.parts
+        .map((p) => ({ ...p, images: p.images.filter((i) => filled(i.url)), videos: playableVideos(p.videos) }))
+        .filter((p) => filled(p.body) || p.images.length || p.videos.length);
+      return filled(section.body) || parts.length || hasImages ? { ...section, parts } : null;
+    }
+    case "buy": {
+      // A shop needs a link to be useful; "Vivino" with no link stays off the page.
+      const items = section.items.filter((i) => filled(i.name) && safeUrl(i.url));
+      return items.length ? { ...section, items } : null;
+    }
     case "visit": {
       const v = {
         ...section,
@@ -147,6 +165,44 @@ function tidyFields(section: Section, hasImages: boolean): Section | null {
         : null;
     }
   }
+}
+
+export type VideoEmbed = { provider: "youtube" | "vimeo"; id: string; embedUrl: string; thumbnail: string | null };
+
+/**
+ * Reads a YouTube or Vimeo link (watch, share, shorts and embed links) into what the page needs to show
+ * it: a thumbnail and a player link that only loads when tapped. Anything else returns null.
+ */
+export function videoEmbed(raw: string | undefined | null): VideoEmbed | null {
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const host = url.hostname.replace(/^(www\.|m\.)/, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = url.pathname.slice(1).split("/")[0];
+  else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    id = url.searchParams.get("v") ?? /^\/(?:shorts|embed|live)\/([^/?#]+)/.exec(url.pathname)?.[1] ?? null;
+  }
+  if (id !== null) {
+    return /^[\w-]{6,20}$/.test(id)
+      ? {
+          provider: "youtube",
+          id,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
+          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        }
+      : null;
+  }
+  if (host === "vimeo.com" || host === "player.vimeo.com") {
+    const vid = /(?:^|\/)(\d{5,12})(?:$|[/?#])/.exec(url.pathname)?.[1];
+    return vid ? { provider: "vimeo", id: vid, embedUrl: `https://player.vimeo.com/video/${vid}?autoplay=1&dnt=1`, thumbnail: null } : null;
+  }
+  return null;
 }
 
 /** What the tap badge calls the thing the sticker is on: "You tapped the sticker on this bottle". */

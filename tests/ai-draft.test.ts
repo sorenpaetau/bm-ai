@@ -6,6 +6,7 @@ import { brandPhotos, carryOverBrandMedia } from "../src/lib/ai/brand-media";
 import { cleanLinks, draftRequest, pickedPhotoToInput } from "../src/lib/ai/brief";
 import { addFindingNotes, checkDraft, containsWhole, HERO, OPTIN } from "../src/lib/ai/checks";
 import { buildDraftContent, starterContent, type AiMarketDraft, type DraftInput } from "../src/lib/ai/template";
+import type { AiWineryDraft } from "../src/lib/ai/winery";
 import { LandingContent } from "../src/lib/landing";
 
 const wine: DraftInput = {
@@ -33,8 +34,8 @@ test("links are cleaned: web addresses only, no duplicates, at most five", () =>
 });
 
 test("the writing job adds the links and photo guides only when the brand gave links and photos", () => {
-  const plain = draftRequest(wine);
-  assert.equal(plain.kind, "wine");
+  const plain = draftRequest({ ...wine, website: null });
+  assert.equal(plain.kind, "winery");
   assert.ok(!plain.system.includes("web fetch tool"));
   assert.ok(!plain.system.includes("photos are attached"));
   assert.ok(plain.prompt.includes("Photos attached: none"));
@@ -97,48 +98,50 @@ test("the rule checker catches invented prices, ratings and medical claims", () 
   assert.ok(about("texture").some((m) => m.includes("emoji")));
 });
 
-const wineDraft = (blend: Array<{ name: string; percent: number }>, story = "Grown on our hillside.") =>
+const wineryDraft = (over: Partial<AiWineryDraft> = {}) =>
   buildDraftContent(
     {
       subtitle: "Napa Valley",
-      facts: [{ label: "Alcohol", value: "14.5%", basis: "description" }],
-      story: { title: "Our story", body: story, basis: "description" },
-      moreSections: [],
+      boxes: [
+        { id: "wine", answer: "Napa Cabernet", body: "Blackberry and cedar.", items: [], chips: ["Blackberry"], basis: "general_knowledge", pages: [] },
+      ],
+      about: [{ id: "family", body: "Grown on our hillside.", basis: "description", pages: [] }],
+      whereToBuy: [],
+      shopUrl: "",
       optin: { headline: "Register this bottle", prompt: "Hear about new releases." },
-      tasting: { body: "Blackberry and cedar.", flavors: ["Blackberry"], structure: [], basis: "general_knowledge" },
-      blend,
-      vintage: { year: "2023", body: "", basis: "description" },
-      estate: { body: "", items: [] },
+      ...over,
     },
     wine,
   );
+
+const blendBox = (rows: Array<[string, string]>) => ({
+  boxes: [{ id: "wine", answer: "Napa Cabernet", body: "", items: rows.map(([label, value]) => ({ label, value })), chips: [], basis: "brand_pages" as const, pages: [] }],
+});
 
 test("an invented blend is flagged, a blend the brand gave is not", () => {
   const given = { ...wine, description: `${wine.description} 92% Cabernet Sauvignon, 8% Merlot.` };
-  const real = checkDraft(wineDraft([{ name: "Cabernet Sauvignon", percent: 92 }, { name: "Merlot", percent: 8 }]), given);
-  assert.ok(!real.some((f) => f.sectionId === "tasting"), JSON.stringify(real));
-  const made = checkDraft(wineDraft([{ name: "Cabernet Sauvignon", percent: 91 }, { name: "Merlot", percent: 9 }]), wine);
-  assert.ok(made.some((f) => f.sectionId === "tasting" && f.message.includes("91%")), JSON.stringify(made));
+  const real = checkDraft(wineryDraft(blendBox([["Grape", "92% Cabernet Sauvignon, 8% Merlot"]])), given);
+  assert.ok(!real.some((f) => f.sectionId === "wine"), JSON.stringify(real));
+  const made = checkDraft(wineryDraft(blendBox([["Grape", "91% Cabernet Sauvignon, 9% Merlot"]])), wine);
+  assert.ok(made.some((f) => f.sectionId === "wine" && f.message.includes("91%")), JSON.stringify(made));
 });
 
 test("wine drafts can't claim drinking is good for you", () => {
-  const content = buildDraftContent(
-    {
-      subtitle: "Napa Valley",
-      facts: [{ label: "Alcohol", value: "14.5%", basis: "description" }],
-      story: { title: "Our story", body: "Full of antioxidants and good for your heart.", basis: "description" },
-      moreSections: [],
-      optin: { headline: "Register this bottle", prompt: "Hear about new releases." },
-      tasting: { body: "Blackberry and cedar.", flavors: ["Blackberry"], structure: [], basis: "general_knowledge" },
-      blend: [],
-      vintage: { year: "2023", body: "", basis: "description" },
-      estate: { body: "", items: [] },
-    },
-    wine,
-  );
+  const content = wineryDraft({ about: [{ id: "family", body: "Full of antioxidants and good for your heart.", basis: "description", pages: [] }] });
   const findings = checkDraft(content, wine);
-  assert.ok(findings.some((f) => f.sectionId === "story" && f.level === "problem" && f.message.includes("health claim")));
-  assert.ok(!findings.some((f) => f.sectionId === "facts"), "14.5% is in the description");
+  assert.ok(findings.some((f) => f.sectionId === "about" && f.level === "problem" && f.message.includes("health claim")), JSON.stringify(findings));
+});
+
+test("alcohol content and discounts in an AI draft are flagged: the winery adds those itself", () => {
+  const content = wineryDraft({
+    boxes: [
+      { id: "wine", answer: "Napa Cabernet", body: "14.5% alc. by vol.", items: [], chips: [], basis: "brand_pages", pages: [] },
+      { id: "giftsets", answer: "Members save 15%", body: "15% off gift boxes.", items: [], chips: [], basis: "brand_pages", pages: [] },
+    ],
+  });
+  const findings = checkDraft(content, wine);
+  assert.ok(findings.some((f) => f.sectionId === "wine" && f.level === "problem" && f.message.includes("alcohol content")), JSON.stringify(findings));
+  assert.ok(findings.some((f) => f.sectionId === "giftsets" && f.level === "problem" && f.message.includes("discount")), JSON.stringify(findings));
 });
 
 test("findings show up in the editor's 'Where this came from' note, and the page stays valid", () => {

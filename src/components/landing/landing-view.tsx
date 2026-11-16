@@ -2,6 +2,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
   ArrowRightIcon,
+  AwardIcon,
   BagIcon,
   BatteryIcon,
   BedIcon,
@@ -27,8 +28,10 @@ import {
   ListIcon,
   LogoMark,
   MailIcon,
+  PercentIcon,
   PhoneIcon,
   PinIcon,
+  QuoteIcon,
   RefreshIcon,
   ReturnIcon,
   RulerIcon,
@@ -36,6 +39,7 @@ import {
   ShieldIcon,
   SparkIcon,
   StarIcon,
+  StoreIcon,
   TagIcon,
   TruckIcon,
   WineIcon,
@@ -63,6 +67,7 @@ import {
 } from "./helpers";
 import { MapCard } from "./map-card";
 import { OptinForm } from "./optin-form";
+import { VideoCard } from "./video-card";
 
 // The consumer landing page, rendered from LandingContent. Used by the live page at /p/[slug] and by
 // the portal editor's preview. It has no side effects: no age gate, tap logging or cookies here.
@@ -411,6 +416,8 @@ const sectionIcons: Record<Section["type"], (p: { className?: string }) => React
   maker: LeafIcon,
   visit: PinIcon,
   topic: ListIcon,
+  about: BookIcon,
+  buy: StoreIcon,
 };
 
 /** Pictures a topic box can pick by name (TopicSection.icon). Unknown names fall back to a list. */
@@ -441,6 +448,15 @@ const TOPIC_ICONS: Record<string, (p: { className?: string }) => ReactNode> = {
   heart: HeartIcon,
   spark: SparkIcon,
   gift: GiftIcon,
+  award: AwardIcon,
+  wine: WineIcon,
+  percent: PercentIcon,
+  bed: BedIcon,
+  fork: ForkIcon,
+  calendar: CalendarIcon,
+  quote: QuoteIcon,
+  store: StoreIcon,
+  pin: PinIcon,
 };
 
 /** Gift sets are a "products" section too, but deserve their own icon. */
@@ -504,6 +520,7 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
       </h2>
       <SectionBody section={section} />
       <ImageStrip images={section.images ?? []} className="mt-5" />
+      <VideoList videos={section.videos ?? []} className="mt-5" />
       {"link" in section && <SectionLink link={section.link} />}
     </section>
   );
@@ -544,6 +561,18 @@ function ImageStrip({ images, className = "" }: { images: Array<{ url: string; a
           decoding="async"
           className={`h-56 snap-start rounded-2xl bg-[var(--lp-tint)] object-cover ${list.length === 1 ? "w-full" : "w-4/5 shrink-0"}`}
         />
+      ))}
+    </div>
+  );
+}
+
+/** The brand's videos, one under the other. Each loads its player only when tapped. */
+function VideoList({ videos, className = "" }: { videos: Array<{ url: string; title: string }>; className?: string }) {
+  if (videos.length === 0) return null;
+  return (
+    <div className={`space-y-3 ${className}`}>
+      {videos.map((v, i) => (
+        <VideoCard key={`${v.url}-${i}`} url={v.url} title={v.title} />
       ))}
     </div>
   );
@@ -1052,6 +1081,52 @@ function SectionBody({ section }: { section: Section }) {
               ))}
             </dl>
           )}
+        </div>
+      );
+
+    case "about":
+      return (
+        <div className="space-y-8">
+          <Paragraphs text={section.body} />
+          {section.parts.map((part) => (
+            <div key={part.id} className="space-y-4">
+              {part.title.trim() && <h3 className={`${heading} text-[1.3rem] leading-snug text-[var(--lp-primary)]`}>{part.title}</h3>}
+              <Paragraphs text={part.body} className="text-[16px] leading-relaxed text-ink/85" />
+              <ImageStrip images={part.images} />
+              <VideoList videos={part.videos} />
+            </div>
+          ))}
+        </div>
+      );
+
+    case "buy":
+      return (
+        <div className="space-y-4">
+          <Paragraphs text={section.body} className="text-[16px] leading-relaxed text-ink/85" />
+          <ul className="space-y-2.5">
+            {section.items.map((item, i) => {
+              const href = safeUrl(item.url);
+              if (!href) return null;
+              return (
+                <li key={i}>
+                  <a
+                    href={href}
+                    {...externalProps(href)}
+                    className="flex items-center gap-3 rounded-2xl bg-[var(--lp-tint)] px-4 py-3.5 ring-1 ring-[var(--lp-primary)]/[0.08] transition ring-inset active:scale-[0.985]"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[var(--lp-primary)] shadow-sm">
+                      <StoreIcon className="h-5 w-5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[16px] font-semibold">{item.name}</span>
+                      {item.note?.trim() && <span className="block text-[13px] text-muted">{item.note}</span>}
+                    </span>
+                    <ArrowRightIcon className="h-4 w-4 shrink-0 text-[var(--lp-primary)]" />
+                  </a>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       );
 
