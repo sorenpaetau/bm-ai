@@ -182,3 +182,19 @@ test("a fresh AI draft keeps the photos and videos under each About part and on 
   assert.match(freshAbout.parts[0].body, /Hale/, "the text is the fresh draft's");
   assert.equal(fresh.sections.find((s) => s.id === "events")!.videos?.[0].title, "Harvest");
 });
+
+test("a fresh draft of an older wine page moves its photos to the new boxes instead of dropping them", async () => {
+  const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
+  const current = starterContent(winery);
+  current.sections = [
+    { id: "story", type: "story", title: "Our story", body: "x", images: [{ url: "/media/story", alt: "" }], visible: true, aiGenerated: false, reviewed: true, sources: [] },
+    { id: "gifts", type: "products", title: "Gift sets", items: [], images: [{ url: "/media/gift", alt: "" }], visible: true, aiGenerated: false, reviewed: true, sources: [] },
+    { id: "club", type: "memberships", title: "Club", tiers: [], images: [{ url: "/media/club", alt: "" }], visible: true, aiGenerated: false, reviewed: true, sources: [] },
+  ];
+  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
+  const about = fresh.sections.find((s) => s.type === "about")!;
+  assert.ok(about.type === "about");
+  assert.equal(about.parts.find((p) => p.id === "family")!.images[0].url, "/media/story");
+  assert.ok(about.parts.find((p) => p.id === "winery")!.images.some((i) => i.url === "/media/club"), "no match: goes to The winery");
+  assert.ok(fresh.sections.find((s) => s.id === "giftsets")!.images!.some((i) => i.url === "/media/gift"));
+});

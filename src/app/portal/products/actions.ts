@@ -278,7 +278,8 @@ export async function redraft(productId: string): Promise<ActionState> {
       vertical: company.vertical,
       productName: product.name,
       description: product.description ?? product.name,
-      website: company.website,
+      // A wine page keeps the website typed on Create a page (saved as its first link) as the main one.
+      website: company.vertical === "wine_spirits" ? (product.brandLinks?.[0] ?? company.website) : company.website,
       links: product.brandLinks,
       photos: current ? brandPhotos(current) : [],
       price: current?.hero.price ?? null,
