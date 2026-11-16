@@ -60,12 +60,49 @@ export function eventDateParts(value: string): { month: string; day: string; lab
  * rows for the brand to fill in), and a section with nothing left in it is not shown at all. Event
  * sections with no upcoming events are dropped.
  */
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/**
+ * The day a row in a winery's "Events & schedules" box is on, from its label: "December 6, 2026",
+ * "Sat, Dec 6, 2026", "Dec 6th 2026" or "2026-12-06". Null when there's no full date with a year, so a
+ * row like "Every Friday" or "Dec 6" (no year) is always kept.
+ */
+export function eventRowDay(label: string): string | null {
+  const iso = isoDay(label);
+  if (iso) return iso;
+  const match = /\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/.exec(label);
+  if (!match) return null;
+  const month = MONTHS.indexOf(match[1].slice(0, 3).toLowerCase());
+  if (month < 0) return null;
+  const candidate = `${match[3]}-${String(month + 1).padStart(2, "0")}-${match[2].padStart(2, "0")}`;
+  return isoDay(candidate);
+}
+
+/** The winery "Events & schedules" box: a topic box whose dated rows hide themselves after their day. */
+function expireEventRows(section: Extract<Section, { type: "topic" }>, now?: Date): Section {
+  const today = todayIn(EVENT_TIMEZONE, now);
+  const items = section.items.filter((row) => {
+    const day = eventRowDay(row.label);
+    return day === null || day >= today;
+  });
+  // When every listed event is over, its short headline ("Coming up at the winery") goes too, so the
+  // box only stays if it has more to say (text, photos, videos).
+  const allOver = section.items.some((row) => eventRowDay(row.label)) && !items.some((row) => row.label.trim() && row.value.trim());
+  return { ...section, items, answer: allOver ? "" : section.answer };
+}
+
 export function sectionsToShow(sections: Section[], opts: { preview?: boolean; now?: Date } = {}): Section[] {
   const out: Section[] = [];
   for (const section of sections) {
     if (!section.visible) continue;
     if (!opts.preview && section.aiGenerated && !section.reviewed) continue;
-    const tidy = tidySection(section.type === "events" ? { ...section, items: upcomingEvents(section.items, opts.now) } : section);
+    const dated =
+      section.type === "events"
+        ? { ...section, items: upcomingEvents(section.items, opts.now) }
+        : section.type === "topic" && section.id === "events"
+          ? expireEventRows(section, opts.now)
+          : section;
+    const tidy = tidySection(dated);
     if (tidy) out.push(tidy);
   }
   return out;
@@ -80,9 +117,16 @@ const filled = (v: string | undefined | null) => Boolean(v && v.trim());
  */
 export function tidySection(section: Section): Section | null {
   const images = (section.images ?? []).filter((i) => filled(i.url));
-  const tidy = tidyFields(section, images.length > 0);
+  const videos = playableVideos(section.videos);
+  const tidy = tidyFields(section, images.length > 0 || videos.length > 0);
   if (!tidy) return null;
-  return section.images === undefined && images.length === 0 ? tidy : { ...tidy, images };
+  const out = section.images === undefined && images.length === 0 ? tidy : { ...tidy, images };
+  return section.videos === undefined && videos.length === 0 ? out : { ...out, videos };
+}
+
+/** Only videos we know how to play (YouTube or Vimeo links). */
+function playableVideos<T extends { url: string }>(videos: T[] | undefined): T[] {
+  return (videos ?? []).filter((v) => videoEmbed(v.url) !== null);
 }
 
 function tidyFields(section: Section, hasImages: boolean): Section | null {
@@ -135,6 +179,17 @@ function tidyFields(section: Section, hasImages: boolean): Section | null {
       };
       return filled(t.answer) || filled(t.body) || t.items.length || t.chips.length || hasImages ? t : null;
     }
+    case "about": {
+      const parts = section.parts
+        .map((p) => ({ ...p, images: p.images.filter((i) => filled(i.url)), videos: playableVideos(p.videos) }))
+        .filter((p) => filled(p.body) || p.images.length || p.videos.length);
+      return filled(section.body) || parts.length || hasImages ? { ...section, parts } : null;
+    }
+    case "buy": {
+      // A shop needs a link to be useful; "Vivino" with no link stays off the page.
+      const items = section.items.filter((i) => filled(i.name) && safeUrl(i.url));
+      return items.length ? { ...section, items } : null;
+    }
     case "visit": {
       const v = {
         ...section,
@@ -147,6 +202,44 @@ function tidyFields(section: Section, hasImages: boolean): Section | null {
         : null;
     }
   }
+}
+
+export type VideoEmbed = { provider: "youtube" | "vimeo"; id: string; embedUrl: string; thumbnail: string | null };
+
+/**
+ * Reads a YouTube or Vimeo link (watch, share, shorts and embed links) into what the page needs to show
+ * it: a thumbnail and a player link that only loads when tapped. Anything else returns null.
+ */
+export function videoEmbed(raw: string | undefined | null): VideoEmbed | null {
+  if (!raw) return null;
+  let url: URL;
+  try {
+    url = new URL(raw.trim());
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  const host = url.hostname.replace(/^(www\.|m\.)/, "");
+  let id: string | null = null;
+  if (host === "youtu.be") id = url.pathname.slice(1).split("/")[0];
+  else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+    id = url.searchParams.get("v") ?? /^\/(?:shorts|embed|live)\/([^/?#]+)/.exec(url.pathname)?.[1] ?? null;
+  }
+  if (id !== null) {
+    return /^[\w-]{6,20}$/.test(id)
+      ? {
+          provider: "youtube",
+          id,
+          embedUrl: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`,
+          thumbnail: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+        }
+      : null;
+  }
+  if (host === "vimeo.com" || host === "player.vimeo.com") {
+    const vid = /(?:^|\/)(\d{5,12})(?:$|[/?#])/.exec(url.pathname)?.[1];
+    return vid ? { provider: "vimeo", id: vid, embedUrl: `https://player.vimeo.com/video/${vid}?autoplay=1&dnt=1`, thumbnail: null } : null;
+  }
+  return null;
 }
 
 /** What the tap badge calls the thing the sticker is on: "You tapped the sticker on this bottle". */

@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import type { Vertical } from "@/lib/site";
 import { DEMO_MARKETS } from "@/lib/demo-markets";
+import { WINERY_BOXES } from "@/lib/ai/winery";
 import { tagQuickLinks, topicExamples } from "../../_lib/builder";
 import { safeContent } from "../../_lib/content";
 import { archiveProduct, redraft, unpublish, updateDetails } from "../actions";
@@ -46,6 +47,10 @@ const NOTICES: Record<string, { tone: "info" | "warn"; text: string }> = {
     text: "The AI writer couldn't finish this time, so we started you with a simple template. You can try again with “Write a fresh AI draft” at the bottom.",
   },
   starter: { tone: "info", text: "We started you with a simple template. Fill in the facts and your story, then publish." },
+  sample: {
+    tone: "info",
+    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes for our made-up Ridgeline Cellars website: it found the visit, story, wines, shop, events and where-to-buy pages and wrote each box from them. Awards, rating, ABV, discounts and reviews are left for you. With the AI switched on, it reads your own website the same way.",
+  },
 };
 
 export default async function EditProductPage({
@@ -67,6 +72,9 @@ export default async function EditProductPage({
     FROM products p JOIN companies c ON c.id = p.company_id
     WHERE p.id = ${id} AND p.company_id = ${user.companyId}`;
   if (!p) notFound();
+  const [signoff] = await sql<{ signerName: string; signerEmail: string; createdAt: Date }[]>`
+    SELECT signer_name, signer_email, created_at FROM page_signoffs WHERE product_id = ${p.id} ORDER BY created_at DESC LIMIT 1`;
+  const wine = p.vertical === "wine_spirits";
 
   const content =
     safeContent(p.content) ??
@@ -101,7 +109,14 @@ export default async function EditProductPage({
         live={p.status === "published"}
         liveIsCurrent={Boolean(p.liveIsCurrent)}
         verified={Boolean(p.verifiedAt)}
-        examples={topicExamples(DEMO_MARKETS.find((m) => m.company.vertical === p.vertical)?.content.sections ?? [])}
+        examples={
+          wine
+            ? Object.fromEntries(WINERY_BOXES.map((b) => [b.id, { answer: b.example.answer, body: b.example.body, rows: {} }]))
+            : topicExamples(DEMO_MARKETS.find((m) => m.company.vertical === p.vertical)?.content.sections ?? [])
+        }
+        wine={wine}
+        companyName={p.companyName}
+        lastSignoff={signoff ? { name: signoff.signerName, email: signoff.signerEmail, at: signoff.createdAt.toISOString() } : null}
       />
 
       <section className="rounded-2xl border border-line bg-surface p-4 sm:p-5 lg:max-w-[calc(100%-404px)]">
@@ -111,6 +126,7 @@ export default async function EditProductPage({
           updateAction={updateDetails.bind(null, p.id)}
           redraftAction={redraft.bind(null, p.id)}
           aiAvailable={aiConfigured()}
+          wine={wine}
         />
         <div className="mt-6 flex flex-wrap gap-3 border-t border-line pt-4 text-sm">
           {p.status === "published" && (

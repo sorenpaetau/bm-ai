@@ -18,6 +18,13 @@ const provenance = {
 const image = z.object({ url: z.string(), alt: z.string().default("") });
 export type LandingImage = z.infer<typeof image>;
 
+/**
+ * A video the brand shares: a YouTube or Vimeo link. It shows as a picture with a play button and only
+ * loads the player when tapped, so the page stays fast on a phone. Links we can't play are not shown.
+ */
+const video = z.object({ url: z.string(), title: z.string().default("") });
+export type LandingVideo = z.infer<typeof video>;
+
 const base = {
   id: z.string(),
   title: z.string(),
@@ -29,6 +36,8 @@ const base = {
    * pictures" under every topic). Brand-owned photos only: the AI never fills this in.
    */
   images: z.array(image).optional(),
+  /** Videos the brand shares for this section, shown under its photos. */
+  videos: z.array(video).optional(),
   ...provenance,
 };
 
@@ -187,6 +196,38 @@ export const TopicSection = z.object({
   link: sectionLink,
 });
 
+/**
+ * "About the winery": a few short parts, each with its own photos and videos right under its text
+ * (Jens, Nov 16: "the pictures and videos would be placed underneath each paragraph"). For example
+ * "Our family", "Our wines and region", "The winery" and "The tasting room". Empty parts are skipped.
+ */
+export const AboutSection = z.object({
+  ...base,
+  type: z.literal("about"),
+  body: z.string().default(""),
+  parts: z
+    .array(
+      z.object({
+        id: z.string(),
+        title: z.string(),
+        body: z.string().default(""),
+        images: z.array(image).default([]),
+        videos: z.array(video).default([]),
+        /** Where the AI found this part's facts (the brand's own pages). Shown to the brand only. */
+        sources: z.array(z.string()).default([]),
+      }),
+    )
+    .default([]),
+});
+
+/** "Where to buy": one button per shop or app that sells it, e.g. Vivino or Total Wine & More. */
+export const BuySection = z.object({
+  ...base,
+  type: z.literal("buy"),
+  body: z.string().default(""),
+  items: z.array(z.object({ name: z.string(), url: z.string().default(""), note: z.string().optional() })).default([]),
+});
+
 export const Section = z.discriminatedUnion("type", [
   FactsSection,
   StorySection,
@@ -198,6 +239,8 @@ export const Section = z.discriminatedUnion("type", [
   MakerSection,
   VisitSection,
   TopicSection,
+  AboutSection,
+  BuySection,
 ]);
 export type Section = z.infer<typeof Section>;
 export type SectionType = Section["type"];

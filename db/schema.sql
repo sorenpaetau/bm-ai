@@ -211,3 +211,18 @@ CREATE INDEX IF NOT EXISTS uploads_company_idx ON uploads (company_id, created_a
 
 -- AI page drafts: the brand's own web pages the AI writer may read (product page, about page). Max 5.
 ALTER TABLE products ADD COLUMN IF NOT EXISTS brand_links text[] NOT NULL DEFAULT '{}';
+
+-- Sign-off at Publish (Nov 2026): who approved a page, when, the exact statement they agreed to, and
+-- the page exactly as it went live. A new row every time a page is published.
+CREATE TABLE IF NOT EXISTS page_signoffs (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_id    uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  company_id    uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id       uuid REFERENCES users(id) ON DELETE SET NULL,
+  signer_name   text NOT NULL,
+  signer_email  text NOT NULL,
+  statement     text NOT NULL,
+  content       jsonb NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS page_signoffs_product_idx ON page_signoffs (product_id, created_at DESC);

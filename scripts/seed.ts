@@ -2,6 +2,7 @@ import { sql } from "../src/lib/db";
 import { randomCode } from "../src/lib/codes";
 import { DEMO_COMPANY, DEMO_CONTENT, DEMO_PRODUCT } from "../src/lib/demo";
 import { DEMO_MARKETS } from "../src/lib/demo-markets";
+import { DEMO_WINERY_PRODUCT, DEMO_WINERY_TAG, demoWineryContent } from "../src/lib/demo-winery";
 import bcrypt from "bcryptjs";
 
 // Seeds a demo manufacturer, a published demo product with 10 tags and some sample taps,
@@ -128,6 +129,7 @@ async function main() {
   }
 
   await seedMarketDemos();
+  await seedWineryDemo(company.id);
 
   console.log("Seeded demo data. Try http://localhost:3000/t/DEMO2023");
   await sql.end();
@@ -169,6 +171,33 @@ async function seedMarketDemos() {
         RETURNING id`;
       await sql`INSERT INTO tags (code, batch_id, company_id, product_id) VALUES (${demo.tagCode}, ${batch.id}, ${company.id}, ${product.id})`;
     }
+  }
+}
+
+/**
+ * The website-first wine page (Jens, Nov 16) as a finished, published demo for Ridgeline Cellars, with
+ * its own tag (/t/DEMOWINE). It belongs to the demo login, so it's only added once: edits made in the
+ * portal are kept.
+ */
+async function seedWineryDemo(companyId: string) {
+  let [product] = await sql<{ id: string }[]>`SELECT id FROM products WHERE slug = ${DEMO_WINERY_PRODUCT.slug}`;
+  if (!product) {
+    const json = sql.json(demoWineryContent());
+    const p = DEMO_WINERY_PRODUCT;
+    [product] = await sql<{ id: string }[]>`
+      INSERT INTO products (company_id, sku, name, description, slug, status, content, published_content, published_at, brand_links)
+      VALUES (${companyId}, ${p.sku}, ${p.name}, ${p.description}, ${p.slug}, 'published', ${json}, ${json}, now(), ${["https://example.com/"]})
+      ON CONFLICT (company_id, sku) DO NOTHING
+      RETURNING id`;
+    if (!product) return;
+  }
+  const [tag] = await sql`SELECT code FROM tags WHERE code = ${DEMO_WINERY_TAG}`;
+  if (!tag) {
+    const [batch] = await sql<{ id: string }[]>`
+      INSERT INTO tag_batches (company_id, product_id, tag_type, quantity, label)
+      VALUES (${companyId}, ${product.id}, 'standard', 1, 'Demo tag')
+      RETURNING id`;
+    await sql`INSERT INTO tags (code, batch_id, company_id, product_id) VALUES (${DEMO_WINERY_TAG}, ${batch.id}, ${companyId}, ${product.id})`;
   }
 }
 

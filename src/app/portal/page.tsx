@@ -48,7 +48,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           <h1 className="font-serif text-3xl font-medium tracking-[-0.01em] sm:text-4xl">Your products</h1>
           <p className="mt-1 text-muted">Each product gets its own page that opens when a customer taps its tag.</p>
         </div>
-        <ButtonLink href="/portal/products/new">+ Add a product</ButtonLink>
+        <ButtonLink href="/portal/products/new">+ Create a page</ButtonLink>
       </div>
 
       {products.length === 0 ? (

@@ -108,7 +108,8 @@ async function claude(names: string[]) {
   for (const { name, brief } of await briefs(names)) {
     // The real writer reads real links. These brands are made up, so hand it the page text in the description.
     const pages = (brief.pages ?? []).map((p) => `From ${p.url}:\n${p.text}`).join("\n\n");
-    const input: DraftInput = { ...brief, links: [], description: pages ? `${brief.description}\n\n${pages}` : brief.description };
+    // Wine pages normally start from the website; these sites are made up, so it gets no website either.
+    const input: DraftInput = { ...brief, links: [], website: null, description: pages ? `${brief.description}\n\n${pages}` : brief.description };
     // Send the same photo files the test workers look at.
     const loadPhoto = async (url: string) => {
       const index = (brief.photos ?? []).findIndex((p) => p.url === url);

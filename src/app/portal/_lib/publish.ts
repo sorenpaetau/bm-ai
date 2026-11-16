@@ -32,3 +32,11 @@ export const STATUS_LABEL: Record<string, string> = {
   archived: "Archived",
 };
 
+
+/**
+ * What the person publishing a page agrees to, word for word. Stored with every publish (page_signoffs)
+ * so there is a record of who approved what the page says, and when.
+ */
+export function signoffStatement(companyName: string) {
+  return `I have read this page and approve it. The facts, photos and videos on it are correct, and ${companyName} has the right to use them.`;
+}

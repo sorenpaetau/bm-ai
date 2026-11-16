@@ -9,10 +9,12 @@ type Props = {
   updateAction: (prev: ActionState, form: FormData) => Promise<ActionState>;
   redraftAction: (prev: ActionState) => Promise<ActionState>;
   aiAvailable: boolean;
+  /** Wine pages start from the winery's website. */
+  wine?: boolean;
 };
 
 /** Product name, SKU and description, plus "write a fresh AI draft". */
-export function DetailsPanel({ product, updateAction, redraftAction, aiAvailable }: Props) {
+export function DetailsPanel({ product, updateAction, redraftAction, aiAvailable, wine = false }: Props) {
   const [state, action, pending] = useActionState(updateAction, {});
   const [redraftState, redraft, redrafting] = useActionState(redraftAction, {});
   return (
@@ -22,14 +24,21 @@ export function DetailsPanel({ product, updateAction, redraftAction, aiAvailable
           <Field label="Product name">
             <input name="name" required defaultValue={product.name} className={inputClass} />
           </Field>
-          <Field label="SKU">
+          <Field label={wine ? "Item code" : "SKU"}>
             <input name="sku" required defaultValue={product.sku} className={inputClass} />
           </Field>
         </div>
         <Field label="Description" hint="Used by the AI writer. Customers don't see this text directly.">
           <textarea name="description" rows={4} required defaultValue={product.description ?? ""} className={inputClass} />
         </Field>
-        <Field label="Your web pages about it (optional)" hint="Up to 5 links, one per line. The AI writer reads them for facts. It never copies pictures from them.">
+        <Field
+          label={wine ? "Your website, plus any other pages (optional)" : "Your web pages about it (optional)"}
+          hint={
+            wine
+              ? "Your website first, then up to 4 more of your own pages, one per line. The AI writer reads your site for facts. It never copies pictures from it."
+              : "Up to 5 links, one per line. The AI writer reads them for facts. It never copies pictures from them."
+          }
+        >
           <textarea
             name="links"
             rows={2}

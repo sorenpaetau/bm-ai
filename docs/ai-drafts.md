@@ -3,6 +3,40 @@
 When a brand adds a product, B&M.ai can write the first draft of its landing page in the right market
 format (wine, retail, cosmetics, electronics). The brand then checks every section before it goes live.
 
+## Wine pages start from the winery's website (Jens, Nov 16 2026)
+
+For wineries, **Create a page** asks only for the wine, a short description and the winery's website.
+The AI opens the home page, finds the winery's own pages about visiting, its history and family, its
+wines and region, its shop, events and where to buy (up to 8 pages), and writes an editable first draft
+in the layout Jens wants for every page (the cashmere demo, /t/DEMOKNIT):
+
+1. Big photo, then the webstore and website buttons (the shop link comes from the winery's own site).
+2. Jump buttons, each with a short "enter if applicable" box right below: This wine, Awards, Wine
+   rating, Gift sets, Other wines, Food pairing, ABV, Discounts, Nearby lodging, Nearby restaurants,
+   Events & schedules, Tasting room schedule, Reviews.
+3. About the winery, in parts (our family, our wines and region, the winery, the tasting room), each
+   with its own photos and YouTube/Vimeo videos right under its text.
+4. Where to buy: one button per shop with a link (Vivino and Total Wine & More start as empty rows).
+
+**The AI never fills Awards, Wine rating, ABV, Discounts or Reviews**, even when the website shows them:
+those boxes aren't in its answer shape, and the rule checker flags any rating, award, alcohol content,
+price or discount anywhere else. Facts come only from the winery's own site and description (web fetch
+is limited to the winery's domain, with and without www). Every box shows where it came from ("Your
+page: example.com/visit"). A box the winery leaves empty, and its jump button, stays off the page.
+
+**Sign-off at Publish (all pages).** Publishing needs a ticked "Approve and sign off" box. Each publish
+stores who approved it, when, the exact statement and the page as it went live (`page_signoffs`), and the
+editor shows "Last approved by ... on ...".
+
+**The sample winery.** While the AI writer is off (no API key), Create a page offers "Open the sample
+winery draft": the answer a test worker wrote for the made-up Ridgeline Cellars website
+(`tests/fixtures/ai-bench/briefs/ridgeline-website.json`, saved in `src/lib/ai/samples/`), built and
+checked exactly like a real draft. The finished version, as if the winery had checked every box and
+filled in its own, is published at /t/DEMOWINE.
+
+The live writer reads more pages for a winery, so a draft costs more: roughly 30 to 60 cents (estimate,
+not measured; up to 10 page reads of up to 12,000 tokens each).
+
 ## What the brand gives us
 
 On **Add a product** (and later under **Product details**):
