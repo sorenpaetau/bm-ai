@@ -232,6 +232,7 @@ function BoxNote({ box }: { box: WineryBox }) {
       <span className="font-semibold">Enter if applicable.</span>{" "}
       {box.ai === "site" ? "Our AI fills this from your own website when it can." : "Our AI fills this from your description and website."} Leave it
       empty and this box and its jump button stay off your page.
+      {box.id === "events" ? " Write each date with its year, like December 6, 2026, and that event hides itself once the day has passed." : ""}
     </p>
   );
 }

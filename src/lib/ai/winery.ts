@@ -152,7 +152,7 @@ export const WINERY_BOXES: WineryBox[] = [
     icon: "calendar",
     ai: "site",
     guide:
-      "Upcoming events listed on the winery's own site. items: one row per event (label = the date exactly as the site writes it, value = the event's name). Skip events whose date has passed. No ticket prices.",
+      "Upcoming events listed on the winery's own site. items: one row per event (label = the date with its year, written like December 6, 2026, value = the event's name). Skip events whose date has passed. Past rows hide themselves on the page after their date, so always include the year. No ticket prices.",
     rows: [],
     example: { answer: "Harvest dinner in the barrel room", body: "Dates and tickets on our events page." },
   },

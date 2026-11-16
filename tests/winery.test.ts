@@ -212,3 +212,26 @@ test("a fresh draft keeps About parts the winery added itself", async () => {
   assert.equal(kept?.images[0].url, "/media/rosie");
   assert.equal(kept?.body, "Meet Rosie.");
 });
+
+test("rows in the Events box hide themselves after their date", async () => {
+  const { sectionsToShow, eventRowDay } = await import("../src/components/landing/helpers");
+  assert.equal(eventRowDay("December 6, 2026"), "2026-12-06");
+  assert.equal(eventRowDay("Sat, Dec 6th 2026"), "2026-12-06");
+  assert.equal(eventRowDay("2027-01-24"), "2027-01-24");
+  assert.equal(eventRowDay("Every Friday"), null);
+  assert.equal(eventRowDay("Dec 6"), null, "no year: always kept");
+  const box = {
+    id: "events", type: "topic" as const, title: "Events & schedules", visible: true, aiGenerated: false, reviewed: true, sources: [],
+    answer: "Coming up at the winery", body: "", chips: [],
+    items: [
+      { label: "December 6, 2026", value: "Holiday Open House" },
+      { label: "Every Friday", value: "Sunset tasting" },
+    ],
+  };
+  const after = sectionsToShow([box], { now: new Date("2026-12-10T20:00:00Z") });
+  assert.deepEqual(after[0].type === "topic" && after[0].items.map((i) => i.value), ["Sunset tasting"]);
+  const before = sectionsToShow([box], { now: new Date("2026-12-06T20:00:00Z") });
+  assert.equal(before[0].type === "topic" && before[0].items.length, 2, "shown all of its day");
+  const allPast = sectionsToShow([{ ...box, items: [box.items[0]] }], { now: new Date("2026-12-10T20:00:00Z") });
+  assert.equal(allPast.length, 0, "every event over: the box and its jump button go");
+});

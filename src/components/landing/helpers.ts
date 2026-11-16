@@ -60,12 +60,49 @@ export function eventDateParts(value: string): { month: string; day: string; lab
  * rows for the brand to fill in), and a section with nothing left in it is not shown at all. Event
  * sections with no upcoming events are dropped.
  */
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+
+/**
+ * The day a row in a winery's "Events & schedules" box is on, from its label: "December 6, 2026",
+ * "Sat, Dec 6, 2026", "Dec 6th 2026" or "2026-12-06". Null when there's no full date with a year, so a
+ * row like "Every Friday" or "Dec 6" (no year) is always kept.
+ */
+export function eventRowDay(label: string): string | null {
+  const iso = isoDay(label);
+  if (iso) return iso;
+  const match = /\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/.exec(label);
+  if (!match) return null;
+  const month = MONTHS.indexOf(match[1].slice(0, 3).toLowerCase());
+  if (month < 0) return null;
+  const candidate = `${match[3]}-${String(month + 1).padStart(2, "0")}-${match[2].padStart(2, "0")}`;
+  return isoDay(candidate);
+}
+
+/** The winery "Events & schedules" box: a topic box whose dated rows hide themselves after their day. */
+function expireEventRows(section: Extract<Section, { type: "topic" }>, now?: Date): Section {
+  const today = todayIn(EVENT_TIMEZONE, now);
+  const items = section.items.filter((row) => {
+    const day = eventRowDay(row.label);
+    return day === null || day >= today;
+  });
+  // When every listed event is over, its short headline ("Coming up at the winery") goes too, so the
+  // box only stays if it has more to say (text, photos, videos).
+  const allOver = section.items.some((row) => eventRowDay(row.label)) && !items.some((row) => row.label.trim() && row.value.trim());
+  return { ...section, items, answer: allOver ? "" : section.answer };
+}
+
 export function sectionsToShow(sections: Section[], opts: { preview?: boolean; now?: Date } = {}): Section[] {
   const out: Section[] = [];
   for (const section of sections) {
     if (!section.visible) continue;
     if (!opts.preview && section.aiGenerated && !section.reviewed) continue;
-    const tidy = tidySection(section.type === "events" ? { ...section, items: upcomingEvents(section.items, opts.now) } : section);
+    const dated =
+      section.type === "events"
+        ? { ...section, items: upcomingEvents(section.items, opts.now) }
+        : section.type === "topic" && section.id === "events"
+          ? expireEventRows(section, opts.now)
+          : section;
+    const tidy = tidySection(dated);
     if (tidy) out.push(tidy);
   }
   return out;
