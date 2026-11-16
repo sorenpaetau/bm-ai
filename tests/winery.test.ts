@@ -163,3 +163,22 @@ test("the test bench job for a winery carries its website pages", () => {
   assert.ok(job.includes('<page url="https://example.com/">'));
   assert.ok(job.includes(request.system));
 });
+
+test("a fresh AI draft keeps the photos and videos under each About part and on each box", async () => {
+  const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
+  const current = starterContent(winery);
+  const about = current.sections.find((s) => s.type === "about")!;
+  if (about.type === "about") {
+    about.parts[0].images = [{ url: "/media/family", alt: "" }];
+    about.parts[0].videos = [{ url: "https://youtu.be/dQw4w9WgXcQ", title: "" }];
+  }
+  const events = current.sections.find((s) => s.id === "events")!;
+  events.videos = [{ url: "https://vimeo.com/76979871", title: "Harvest" }];
+  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
+  const freshAbout = fresh.sections.find((s) => s.type === "about")!;
+  assert.ok(freshAbout.type === "about");
+  assert.equal(freshAbout.parts[0].images[0].url, "/media/family");
+  assert.equal(freshAbout.parts[0].videos.length, 1);
+  assert.match(freshAbout.parts[0].body, /Hale/, "the text is the fresh draft's");
+  assert.equal(fresh.sections.find((s) => s.id === "events")!.videos?.[0].title, "Harvest");
+});

@@ -245,7 +245,8 @@ export async function publish(productId: string, content: unknown, approved = fa
   const [signoff] = await sql.begin(async (tx) => {
     await tx`
       UPDATE products
-      SET published_content = content, status = 'published', published_at = now(), updated_at = now()
+      SET content = ${sql.json(parsed.data)}, published_content = ${sql.json(parsed.data)},
+          status = 'published', published_at = now(), updated_at = now()
       WHERE id = ${productId}`;
     return tx<{ createdAt: Date }[]>`
       INSERT INTO page_signoffs (product_id, company_id, user_id, signer_name, signer_email, statement, content)
