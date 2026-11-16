@@ -296,10 +296,13 @@ export async function redraft(productId: string): Promise<ActionState> {
 }
 
 const Details = NewProduct;
+/** Wine pages accept the shorter description that Create a page accepts, so saving details never fails on it. */
+const WineDetails = NewProduct.extend({ description: NewWine.shape.description });
 
 export async function updateDetails(productId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
   const { user } = await ownedProduct(productId);
-  const parsed = Details.safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
+  const company = await currentCompany(user.companyId);
+  const parsed = (company.vertical === "wine_spirits" ? WineDetails : Details).safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { name, sku, description } = parsed.data;
   const rawLinks = String(form.get("links") ?? "");

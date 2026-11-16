@@ -198,3 +198,17 @@ test("a fresh draft of an older wine page moves its photos to the new boxes inst
   assert.ok(about.parts.find((p) => p.id === "winery")!.images.some((i) => i.url === "/media/club"), "no match: goes to The winery");
   assert.ok(fresh.sections.find((s) => s.id === "giftsets")!.images!.some((i) => i.url === "/media/gift"));
 });
+
+test("a fresh draft keeps About parts the winery added itself", async () => {
+  const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
+  const current = starterContent(winery);
+  const about = current.sections.find((s) => s.type === "about")!;
+  assert.ok(about.type === "about");
+  about.parts.push({ id: "part-abc", title: "Our dog", body: "Meet Rosie.", images: [{ url: "/media/rosie", alt: "" }], videos: [], sources: [] });
+  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
+  const freshAbout = fresh.sections.find((s) => s.type === "about")!;
+  assert.ok(freshAbout.type === "about");
+  const kept = freshAbout.parts.find((p) => p.id === "part-abc");
+  assert.equal(kept?.images[0].url, "/media/rosie");
+  assert.equal(kept?.body, "Meet Rosie.");
+});

@@ -64,12 +64,17 @@ export function carryOverBrandMedia(current: LandingContent, fresh: LandingConte
     if (old.videos?.length) next = { ...next, videos: old.videos } as typeof s;
     if (next.type === "about" && old.type === "about") {
       const parts = new Map(old.parts.map((p) => [p.id, p]));
+      const freshPartIds = new Set(next.parts.map((p) => p.id));
       next = {
         ...next,
-        parts: next.parts.map((p) => {
-          const was = parts.get(p.id);
-          return was ? { ...p, images: was.images.length ? was.images : p.images, videos: was.videos.length ? was.videos : p.videos } : p;
-        }),
+        parts: [
+          ...next.parts.map((p) => {
+            const was = parts.get(p.id);
+            return was ? { ...p, images: was.images.length ? was.images : p.images, videos: was.videos.length ? was.videos : p.videos } : p;
+          }),
+          // Parts the brand added itself ("Add a part") aren't in a fresh draft: keep them as they are.
+          ...old.parts.filter((p) => !freshPartIds.has(p.id) && (p.body.trim() || p.images.length || p.videos.length)),
+        ],
       };
     }
     return next;
