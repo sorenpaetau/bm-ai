@@ -105,9 +105,10 @@ const wineryDraft = (over: Partial<AiWineryDraft> = {}) =>
       boxes: [
         { id: "wine", answer: "Napa Cabernet", body: "Blackberry and cedar.", items: [], chips: ["Blackberry"], basis: "general_knowledge", pages: [] },
       ],
-      about: [{ id: "family", body: "Grown on our hillside.", basis: "description", pages: [] }],
+      about: [{ title: "Our story", body: "Grown on our hillside.", photoHint: "", linkLabel: "", linkUrl: "", basis: "description", pages: [] }],
       whereToBuy: [],
       shopUrl: "",
+      contactUrl: "",
       optin: { headline: "Register this bottle", prompt: "Hear about new releases." },
       ...over,
     },
@@ -127,7 +128,7 @@ test("an invented blend is flagged, a blend the brand gave is not", () => {
 });
 
 test("wine drafts can't claim drinking is good for you", () => {
-  const content = wineryDraft({ about: [{ id: "family", body: "Full of antioxidants and good for your heart.", basis: "description", pages: [] }] });
+  const content = wineryDraft({ about: [{ title: "Our story", body: "Full of antioxidants and good for your heart.", photoHint: "", linkLabel: "", linkUrl: "", basis: "description", pages: [] }] });
   const findings = checkDraft(content, wine);
   assert.ok(findings.some((f) => f.sectionId === "about" && f.level === "problem" && f.message.includes("health claim")), JSON.stringify(findings));
 });
@@ -136,12 +137,12 @@ test("alcohol content and discounts in an AI draft are flagged: the winery adds 
   const content = wineryDraft({
     boxes: [
       { id: "wine", answer: "Napa Cabernet", body: "14.5% alc. by vol.", items: [], chips: [], basis: "brand_pages", pages: [] },
-      { id: "giftsets", answer: "Members save 15%", body: "15% off gift boxes.", items: [], chips: [], basis: "brand_pages", pages: [] },
+      { id: "shop", answer: "Members save 15%", body: "15% off gift boxes.", items: [], chips: [], basis: "brand_pages", pages: [] },
     ],
   });
   const findings = checkDraft(content, wine);
   assert.ok(findings.some((f) => f.sectionId === "wine" && f.level === "problem" && f.message.includes("alcohol content")), JSON.stringify(findings));
-  assert.ok(findings.some((f) => f.sectionId === "giftsets" && f.level === "problem" && f.message.includes("discount")), JSON.stringify(findings));
+  assert.ok(findings.some((f) => f.sectionId === "shop" && f.level === "problem" && f.message.includes("discount")), JSON.stringify(findings));
 });
 
 test("findings show up in the editor's 'Where this came from' note, and the page stays valid", () => {

@@ -22,7 +22,7 @@ export type PublishedProduct = {
  */
 export const getPublishedProduct = cache(async (slug: string): Promise<PublishedProduct | null> => {
   const [row] = await sql<{ id: string; companyId: string; name: string; slug: string; vertical: string; publishedContent: unknown }[]>`
-    SELECT p.id, p.company_id, p.name, p.slug, c.vertical, p.published_content
+    SELECT p.id, p.company_id, p.name, p.slug, COALESCE(p.vertical, c.vertical) AS vertical, p.published_content
     FROM products p JOIN companies c ON c.id = p.company_id
     WHERE p.slug = ${slug} AND p.status = 'published' AND p.published_content IS NOT NULL`;
   if (!row) return null;

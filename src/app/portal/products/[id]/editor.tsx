@@ -190,7 +190,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           <p className="font-semibold">Fill in the blanks, top to bottom</p>
           <p className="mt-1">
             {wine
-              ? "This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each jump button (enter if applicable), About your winery, and Where to buy. Add pictures and videos under any box or paragraph. Anything you leave empty simply stays off your page."
+              ? "This form follows your page from top to bottom: your main photo, the webstore, website and Contact us links, then the four jump-button boxes (The wine, Shop, Nearby, Events), About your winery laid out like your own website, Where to buy, and Reviews. Upload pictures where the AI suggests them, under any box or paragraph. Anything you leave empty simply stays off your page."
               : "This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each topic button. Add pictures anywhere you see the camera. Anything you leave empty simply stays off your page."}
           </p>
         </div>
@@ -229,8 +229,12 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
         </Panel>
 
         <Panel
-          title="Step 2 · Webstore and website buttons"
-          description="The two big buttons right under the photo. Leave one empty and that button won't show."
+          title={wine ? "Step 2 · Webstore, website and Contact us" : "Step 2 · Webstore and website buttons"}
+          description={
+            wine
+              ? "The two big buttons right under the photo, and a small Contact us link under them. Leave one empty and it won't show."
+              : "The two big buttons right under the photo. Leave one empty and that button won't show."
+          }
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField
@@ -250,6 +254,13 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
               hint="Shows as “Go to website”."
             />
           </div>
+          <TextField
+            label="Your Contact us link (optional)"
+            value={quickLinkUrl(content, "contact")}
+            onChange={(v) => update((d) => void (d.buttons = setQuickLink(d.buttons, "contact", v)))}
+            placeholder="https://yourbrand.com/contact"
+            hint="Your contact page, an email address or a phone number. Shows as a small “Contact us” link under the buttons."
+          />
           <details className="rounded-lg border border-line p-3" open={others.length > 0}>
             <summary className="cursor-pointer text-sm font-medium">More buttons (optional)</summary>
             <p className="mt-1 mb-3 text-xs text-muted">For example “Book a tasting” or “Call us”.</p>
@@ -289,10 +300,10 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <h2 className="font-semibold">{wine ? "Step 3 · Jump buttons, About and Where to buy" : "Step 3 · Your topics"}</h2>
+              <h2 className="font-semibold">{wine ? "Step 3 · Jump-button boxes, About, Where to buy and Reviews" : "Step 3 · Your topics"}</h2>
               <p className="text-sm text-muted">
                 {wine
-                  ? "Each box below gets its own jump button under the photo, in this order. Enter what applies: a short answer shows big, with any details, pictures and videos under it. Empty boxes and their buttons stay off the page."
+                  ? "Each section below gets its own jump button under the photo, in this order. The first four boxes each combine a few things (for example The wine: taste, food pairing, alcohol, awards and rating). Enter what applies; pictures and videos show under the text. Empty rows, boxes and parts stay off the page."
                   : "Each box below gets its own jump button under the photo, in this order. Give a short answer, a few details and pictures. Empty boxes stay off the page, and hidden ones stay saved but shoppers don't see them."}
               </p>
             </div>

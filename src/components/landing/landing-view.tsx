@@ -108,9 +108,12 @@ export function LandingView({
   const sections = sectionsToShow(content.sections, { preview, now });
   const heroImage = safeUrl(hero.imageUrl);
   const logo = safeUrl(theme.logoUrl);
-  const buttons = content.buttons
+  const allButtons = content.buttons
     .map((b) => ({ ...b, href: buttonHref(b) }))
     .filter((b): b is ActionButton & { href: string } => b.href !== null);
+  // "Contact us" is a small link under the big buttons (Jens, Nov 16), not a third big button.
+  const buttons = allButtons.filter((b) => b.slot !== "contact");
+  const contact = allButtons.find((b) => b.slot === "contact");
   const jumpLinks = [
     ...sections.map((s) => ({ href: `#s-${s.id}`, label: s.navLabel?.trim() || s.title, Icon: iconFor(s) })),
     ...(content.optin.enabled ? [{ href: "#register", label: content.optin.headline, Icon: MailIcon }] : []),
@@ -187,6 +190,19 @@ export function LandingView({
               <ActionLink key={i} button={button} />
             ))}
           </div>
+        )}
+        {contact && (
+          <p className={`relative z-10 animate-rise px-5 text-center [animation-delay:200ms] ${buttons.length ? "mt-4" : "-mt-6"}`}>
+            <a
+              href={contact.href}
+              data-kind={contact.kind}
+              {...(isExternal(contact.href) ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[var(--lp-primary)] shadow-sm ring-1 ring-black/[0.06] transition active:scale-[0.985]"
+            >
+              {contact.kind === "phone" ? <PhoneIcon className="h-4 w-4" /> : <MailIcon className="h-4 w-4" />}
+              {contact.label.trim() || "Contact us"}
+            </a>
+          </p>
         )}
 
         <GenuineCard check={check} brand={hero.brand} noun={tapNoun(vertical)} />
@@ -518,7 +534,7 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
         </span>
         {section.title}
       </h2>
-      <SectionBody section={section} />
+      <SectionBody section={section} preview={preview} />
       <ImageStrip images={section.images ?? []} className="mt-5" />
       <VideoList videos={section.videos ?? []} className="mt-5" />
       {"link" in section && <SectionLink link={section.link} />}
@@ -593,6 +609,37 @@ function SectionLink({ link }: { link?: { label: string; url: string } }) {
   );
 }
 
+/** A part's link to the brand's own page about it, e.g. "Join the wine club". Lighter than a section's button. */
+function PartLink({ link }: { link?: { label: string; url: string } }) {
+  const href = safeUrl(link?.url);
+  if (!link || !href || !link.label.trim()) return null;
+  return (
+    <a
+      href={href}
+      {...externalProps(href)}
+      className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[14px] font-semibold text-[var(--lp-primary)] ring-[1.5px] ring-[var(--lp-primary)]/60 ring-inset transition active:scale-[0.985]"
+    >
+      {link.label} <ArrowRightIcon className="h-3.5 w-3.5" />
+    </a>
+  );
+}
+
+/**
+ * Where the AI suggests a picture (Jens, Nov 16: "AI will suggest inserting pictures in the main body of
+ * the text"). Only in the editor's preview, until the brand uploads one; consumers never see it.
+ */
+function PhotoSuggestion({ hint }: { hint: string }) {
+  return (
+    <p className="flex items-center gap-3 rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/70 px-4 py-4 text-[13px] leading-snug text-amber-950">
+      <CameraIcon className="h-6 w-6 shrink-0 text-amber-600" />
+      <span>
+        <span className="block font-semibold">Suggested picture: {hint}</span>
+        Upload it in the editor. Only you see this box.
+      </span>
+    </p>
+  );
+}
+
 /** Shades of the brand colour for the blend bar. */
 const BLEND_SHADES = [
   "var(--lp-primary)",
@@ -604,7 +651,7 @@ const BLEND_SHADES = [
 
 const LEVEL_WORDS = ["", "Light", "Medium-light", "Medium", "Medium-full", "Full"];
 
-function SectionBody({ section }: { section: Section }) {
+function SectionBody({ section, preview = false }: { section: Section; preview?: boolean }) {
   switch (section.type) {
     case "facts": {
       const highlights = section.items.filter((i) => i.highlight);
@@ -1093,7 +1140,9 @@ function SectionBody({ section }: { section: Section }) {
               {part.title.trim() && <h3 className={`${heading} text-[1.3rem] leading-snug text-[var(--lp-primary)]`}>{part.title}</h3>}
               <Paragraphs text={part.body} className="text-[16px] leading-relaxed text-ink/85" />
               <ImageStrip images={part.images} />
+              {preview && !part.images.length && part.photoHint?.trim() && <PhotoSuggestion hint={part.photoHint} />}
               <VideoList videos={part.videos} />
+              <PartLink link={part.link} />
             </div>
           ))}
         </div>

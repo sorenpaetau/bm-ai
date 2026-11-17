@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { aiConfigured, DraftError, draftLandingContent, httpsPhotos, type PhotoLoader } from "@/lib/ai/draft";
 import { cleanLinks } from "@/lib/ai/brief";
+import { MARKET_CHOICES } from "@/lib/ai/markets";
 import { starterContent, type DraftInput } from "@/lib/ai/template";
 import { requireUser } from "@/lib/auth";
 import { randomCode, slugify } from "@/lib/codes";
@@ -32,9 +33,9 @@ async function ownedProduct(productId: string) {
   const user = await requireUser();
   if (!z.uuid().safeParse(productId).success) redirect("/portal");
   const [product] = await sql<
-    { id: string; name: string; description: string | null; companyId: string; brandLinks: string[]; content: unknown }[]
+    { id: string; name: string; sku: string; description: string | null; companyId: string; brandLinks: string[]; content: unknown; vertical: Vertical | null }[]
   >`
-    SELECT id, name, description, company_id, brand_links, content FROM products WHERE id = ${productId} AND company_id = ${user.companyId}`;
+    SELECT id, name, sku, description, company_id, brand_links, content, vertical FROM products WHERE id = ${productId} AND company_id = ${user.companyId}`;
   if (!product) redirect("/portal");
   return { user, product };
 }
@@ -97,12 +98,20 @@ async function makeSku(companyId: string, name: string) {
   return `${base}-${randomCode(6)}`;
 }
 
-const NewWine = z.object({
-  name: z.string().trim().min(2, "Enter the wine's name, e.g. Cabernet Sauvignon 2023.").max(120),
-  description: z.string().trim().min(10, "Describe the wine in a sentence or two.").max(4000),
-  website: z.string().trim().max(300),
-  sku: z.string().trim().max(60),
-});
+const NewPage = z
+  .object({
+    vertical: z.enum(MARKET_CHOICES, { message: "Choose a market template first." }),
+    name: z.string().trim().min(2, "Enter the product's name, e.g. Cabernet Sauvignon 2023.").max(120),
+    description: z.string().trim().max(4000),
+    sku: z.string().trim().max(60),
+    website: z.string().trim().max(300),
+  })
+  .refine((d) => d.description.length >= 10 || d.sku.length >= 2, {
+    message: "Add a sentence or two about it, or its item code (SKU) so the AI can find it on your website.",
+  });
+
+/** Wine pages accept the short description that Create a page accepts (or none, with a SKU). */
+const NewWine = z.object({ description: z.string().trim().max(4000) });
 
 /** Turns "caymus.com" into "https://caymus.com/". Returns null if it isn't a web address. */
 function websiteFrom(raw: string): string | null {
@@ -113,16 +122,22 @@ function websiteFrom(raw: string): string | null {
 }
 
 /**
- * "Create a page" for wineries (Jens, Nov 16): only the wine, a short description and the winery's
- * website. The AI reads the website and writes the first draft; the winery adds photos, videos and
- * the boxes only it may fill (awards, ratings, ABV...), then approves the page.
+ * "Create a page" (Jens, Nov 16): pick the market template, enter the product and a short description
+ * (or its SKU) and the website. The AI reads the website and writes the first draft: for wine, the
+ * website-first page that mirrors the winery's own site (winery.ts); for the other markets, that
+ * market's topic boxes (markets.ts). The brand then adds photos, videos and what only it may fill in
+ * (awards, ratings, ABV, discounts...), and approves the page.
  */
-async function createWinePage(user: Awaited<ReturnType<typeof requireUser>>, company: Company, form: FormData): Promise<ActionState> {
+export async function createProduct(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const company = await currentCompany(user.companyId);
   const values = {
+    vertical: String(form.get("vertical") ?? ""),
     name: String(form.get("name") ?? ""),
     description: String(form.get("description") ?? ""),
     website: String(form.get("website") ?? ""),
     sku: String(form.get("sku") ?? ""),
+    price: String(form.get("price") ?? ""),
   };
 
   // The sample winery: shows what the AI writes, while the AI writer isn't switched on yet.
@@ -131,18 +146,21 @@ async function createWinePage(user: Awaited<ReturnType<typeof requireUser>>, com
     const sku = await makeSku(user.companyId, `SAMPLE ${sample.input.productName}`);
     const slug = await uniqueSlug(slugify(`${company.name} sample ${sample.input.productName}`));
     const [row] = await sql<{ id: string }[]>`
-      INSERT INTO products (company_id, sku, name, description, slug, content, brand_links)
-      VALUES (${user.companyId}, ${sku}, ${`${sample.input.productName} (sample)`}, ${sample.input.description}, ${slug}, ${sql.json(sample.content)}, ${[sample.input.website ?? ""]})
+      INSERT INTO products (company_id, sku, name, description, slug, content, brand_links, vertical)
+      VALUES (${user.companyId}, ${sku}, ${`${sample.input.productName} (sample)`}, ${sample.input.description}, ${slug}, ${sql.json(sample.content)}, ${[sample.input.website ?? ""]}, 'wine_spirits')
       RETURNING id`;
     revalidatePath("/portal");
     redirect(`/portal/products/${row.id}?drafted=sample`);
   }
 
-  const parsed = NewWine.safeParse(values);
+  const parsed = NewPage.safeParse(values);
   if (!parsed.success) return { error: parsed.error.issues[0].message, values };
-  const { name, description } = parsed.data;
+  const { vertical, name, description } = parsed.data;
+  const wine = vertical === "wine_spirits";
   const website = websiteFrom(parsed.data.website);
-  if (parsed.data.website && !website) return { error: "That website doesn't look right. Type it like yourwinery.com", values };
+  if (parsed.data.website && !website) return { error: "That website doesn't look right. Type it like yourbrand.com", values };
+  const price = Price.safeParse(values.price);
+  if (!price.success) return { error: price.error.issues[0].message, values };
 
   let sku = parsed.data.sku;
   if (sku) {
@@ -152,64 +170,27 @@ async function createWinePage(user: Awaited<ReturnType<typeof requireUser>>, com
     sku = await makeSku(user.companyId, name);
   }
 
-  // The first website a winery gives us becomes its company website too (used on every new page).
+  // The first website a brand gives us becomes its company website too (used on every new page).
   if (website && !company.website) await sql`UPDATE companies SET website = ${website} WHERE id = ${user.companyId}`;
 
-  const input: DraftInput = {
-    companyName: company.name,
-    vertical: company.vertical,
-    productName: name,
-    description,
-    website: website ?? company.website,
-  };
-  const { content, drafted } = await draftFor(input, form.get("useAi") === "on");
-  const slug = await uniqueSlug(slugify(`${company.name} ${name}`));
+  const site = website ?? company.website;
   const links = website ? [website] : [];
-  const [row] = await sql<{ id: string }[]>`
-    INSERT INTO products (company_id, sku, name, description, slug, content, brand_links)
-    VALUES (${user.companyId}, ${sku}, ${name}, ${description}, ${slug}, ${sql.json(content)}, ${links})
-    RETURNING id`;
-  revalidatePath("/portal");
-  redirect(`/portal/products/${row.id}?drafted=${drafted}`);
-}
-
-export async function createProduct(_prev: ActionState, form: FormData): Promise<ActionState> {
-  const user = await requireUser();
-  const company = await currentCompany(user.companyId);
-  if (company.vertical === "wine_spirits") return createWinePage(user, company, form);
-  const values = {
-    name: String(form.get("name") ?? ""),
-    sku: String(form.get("sku") ?? ""),
-    description: String(form.get("description") ?? ""),
-    links: String(form.get("links") ?? ""),
-    price: String(form.get("price") ?? ""),
-  };
-  const parsed = NewProduct.safeParse(values);
-  if (!parsed.success) return { error: parsed.error.issues[0].message, values };
-  const { name, sku, description } = parsed.data;
-  const price = Price.safeParse(values.price);
-  if (!price.success) return { error: price.error.issues[0].message, values };
-  const links = linksFrom(values.links);
-  if (values.links.trim() && !links.length) return { error: "Those links don't look like web addresses. Start each one with https://", values };
-
-  const [dupe] = await sql`SELECT 1 FROM products WHERE company_id = ${user.companyId} AND lower(sku) = ${sku.toLowerCase()}`;
-  if (dupe) return { error: `You already have a product with SKU ${sku}.`, values };
-
   const input: DraftInput = {
     companyName: company.name,
-    vertical: company.vertical,
+    vertical,
     productName: name,
     description,
-    website: company.website,
-    links,
-    price: price.data || null,
+    sku: parsed.data.sku || null,
+    website: site,
+    // Wine pages start from the website itself; the other markets read it as one of the brand's pages.
+    links: wine ? [] : site ? [site] : [],
+    price: wine ? null : price.data || null,
   };
   const { content, drafted } = await draftFor(input, form.get("useAi") === "on");
-
   const slug = await uniqueSlug(slugify(`${company.name} ${name}`));
   const [row] = await sql<{ id: string }[]>`
-    INSERT INTO products (company_id, sku, name, description, slug, content, brand_links)
-    VALUES (${user.companyId}, ${sku}, ${name}, ${description}, ${slug}, ${sql.json(content)}, ${links})
+    INSERT INTO products (company_id, sku, name, description, slug, content, brand_links, vertical)
+    VALUES (${user.companyId}, ${sku}, ${name}, ${description}, ${slug}, ${sql.json(content)}, ${links}, ${vertical})
     RETURNING id`;
   revalidatePath("/portal");
   redirect(`/portal/products/${row.id}?drafted=${drafted}`);
@@ -270,16 +251,18 @@ export async function redraft(productId: string): Promise<ActionState> {
   const { user, product } = await ownedProduct(productId);
   if (!aiConfigured()) return { error: "The AI writer isn't switched on for this site yet." };
   const company = await currentCompany(user.companyId);
+  const vertical = product.vertical ?? company.vertical;
   // The brand's photos and price come from the current draft, so a fresh draft keeps them.
   const current = safeContent(product.content);
   try {
     const fresh = await draftLandingContent({
       companyName: company.name,
-      vertical: company.vertical,
+      vertical,
       productName: product.name,
-      description: product.description ?? product.name,
-      // A wine page keeps the website typed on Create a page (saved as its first link) as the main one.
-      website: company.vertical === "wine_spirits" ? (product.brandLinks?.[0] ?? company.website) : company.website,
+      description: product.description ?? "",
+      sku: product.sku,
+      // A page keeps the website typed on Create a page (saved as its first link) as the main one.
+      website: product.brandLinks?.[0] ?? company.website,
       links: product.brandLinks,
       photos: current ? brandPhotos(current) : [],
       price: current?.hero.price ?? null,
@@ -296,13 +279,17 @@ export async function redraft(productId: string): Promise<ActionState> {
 }
 
 const Details = NewProduct;
-/** Wine pages accept the shorter description that Create a page accepts, so saving details never fails on it. */
+/**
+ * Wine pages, and pages made on Create a page with only a SKU, accept the short (or empty) description
+ * Create a page accepts, so saving details never fails on it.
+ */
 const WineDetails = NewProduct.extend({ description: NewWine.shape.description });
 
 export async function updateDetails(productId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
-  const { user } = await ownedProduct(productId);
+  const { user, product } = await ownedProduct(productId);
   const company = await currentCompany(user.companyId);
-  const parsed = (company.vertical === "wine_spirits" ? WineDetails : Details).safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
+  const short = (product.vertical ?? company.vertical) === "wine_spirits" || !product.description?.trim();
+  const parsed = (short ? WineDetails : Details).safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { name, sku, description } = parsed.data;
   const rawLinks = String(form.get("links") ?? "");

@@ -8,7 +8,16 @@ export type QuickSlot = NonNullable<ActionButton["slot"]>;
 export const QUICK_LINKS: Record<QuickSlot, { label: string; style: ActionButton["style"]; kind: ActionButton["kind"] }> = {
   webstore: { label: "Go to webstore", style: "primary", kind: "shopify" },
   website: { label: "Go to website", style: "secondary", kind: "link" },
+  contact: { label: "Contact us", style: "secondary", kind: "link" },
 };
+
+/** The "Contact us" link can be a web page, an email address or a phone number, whichever the brand types. */
+export function contactKind(value: string): ActionButton["kind"] {
+  const v = value.trim();
+  if (/^mailto:/i.test(v) || (/^[^\s@/:]+@[^\s@/]+\.[a-z]{2,}$/i.test(v))) return "email";
+  if (/^tel:/i.test(v) || /^\+?[\d\s().-]{7,}$/.test(v)) return "phone";
+  return "link";
+}
 
 /** Which button is the page's webstore or website button, by its slot. -1 if there is none. */
 export function quickLinkIndex(buttons: ActionButton[], slot: QuickSlot): number {
@@ -41,22 +50,24 @@ export function quickLinkUrl(content: LandingContent, slot: QuickSlot): string {
 }
 
 /**
- * Sets the webstore or website link. An empty link removes the button. A new webstore button goes
- * first (it's the main action) and a new website button goes right after it.
+ * Sets the webstore, website or contact link. An empty link removes the button. A new webstore button
+ * goes first (it's the main action), a new website button right after it, and "Contact us" last.
  */
 export function setQuickLink(buttons: ActionButton[], slot: QuickSlot, url: string): ActionButton[] {
   const i = quickLinkIndex(buttons, slot);
   if (!url.trim()) return i >= 0 ? buttons.filter((_, j) => j !== i) : buttons;
-  if (i >= 0) return buttons.map((b, j) => (j === i ? { ...b, url, slot } : b));
-  const button: ActionButton = { ...QUICK_LINKS[slot], url, slot };
+  const kind = slot === "contact" ? { kind: contactKind(url) } : {};
+  if (i >= 0) return buttons.map((b, j) => (j === i ? { ...b, url, slot, ...kind } : b));
+  const button: ActionButton = { ...QUICK_LINKS[slot], url, slot, ...kind };
   if (slot === "webstore") return [button, ...buttons];
+  if (slot === "contact") return [...buttons, button];
   const store = quickLinkIndex(buttons, "webstore");
   return [...buttons.slice(0, store + 1), button, ...buttons.slice(store + 1)];
 }
 
-/** The buttons that aren't the webstore or website button ("More buttons" in the builder). */
+/** The buttons that aren't the webstore, website or contact button ("More buttons" in the builder). */
 export function otherButtonIndexes(buttons: ActionButton[]): number[] {
-  const quick = new Set([quickLinkIndex(buttons, "webstore"), quickLinkIndex(buttons, "website")]);
+  const quick = new Set([quickLinkIndex(buttons, "webstore"), quickLinkIndex(buttons, "website"), quickLinkIndex(buttons, "contact")]);
   return buttons.map((_, i) => i).filter((i) => !quick.has(i));
 }
 

@@ -62,13 +62,15 @@ test("blank template rows don't block publishing, but a value with no label does
   assert.ok(publishBlockers(c, true).some((b) => b.includes("needs a label")));
 });
 
-test("a new wine page has Jens's jump-button boxes, then About the winery, then Where to buy", () => {
+test("a new wine page has Jens's four combined boxes, then About the winery, Where to buy and Reviews", () => {
   const sections = starterContent(wine).sections;
-  const ids = sections.map((s) => s.id);
-  for (const id of ["awards", "rating", "giftsets", "otherwines", "pairing", "abv", "discounts", "lodging", "restaurants", "events", "tastingroom", "reviews"]) {
-    assert.ok(ids.includes(id), `missing ${id}`);
-  }
-  assert.deepEqual(ids.slice(-2), ["about", "buy"]);
+  assert.deepEqual(sections.map((s) => s.id), ["wine", "shop", "nearby", "events", "about", "buy", "reviews"]);
+  // The old "enter if applicable" boxes live on as rows: the winery fills in alcohol, awards, rating and discounts.
+  const rows = (id: string) => sections.flatMap((s) => (s.id === id && s.type === "topic" ? s.items.map((i) => i.label) : []));
+  assert.deepEqual(rows("wine"), ["Grape", "Vintage", "Region", "Food pairing", "Alcohol (ABV)", "Awards", "Wine rating"]);
+  assert.deepEqual(rows("shop"), ["Discounts"]);
+  assert.deepEqual(rows("nearby"), ["Lodging", "Restaurants", "Things to do"]);
+  assert.deepEqual(rows("events"), ["Tasting room hours", "Reservations", "Address"]);
 });
 
 test("a new wine page only shows what has been filled in", () => {

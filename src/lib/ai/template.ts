@@ -18,6 +18,8 @@ export type DraftInput = {
   productName: string;
   description: string;
   website?: string | null;
+  /** The brand's own item code or SKU, if it gave one, to help the AI find the product on its site. */
+  sku?: string | null;
   /** The brand's own web pages the AI may read (product page, about page). Max MAX_LINKS. */
   links?: string[];
   /** Photos the brand uploaded ("/media/<id>" or https). Max MAX_PHOTOS. Never web images. */
