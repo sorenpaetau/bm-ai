@@ -361,3 +361,17 @@ ${topics}
 Do not write ${never.join(" or ")}: the brand adds real ones.
 The story is the brand's short history and what it stands for, only from what the brand gave you.`;
 }
+
+/**
+ * The market templates in the dropdown on Create a page (Jens, Nov 16: "Select Market segment template
+ * from dropdown"), in his order. Pharmaceutical is shown but can't be picked until its legal review.
+ */
+export const PAGE_MARKETS = [
+  { vertical: "wine_spirits", label: "Wine & Spirits", product: "wine", example: "Cabernet Sauvignon 2023", ready: true },
+  { vertical: "retail", label: "Retail & clothing", product: "product", example: "Merino crewneck sweater", ready: true },
+  { vertical: "cosmetics", label: "Cosmetics", product: "product", example: "Sea-salt night cream", ready: true },
+  { vertical: "electronics", label: "Consumer electronics", product: "product", example: "Wireless earbuds", ready: true },
+  { vertical: "pharmaceutical", label: "Pharmaceutical & medicinal (coming soon)", product: "product", example: "", ready: false },
+] as const satisfies ReadonlyArray<{ vertical: Vertical; label: string; product: string; example: string; ready: boolean }>;
+
+export const MARKET_CHOICES = ["wine_spirits", "retail", "cosmetics", "electronics"] as const satisfies ReadonlyArray<Vertical>;

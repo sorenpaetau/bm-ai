@@ -184,7 +184,7 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
             <PhotoStrip
               images={section.images ?? []}
               onChange={(fn) => onUpdate((s) => ({ ...s, images: fn(s.images ?? []) }) as Section)}
-              {...(box ? BOX_PHOTO_WORDING[box.id] : undefined) ?? PHOTO_STRIP_WORDING[section.type]}
+              {...(box?.photos ?? PHOTO_STRIP_WORDING[section.type])}
             />
             <VideoField videos={section.videos ?? []} onChange={(videos) => patch({ videos })} />
           </>
@@ -220,32 +220,31 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
   );
 }
 
-/** The "enter if applicable" line under a wine box's heading, and who may fill it in. */
+/** The line under a wine box's heading: what it combines, and who may fill it in (Jens, Nov 16). */
 function BoxNote({ box }: { box: WineryBox }) {
-  return box.ai === "never" ? (
-    <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
-      <span className="font-semibold">Enter if applicable.</span> Only you can fill this in: our AI never writes awards, ratings, reviews,
-      alcohol content or discounts. Leave it empty and this box and its jump button stay off your page.
-    </p>
-  ) : (
+  if (box.ai === "never") {
+    return (
+      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
+        <span className="font-semibold">{box.combines}</span> Only you can fill this in: our AI never writes reviews. Shown after Where to
+        buy. Leave it empty and it stays off your page.
+      </p>
+    );
+  }
+  return (
     <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950 ring-1 ring-sky-200 ring-inset">
-      <span className="font-semibold">Enter if applicable.</span>{" "}
-      {box.ai === "site" ? "Our AI fills this from your own website when it can." : "Our AI fills this from your description and website."} Leave it
-      empty and this box and its jump button stay off your page.
-      {box.id === "events" ? " Write each date with its year, like December 6, 2026, and that event hides itself once the day has passed." : ""}
+      <span className="font-semibold">One box for: {box.combines}</span>{" "}
+      {box.ai === "site" ? "Our AI fills in what your own website says." : "Our AI fills this in from your description and website."}
+      {box.ownerRows.length > 0 && ` Only you can fill in ${listWords(box.ownerRows)}: our AI never writes them.`} Enter
+      anything else that applies; empty rows, and an empty box with its jump button, stay off your page.
+      {box.id === "events" ? " Write each event's date with its year, like December 6, 2026, and that row hides itself once the day has passed." : ""}
     </p>
   );
 }
 
-/** Pictures under each wine box, in Jens's words ("other winery products", "gift sets and shop"). */
-const BOX_PHOTO_WORDING: Record<string, { label: string; hint: string }> = {
-  wine: { label: "More pictures of this wine", hint: "Optional. The label, the bottle in the vineyard, a pour. Only use photos your winery owns." },
-  giftsets: { label: "Gift set and shop pictures", hint: "Optional. Your gift boxes and shop items. Only use photos your winery owns." },
-  otherwines: { label: "Pictures of your other wines", hint: "Optional. Your other bottles and products. Only use photos your winery owns." },
-  events: { label: "Event pictures", hint: "Optional. Past events, the barrel room set for dinner. Only use photos your winery owns." },
-  tastingroom: { label: "Tasting room pictures", hint: "Optional. The tasting room, the terrace, the view. Only use photos your winery owns." },
-  awards: { label: "Award pictures", hint: "Optional. A medal or certificate. Only use photos your winery owns." },
-};
+/** "a, b and c". */
+function listWords(words: string[]): string {
+  return words.length < 2 ? (words[0] ?? "") : `${words.slice(0, -1).join(", ")} and ${words.at(-1)}`;
+}
 
 /**
  * YouTube or Vimeo links for a section. Shoppers see a still with a play button; the video only loads
@@ -290,6 +289,12 @@ function rowExample(example: TopicExample | undefined, label: string): string | 
   return value ? `e.g. ${value}` : undefined;
 }
 
+/** "e.g. 14.5%" for a wine box row whose label has an example, otherwise nothing. */
+function matchingRowExample(example: TopicExample | undefined, label: string): string | undefined {
+  const value = example?.rows[label.trim().toLowerCase()];
+  return value ? `e.g. ${value}` : undefined;
+}
+
 /**
  * Puts a finished upload on the row it was meant for. The row is found by its place in the list, but
  * only if it is still the same row (same name and same old photo); if the brand removed or reordered
@@ -300,14 +305,6 @@ function setPhotoAt<T extends { name: string; imageUrl?: string }>(rows: T[], in
   if (!row || row.name !== was.name || row.imageUrl !== was.imageUrl) return rows;
   return rows.map((r, j) => (j === index ? { ...r, imageUrl } : r));
 }
-
-/** Jens's photo list for "About the winery": the family, the tasting room, the winery. */
-const ABOUT_PHOTO_HINTS: Record<string, string> = {
-  family: "The family, then and now.",
-  region: "The vineyards and the landscape.",
-  winery: "The winery, the cellar or the barrel room.",
-  tastingroom: "The tasting room and the view.",
-};
 
 /** What the pictures area under a section is for, in the brand's words. */
 const PHOTO_STRIP_WORDING: Partial<Record<SectionType, { label: string; hint: string }>> = {
@@ -647,7 +644,7 @@ function SectionFields({
                   label="Value"
                   value={item.value}
                   onChange={(value) => set({ value })}
-                  placeholder={simple ? undefined : rowExample(example, item.label)}
+                  placeholder={simple ? matchingRowExample(example, item.label) : rowExample(example, item.label)}
                 />
               </div>
             )}
@@ -686,9 +683,18 @@ function SectionFields({
             addLabel="Add a part"
             render={(part, set, i) => (
               <div className="space-y-3">
-                <TextField label="Part heading" value={part.title} onChange={(title) => set({ title })} placeholder="e.g. Our family" />
+                <TextField label="Part heading" value={part.title} onChange={(title) => set({ title })} placeholder="e.g. Our story" />
                 <TextArea label="Text" rows={4} value={part.body} onChange={(body) => set({ body })} />
                 {part.sources.length > 0 && <p className="text-xs text-muted">Where this came from: {part.sources.join(" · ")}. Customers never see this note.</p>}
+                {part.photoHint?.trim() && !part.images.length && (
+                  <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
+                    <span aria-hidden="true">📷</span>
+                    <span>
+                      <span className="font-semibold">Suggested picture here:</span> {part.photoHint}. Upload one below if you have it; if not, this
+                      part simply shows its text.
+                    </span>
+                  </p>
+                )}
                 <PhotoStrip
                   images={part.images}
                   onChange={(fn) =>
@@ -697,9 +703,10 @@ function SectionFields({
                     )
                   }
                   label={`Pictures for “${part.title || `part ${i + 1}`}”`}
-                  hint={`Optional. ${ABOUT_PHOTO_HINTS[part.id] ?? "Shown right under this part's text."} Only use photos your company owns.`}
+                  hint="Optional. Shown right under this part's text. Only use photos your company owns."
                 />
                 <VideoField videos={part.videos} onChange={(videos) => set({ videos })} label={`Videos for “${part.title || `part ${i + 1}`}”`} />
+                <SectionLinkField link={part.link} onChange={(link) => set({ link })} placeholder="Join the wine club" />
               </div>
             )}
           />

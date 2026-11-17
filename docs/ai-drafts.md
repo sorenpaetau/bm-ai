@@ -3,33 +3,51 @@
 When a brand adds a product, B&M.ai can write the first draft of its landing page in the right market
 format (wine, retail, cosmetics, electronics). The brand then checks every section before it goes live.
 
-## Wine pages start from the winery's website (Jens, Nov 16 2026)
+## Create a page: market template, product, website (Jens, Nov 16 2026)
 
-For wineries, **Create a page** asks only for the wine, a short description and the winery's website.
-The AI opens the home page, finds the winery's own pages about visiting, its history and family, its
-wines and region, its shop, events and where to buy (up to 8 pages), and writes an editable first draft
-in the layout Jens wants for every page (the cashmere demo, /t/DEMOKNIT):
+**Create a page** has three steps for every brand: pick the **market template** from a dropdown (Wine &
+Spirits, Retail & clothing, Cosmetics, Consumer electronics; Pharmaceutical shows as "coming soon"),
+enter the product and a short description **or its item code (SKU)**, and enter the website. The
+template is saved per product (`products.vertical`), so a brand can make pages in more than one market.
+For retail, cosmetics and electronics the AI reads the website as one of the brand's pages and fills
+that market's topic boxes (see below).
 
-1. Big photo, then the webstore and website buttons (the shop link comes from the winery's own site).
-2. Jump buttons, each with a short "enter if applicable" box right below: This wine, Awards, Wine
-   rating, Gift sets, Other wines, Food pairing, ABV, Discounts, Nearby lodging, Nearby restaurants,
-   Events & schedules, Tasting room schedule, Reviews.
-3. About the winery, in parts (our family, our wines and region, the winery, the tasting room), each
-   with its own photos and YouTube/Vimeo videos right under its text.
-4. Where to buy: one button per shop with a link (Vivino and Total Wine & More start as empty rows).
+## Wine pages mirror the winery's own website
 
-**The AI never fills Awards, Wine rating, ABV, Discounts or Reviews**, even when the website shows them:
-those boxes aren't in its answer shape, and the rule checker flags any rating, award, alcohol content,
-price or discount anywhere else. Facts come only from the winery's own site and description (web fetch
-is limited to the winery's domain, with and without www). Every box shows where it came from ("Your
-page: example.com/visit"). A box the winery leaves empty, and its jump button, stays off the page.
+For wine, the AI opens the home page, notes its menu (the names and order of its sections), reads up to
+8 of the winery's own pages and writes a text-only first draft. Jens asked for this after studying the
+Rombauer and Robert Mondavi sites:
+
+1. Big photo, then the webstore and website buttons and a small **Contact us** link (the shop and
+   contact links come from the winery's own site; the brand can also type an email or phone number).
+2. Jump buttons for **four combined boxes**, each with text, rows and pictures:
+   - **The wine**: how it tastes, grape, vintage, region, food pairing, plus rows only the winery fills:
+     Alcohol (ABV), Awards, Wine rating.
+   - **Shop**: gift sets, other wines and shop items, plus a Discounts row only the winery fills.
+   - **Nearby**: lodging, restaurants, things to do (only places the winery's own site recommends).
+   - **Events & schedules**: tasting room hours, reservations, address, dated events (they hide
+     themselves after their day), concerts, weddings and private events.
+3. **About the winery**, in parts that follow the winery's own menu, with its own headings (for the
+   sample: Visit, Our Story, Wines, Ridge Club, Gift Guide, Weddings & Gatherings, Recipes). After each
+   part the AI suggests a picture ("The Hale family at harvest"); the editor and the draft preview show
+   the suggestion until the winery uploads one, and consumers never see it. A part can link to the
+   winery's own page about it ("Join the Ridge Club").
+4. **Where to buy**: one button per shop with a link (Vivino and Total Wine & More start as empty rows).
+5. **Reviews**: only the winery fills this in.
+
+**The AI never writes alcohol content, awards, ratings, reviews, prices or discounts**, even when the
+website shows them: the Reviews box isn't in its answer shape, any row the AI labels with one of those
+words is dropped, and the rule checker flags any rating, award, alcohol content, price or discount
+anywhere else. Facts come only from the winery's own site and description (web fetch is limited to the
+winery's domain, with and without www). Every box shows where it came from ("Your page:
+example.com/visit"). Anything the winery leaves empty (a row, a box, a part) stays off the page.
 
 **Sign-off at Publish (all pages).** Publishing needs a ticked "Approve and sign off" box. Each publish
 stores who approved it, when, the exact statement and the page as it went live (`page_signoffs`), and the
 editor shows "Last approved by ... on ...".
 
 **The sample winery.** While the AI writer is off (no API key), Create a page offers "Open the sample
-winery draft": the answer a test worker wrote for the made-up Ridgeline Cellars website
+winery draft": the answer written for the made-up Ridgeline Cellars website
 (`tests/fixtures/ai-bench/briefs/ridgeline-website.json`, saved in `src/lib/ai/samples/`), built and
 checked exactly like a real draft. The finished version, as if the winery had checked every box and
 filled in its own, is published at /t/DEMOWINE.

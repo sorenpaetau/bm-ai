@@ -226,3 +226,10 @@ CREATE TABLE IF NOT EXISTS page_signoffs (
   created_at    timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS page_signoffs_product_idx ON page_signoffs (product_id, created_at DESC);
+
+-- Create a page starts with a market template dropdown (Jens, Nov 16 2026), so a product can use a
+-- different market template than its company's main one. Empty = the company's market.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS vertical text;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS products_vertical_check;
+ALTER TABLE products ADD CONSTRAINT products_vertical_check
+  CHECK (vertical IS NULL OR vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));

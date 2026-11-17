@@ -49,7 +49,7 @@ const NOTICES: Record<string, { tone: "info" | "warn"; text: string }> = {
   starter: { tone: "info", text: "We started you with a simple template. Fill in the facts and your story, then publish." },
   sample: {
     tone: "info",
-    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes for our made-up Ridgeline Cellars website: it found the visit, story, wines, shop, events and where-to-buy pages and wrote each box from them. Awards, rating, ABV, discounts and reviews are left for you. With the AI switched on, it reads your own website the same way.",
+    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes for our made-up Ridgeline Cellars website: it filled the four boxes (The wine, Shop, Nearby, Events) from the site, laid out “About Ridgeline Cellars” in the same order as the site's own menu, and suggested a picture after each part. Alcohol content, awards, rating, discounts and reviews are left for you. With the AI switched on, it reads your own website the same way.",
   },
 };
 
@@ -68,7 +68,7 @@ export default async function EditProductPage({
   const [p] = await sql<Row[]>`
     SELECT p.id, p.sku, p.name, p.description, p.brand_links, p.slug, p.status, p.content,
            (p.content = p.published_content) AS live_is_current,
-           c.name AS company_name, c.vertical, c.website, c.verified_at
+           c.name AS company_name, COALESCE(p.vertical, c.vertical) AS vertical, c.website, c.verified_at
     FROM products p JOIN companies c ON c.id = p.company_id
     WHERE p.id = ${id} AND p.company_id = ${user.companyId}`;
   if (!p) notFound();
@@ -78,7 +78,7 @@ export default async function EditProductPage({
 
   const content =
     safeContent(p.content) ??
-    starterContent({ companyName: p.companyName, vertical: p.vertical, productName: p.name, description: p.description ?? "", website: p.website });
+    starterContent({ companyName: p.companyName, vertical: p.vertical, productName: p.name, description: p.description ?? "", website: p.brandLinks?.[0] ?? p.website });
   content.buttons = tagQuickLinks(content.buttons);
   const notice = drafted ? NOTICES[drafted] : undefined;
 
@@ -111,7 +111,7 @@ export default async function EditProductPage({
         verified={Boolean(p.verifiedAt)}
         examples={
           wine
-            ? Object.fromEntries(WINERY_BOXES.map((b) => [b.id, { answer: b.example.answer, body: b.example.body, rows: {} }]))
+            ? Object.fromEntries(WINERY_BOXES.map((b) => [b.id, { answer: b.example.answer, body: b.example.body, rows: b.example.rows ?? {} }]))
             : topicExamples(DEMO_MARKETS.find((m) => m.company.vertical === p.vertical)?.content.sections ?? [])
         }
         wine={wine}

@@ -56,7 +56,7 @@ export function sectionText(s: Section): string {
       break;
     case "about":
       add(s.body);
-      s.parts.forEach((p) => add(p.body ? `${p.title}\n${p.body}` : undefined));
+      s.parts.forEach((p) => add(p.body ? `${p.title}\n${p.body}` : undefined, p.link?.label));
       break;
     case "buy":
       add(s.body);
@@ -84,7 +84,7 @@ export function containsWhole(haystack: string, needle: string) {
 
 /** What the brand gave us, as one lower-case string to compare against. */
 export function sourceText(input: DraftInput, extra: string[] = []) {
-  return norm([input.companyName, input.productName, input.description, input.price ?? "", ...extra].join("\n"));
+  return norm([input.companyName, input.productName, input.description, input.sku ?? "", input.price ?? "", ...extra].join("\n"));
 }
 
 /**

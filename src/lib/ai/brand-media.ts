@@ -24,20 +24,54 @@ export function brandPhotos(content: LandingContent): DraftPhoto[] {
 type Media = { images: Array<{ url: string; alt: string }>; videos: Array<{ url: string; title: string }> };
 
 /**
- * Where photos go when a fresh draft has no section with the same id. Wine pages made before the
- * website-first layout (Nov 2026) used other section ids; their photos move to the closest new box or
- * About part instead of disappearing.
+ * Where photos go when a fresh draft has no section with the same id. Wine pages made with older
+ * layouts used other section ids (the full wine page of Nov 4, the twelve "enter if applicable" boxes
+ * of Nov 16 morning); their photos move to the closest new box or About part instead of disappearing.
  */
 const LEGACY_HOMES: Record<string, { section?: string; part?: string }> = {
   story: { part: "family" },
   estate: { part: "winery" },
   visit: { part: "tastingroom" },
+  club: { part: "club" },
   tasting: { section: "wine" },
   facts: { section: "wine" },
-  wines: { section: "otherwines" },
-  gifts: { section: "giftsets" },
-  specials: { section: "discounts" },
+  awards: { section: "wine" },
+  rating: { section: "wine" },
+  abv: { section: "wine" },
+  pairing: { section: "wine" },
+  wines: { section: "shop" },
+  gifts: { section: "shop" },
+  specials: { section: "shop" },
+  giftsets: { section: "shop" },
+  otherwines: { section: "shop" },
+  discounts: { section: "shop" },
+  lodging: { section: "nearby" },
+  restaurants: { section: "nearby" },
+  tastingroom: { section: "events" },
 };
+
+/** Words that find the closest new About part for an old one (About parts now follow each winery's own menu). */
+const PART_WORDS: Record<string, string[]> = {
+  family: ["story", "history", "family", "about"],
+  region: ["region", "vineyard", "wines", "story"],
+  winery: ["winery", "estate", "visit", "story"],
+  tastingroom: ["visit", "tasting"],
+  club: ["club"],
+};
+
+type Part = Extract<LandingContent["sections"][number], { type: "about" }>["parts"][number];
+
+function closestPart(parts: Part[], oldId: string | undefined): Part | undefined {
+  if (oldId) {
+    const same = parts.find((p) => p.id === oldId);
+    if (same) return same;
+    for (const word of PART_WORDS[oldId] ?? []) {
+      const hit = parts.find((p) => p.id.includes(word));
+      if (hit) return hit;
+    }
+  }
+  return parts[0];
+}
 
 function addMedia<T extends { images?: Media["images"]; videos?: Media["videos"] }>(target: T, media: Media): T {
   const images = [...(target.images ?? [])];
@@ -65,17 +99,19 @@ export function carryOverBrandMedia(current: LandingContent, fresh: LandingConte
     if (next.type === "about" && old.type === "about") {
       const parts = new Map(old.parts.map((p) => [p.id, p]));
       const freshPartIds = new Set(next.parts.map((p) => p.id));
-      next = {
-        ...next,
-        parts: [
-          ...next.parts.map((p) => {
-            const was = parts.get(p.id);
-            return was ? { ...p, images: was.images.length ? was.images : p.images, videos: was.videos.length ? was.videos : p.videos } : p;
-          }),
-          // Parts the brand added itself ("Add a part") aren't in a fresh draft: keep them as they are.
-          ...old.parts.filter((p) => !freshPartIds.has(p.id) && (p.body.trim() || p.images.length || p.videos.length)),
-        ],
-      };
+      let freshParts = next.parts.map((p) => {
+        const was = parts.get(p.id);
+        return was ? { ...p, images: was.images.length ? was.images : p.images, videos: was.videos.length ? was.videos : p.videos } : p;
+      });
+      const dropped = old.parts.filter((p) => !freshPartIds.has(p.id) && (p.body.trim() || p.images.length || p.videos.length));
+      // An old AI-written part the fresh draft doesn't have (the AI now follows the winery's own menu):
+      // its text goes, its photos and videos move to the closest new part.
+      for (const p of dropped.filter((d) => d.sources.length && freshParts.length)) {
+        const home = closestPart(freshParts, p.id);
+        if (home) freshParts = freshParts.map((f) => (f.id === home.id ? addMedia(f, p) : f));
+      }
+      // Parts the brand added itself ("Add a part") aren't in a fresh draft: keep them as they are.
+      next = { ...next, parts: [...freshParts, ...dropped.filter((d) => !d.sources.length || !freshParts.length)] };
     }
     return next;
   });
@@ -97,7 +133,7 @@ export function carryOverBrandMedia(current: LandingContent, fresh: LandingConte
     if (sectionIdx >= 0) {
       sections = sections.map((s, i) => (i === sectionIdx ? addMedia(s, media) : s));
     } else if (about?.type === "about" && about.parts.length) {
-      const part = about.parts.find((p) => p.id === home.part) ?? about.parts.find((p) => p.id === "winery") ?? about.parts[0];
+      const part = closestPart(about.parts, home.part ?? "winery")!;
       sections = sections.map((s, i) =>
         i === aboutIdx && s.type === "about" ? { ...s, parts: s.parts.map((p) => (p.id === part.id ? addMedia(p, media) : p)) } : s,
       );

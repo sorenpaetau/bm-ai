@@ -2,7 +2,7 @@ import { sql } from "../src/lib/db";
 import { randomCode } from "../src/lib/codes";
 import { DEMO_COMPANY, DEMO_CONTENT, DEMO_PRODUCT } from "../src/lib/demo";
 import { DEMO_MARKETS } from "../src/lib/demo-markets";
-import { DEMO_WINERY_PRODUCT, DEMO_WINERY_TAG, demoWineryContent } from "../src/lib/demo-winery";
+import { DEMO_WINERY_PRODUCT, DEMO_WINERY_TAG, OLD_WINERY_IDS, demoWineryContent } from "../src/lib/demo-winery";
 import bcrypt from "bcryptjs";
 
 // Seeds a demo manufacturer, a published demo product with 10 tags and some sample taps,
@@ -177,18 +177,26 @@ async function seedMarketDemos() {
 /**
  * The website-first wine page (Jens, Nov 16) as a finished, published demo for Ridgeline Cellars, with
  * its own tag (/t/DEMOWINE). It belongs to the demo login, so it's only added once: edits made in the
- * portal are kept.
+ * portal are kept. A demo still in an older wine layout (the twelve "enter if applicable" boxes of Nov 16
+ * morning) is upgraded to the current one once.
  */
 async function seedWineryDemo(companyId: string) {
-  let [product] = await sql<{ id: string }[]>`SELECT id FROM products WHERE slug = ${DEMO_WINERY_PRODUCT.slug}`;
+  let [product] = await sql<{ id: string; content: { sections?: Array<{ id: string }> } | null }[]>`
+    SELECT id, content FROM products WHERE slug = ${DEMO_WINERY_PRODUCT.slug}`;
+  if (product && (product.content?.sections ?? []).some((s) => OLD_WINERY_IDS.includes(s.id))) {
+    const json = sql.json(demoWineryContent());
+    await sql`
+      UPDATE products SET content = ${json}, published_content = ${json}, vertical = 'wine_spirits', updated_at = now()
+      WHERE id = ${product.id}`;
+  }
   if (!product) {
     const json = sql.json(demoWineryContent());
     const p = DEMO_WINERY_PRODUCT;
-    [product] = await sql<{ id: string }[]>`
-      INSERT INTO products (company_id, sku, name, description, slug, status, content, published_content, published_at, brand_links)
-      VALUES (${companyId}, ${p.sku}, ${p.name}, ${p.description}, ${p.slug}, 'published', ${json}, ${json}, now(), ${["https://example.com/"]})
+    [product] = await sql<{ id: string; content: null }[]>`
+      INSERT INTO products (company_id, sku, name, description, slug, status, content, published_content, published_at, brand_links, vertical)
+      VALUES (${companyId}, ${p.sku}, ${p.name}, ${p.description}, ${p.slug}, 'published', ${json}, ${json}, now(), ${["https://example.com/"]}, 'wine_spirits')
       ON CONFLICT (company_id, sku) DO NOTHING
-      RETURNING id`;
+      RETURNING id, NULL::jsonb AS content`;
     if (!product) return;
   }
   const [tag] = await sql`SELECT code FROM tags WHERE code = ${DEMO_WINERY_TAG}`;

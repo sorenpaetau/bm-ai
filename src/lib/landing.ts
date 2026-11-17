@@ -215,6 +215,14 @@ export const AboutSection = z.object({
         videos: z.array(video).default([]),
         /** Where the AI found this part's facts (the brand's own pages). Shown to the brand only. */
         sources: z.array(z.string()).default([]),
+        /**
+         * The picture the AI suggests for this part, e.g. "The family in the vineyard" (Jens, Nov 16: "AI will
+         * suggest inserting pictures in the main body of the text"). Shown to the brand in the editor and in
+         * the draft preview only; consumers never see it.
+         */
+        photoHint: z.string().optional(),
+        /** "Join the wine club" and the like: a link to the brand's own page about this part. */
+        link: sectionLink,
       }),
     )
     .default([]),
@@ -252,10 +260,11 @@ export const ActionButton = z.object({
   /** "shopify" buttons are the Phase 1 Shopify redirect; analytics counts their clicks separately. */
   kind: z.enum(["link", "shopify", "phone", "email"]).default("link"),
   /**
-   * The two quick buttons under the big photo that every page has: "Go to webstore" and "Go to website".
-   * The page builder fills these from its two link fields. Other buttons have no slot.
+   * The quick buttons under the big photo that every page has: "Go to webstore" and "Go to website", plus
+   * a small "Contact us" link under them. The page builder fills these from its link fields. Other
+   * buttons have no slot.
    */
-  slot: z.enum(["webstore", "website"]).optional(),
+  slot: z.enum(["webstore", "website", "contact"]).optional(),
 });
 export type ActionButton = z.infer<typeof ActionButton>;
 
