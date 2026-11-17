@@ -278,18 +278,15 @@ export async function redraft(productId: string): Promise<ActionState> {
   redirect(`/portal/products/${productId}?drafted=ai`);
 }
 
-const Details = NewProduct;
 /**
- * Wine pages, and pages made on Create a page with only a SKU, accept the short (or empty) description
- * Create a page accepts, so saving details never fails on it.
+ * Saving details accepts any description Create a page accepts: Create a page needs a short description
+ * or an item code, and every product has an item code, so a short (or empty) description is fine here.
  */
-const WineDetails = NewProduct.extend({ description: NewWine.shape.description });
+const Details = NewProduct.extend({ description: NewWine.shape.description });
 
 export async function updateDetails(productId: string, _prev: ActionState, form: FormData): Promise<ActionState> {
-  const { user, product } = await ownedProduct(productId);
-  const company = await currentCompany(user.companyId);
-  const short = (product.vertical ?? company.vertical) === "wine_spirits" || !product.description?.trim();
-  const parsed = (short ? WineDetails : Details).safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
+  const { user } = await ownedProduct(productId);
+  const parsed = Details.safeParse({ name: form.get("name") ?? "", sku: form.get("sku") ?? "", description: form.get("description") ?? "" });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { name, sku, description } = parsed.data;
   const rawLinks = String(form.get("links") ?? "");
