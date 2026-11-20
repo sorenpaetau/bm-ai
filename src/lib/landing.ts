@@ -15,7 +15,17 @@ const provenance = {
   sources: z.array(z.string()).default([]),
 };
 
-const image = z.object({ url: z.string(), alt: z.string().default("") });
+const image = z.object({
+  url: z.string(),
+  alt: z.string().default(""),
+  /**
+   * The page on the brand's OWN website this picture was copied from, when our AI took it from there
+   * (Nov 20 2026: wine pages may use pictures from the winery's own site, never anyone else's). The
+   * editor marks these "From your website" until the brand approves the page at Publish. Consumers
+   * never see it. Empty for photos the brand uploaded itself.
+   */
+  source: z.string().optional(),
+});
 export type LandingImage = z.infer<typeof image>;
 
 /**
@@ -33,7 +43,8 @@ const base = {
   visible: z.boolean().default(true),
   /**
    * Photos the brand uploaded for this section, shown as a strip at the bottom of its card ("upload
-   * pictures" under every topic). Brand-owned photos only: the AI never fills this in.
+   * pictures" under every topic). Brand-owned photos: uploaded by the brand, or (wine pages only) copied
+   * by the AI from the brand's own website and marked with `source`.
    */
   images: z.array(image).optional(),
   /** Videos the brand shares for this section, shown under its photos. */
@@ -228,6 +239,27 @@ export const AboutSection = z.object({
     .default([]),
 });
 
+/**
+ * One tab of the winery's own website (Jens's final flow, Nov 18 2026): the page's jump buttons are the
+ * winery's own menu tabs (Visit, Our Story, Wines, Shop, Wine Club, Gift Guide, Events, Recipes...).
+ * Each card has one picture (the first of `images`), a few sentences and a button to that tab on the
+ * winery's site.
+ */
+export const TabSection = z.object({
+  ...base,
+  type: z.literal("tab"),
+  /** Which small picture the jump button shows, e.g. "pin" for Visit (TOPIC_ICONS in the landing view). */
+  icon: z.string().optional(),
+  body: z.string().default(""),
+  /** The button to this tab on the winery's own website, e.g. "Join the Ridge Club". */
+  link: sectionLink,
+  /**
+   * Where the AI looks for this tab's picture on the winery's site, and the picture address it saw
+   * there, if any. Used once when the draft is written; never shown.
+   */
+  sitePhoto: z.object({ page: z.string(), suggested: z.string().optional(), alt: z.string().optional() }).optional(),
+});
+
 /** "Where to buy": one button per shop or app that sells it, e.g. Vivino or Total Wine & More. */
 export const BuySection = z.object({
   ...base,
@@ -249,6 +281,7 @@ export const Section = z.discriminatedUnion("type", [
   TopicSection,
   AboutSection,
   BuySection,
+  TabSection,
 ]);
 export type Section = z.infer<typeof Section>;
 export type SectionType = Section["type"];
@@ -286,6 +319,10 @@ export const LandingContent = z.object({
     price: z.string().optional(),
     /** Small print next to the price. Defaults to "Suggested retail price". */
     priceNote: z.string().optional(),
+    /** The page on the brand's own website the main photo was copied from (see image.source). */
+    imageSource: z.string().optional(),
+    /** Where the AI looks for the bottle's picture on the winery's own site (see TabSection.sitePhoto). Never shown. */
+    sitePhoto: z.object({ page: z.string(), suggested: z.string().optional() }).optional(),
   }),
   sections: z.array(Section).default([]),
   buttons: z.array(ActionButton).default([]),

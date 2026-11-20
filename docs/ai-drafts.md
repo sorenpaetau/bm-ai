@@ -12,35 +12,49 @@ template is saved per product (`products.vertical`), so a brand can make pages i
 For retail, cosmetics and electronics the AI reads the website as one of the brand's pages and fills
 that market's topic boxes (see below).
 
-## Wine pages mirror the winery's own website
+## Wine pages mirror the winery's own website (Jens, Nov 18 2026)
 
 For wine, the AI opens the home page, notes its menu (the names and order of its sections), reads up to
-8 of the winery's own pages and writes a text-only first draft. Jens asked for this after studying the
-Rombauer and Robert Mondavi sites:
+8 of the winery's own pages and writes the first draft. Jens asked for this after studying the Rombauer
+and Robert Mondavi sites:
 
-1. Big photo, then the webstore and website buttons and a small **Contact us** link (the shop and
+1. Big bottle photo, then the webstore and website buttons and a small **Contact us** link (the shop and
    contact links come from the winery's own site; the brand can also type an email or phone number).
-2. Jump buttons for **four combined boxes**, each with text, rows and pictures:
-   - **The wine**: how it tastes, grape, vintage, region, food pairing, plus rows only the winery fills:
-     Alcohol (ABV), Awards, Wine rating.
-   - **Shop**: gift sets, other wines and shop items, plus a Discounts row only the winery fills.
-   - **Nearby**: lodging, restaurants, things to do (only places the winery's own site recommends).
-   - **Events & schedules**: tasting room hours, reservations, address, dated events (they hide
-     themselves after their day), concerts, weddings and private events.
-3. **About the winery**, in parts that follow the winery's own menu, with its own headings (for the
-   sample: Visit, Our Story, Wines, Ridge Club, Gift Guide, Weddings & Gatherings, Recipes). After each
-   part the AI suggests a picture ("The Hale family at harvest"); the editor and the draft preview show
-   the suggestion until the winery uploads one, and consumers never see it. A part can link to the
-   winery's own page about it ("Join the Ridge Club").
-4. **Where to buy**: one button per shop with a link (Vivino and Total Wine & More start as empty rows).
-5. **Reviews**: only the winery fills this in.
+2. Jump buttons that are **the winery's own website tabs**, in its own order and with its own names
+   (up to 12). The first is always **The wine**: how it tastes, grape, vintage, region, food pairing,
+   plus rows only the winery fills: Alcohol (ABV), Awards, Wine rating. Then one box per tab (for the
+   sample: Visit, Our Story, Wines, Shop, Ridge Club, Gift Guide, Events, Weddings & Gatherings, Recipes),
+   each with a picture, a short text and a button to that page on the winery's site ("Join the Ridge
+   Club"). Then **Reviews** (only the winery fills this in) and **Where to buy** (one button per shop;
+   Vivino, Total Wine & More and Delectable start as empty rows). Home, contact, login and cart pages are
+   never tabs. Without a website the page starts with the usual tabs, empty, for the winery to fill in.
+3. **Pictures from the winery's own website** (soren, Nov 20). The AI picks the bottle photo for the
+   top and one picture per tab, but only from pages on the website the winery gave us: never a shop,
+   stock, social or any other site. The server (`src/lib/ai/site-photos.ts`) then opens that page itself,
+   uses the AI's choice only if it really is on the page (else the page's own main picture), shrinks it
+   and stores a copy in our uploads, so consumer pages never load pictures from someone else's site.
+   Each copied picture remembers its page (`image.source`, `hero.imageSource`), shows "From your
+   website" in the editor and the draft preview, and the Publish sign-off says how many there are. The
+   winery can replace or remove any of them.
 
 **The AI never writes alcohol content, awards, ratings, reviews, prices or discounts**, even when the
 website shows them: the Reviews box isn't in its answer shape, any row the AI labels with one of those
 words is dropped, and the rule checker flags any rating, award, alcohol content, price or discount
 anywhere else. Facts come only from the winery's own site and description (web fetch is limited to the
 winery's domain, with and without www). Every box shows where it came from ("Your page:
-example.com/visit"). Anything the winery leaves empty (a row, a box, a part) stays off the page.
+example.com/visit"). Anything the winery leaves empty (a row, a box, a tab) stays off the page.
+
+**Copy a page for the next wine.** "Copy for the next wine" (on My products and in the editor), or
+"Start from" on Create a page, makes a new draft from a finished page. It keeps the tabs, their
+pictures and links, Where to buy and the contact links, and clears what belongs to one bottle: the
+bottle photo, price, the wine box rows (except Region; Vintage comes from the year in the new name) and
+reviews (`src/app/portal/_lib/copy.ts`).
+
+**B&M builds a first page and hands it over.** On the admin page, staff can start a company for a winery
+("Build a first page for a winery"), or open any company's pages, and work in its portal under a
+"You're working on ... for them" banner. Staff can't publish: that stays the winery's sign-off. "Create
+a hand-over link" gives a one-time link (good for 14 days, only its fingerprint is stored in
+`handovers`) to send the winery; at /welcome/... they set a name and password and their pages are theirs.
 
 **Sign-off at Publish (all pages).** Publishing needs a ticked "Approve and sign off" box. Each publish
 stores who approved it, when, the exact statement and the page as it went live (`page_signoffs`), and the
@@ -49,8 +63,9 @@ editor shows "Last approved by ... on ...".
 **The sample winery.** While the AI writer is off (no API key), Create a page offers "Open the sample
 winery draft": the answer written for the made-up Ridgeline Cellars website
 (`tests/fixtures/ai-bench/briefs/ridgeline-website.json`, saved in `src/lib/ai/samples/`), built and
-checked exactly like a real draft. The finished version, as if the winery had checked every box and
-filled in its own, is published at /t/DEMOWINE.
+checked exactly like a real draft. Its pictures are drawings standing in for the ones
+the server would copy from the winery's site. The finished version, as if the winery had checked every
+box and filled in its own, is published at /t/DEMOWINE.
 
 The live writer reads more pages for a winery, so a draft costs more: roughly 30 to 60 cents (estimate,
 not measured; up to 10 page reads of up to 12,000 tokens each).

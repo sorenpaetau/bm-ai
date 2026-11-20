@@ -239,6 +239,7 @@ export function PhotoStrip({
 }) {
   const { upload, busy, error } = useUploader();
   const add = (files: File[]) => upload(files, (url) => onChange((prev) => [...prev, { url, alt: "" }]));
+  const fromSite = images.filter((img) => img.source);
   const set = (i: number, patch: Partial<LandingImage>) => onChange((prev) => prev.map((img, j) => (j === i ? { ...img, ...patch } : img)));
   const remove = (i: number) => onChange((prev) => prev.filter((_, j) => j !== i));
   const move = (i: number, delta: number) =>
@@ -263,6 +264,14 @@ export function PhotoStrip({
           <li key={`${img.url}-${i}`} className="space-y-1.5 rounded-xl border border-line bg-surface p-2">
             <div className="relative">
               <img src={img.url} alt="" className="h-28 w-full rounded-lg bg-paper object-cover" />
+              {img.source && (
+                <span
+                  title={`Our AI copied this from your own website (${img.source}). Keep it, replace it or remove it before you approve the page.`}
+                  className="absolute bottom-1 left-1 max-w-[calc(100%-0.5rem)] truncate rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-950 shadow-sm"
+                >
+                  From your website
+                </span>
+              )}
               <div className="absolute top-1 right-1 flex gap-1">
                 {i > 0 && <SmallButton label="Move left" onClick={() => move(i, -1)}>←</SmallButton>}
                 {i < images.length - 1 && <SmallButton label="Move right" onClick={() => move(i, 1)}>→</SmallButton>}
@@ -286,6 +295,13 @@ export function PhotoStrip({
           </DropZone>
         </li>
       </ul>
+      {fromSite.length > 0 && (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
+          <span className="font-semibold">From your website:</span> our AI copied {fromSite.length === 1 ? "this picture" : "these pictures"} from your own
+          site ({[...new Set(fromSite.map((img) => img.source))].join(", ")}). Keep, replace or remove {fromSite.length === 1 ? "it" : "them"}; you approve every
+          picture when you publish.
+        </p>
+      )}
       <Status busy={null} error={error} />
     </div>
   );

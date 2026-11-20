@@ -58,6 +58,9 @@ export function sectionText(s: Section): string {
       add(s.body);
       s.parts.forEach((p) => add(p.body ? `${p.title}\n${p.body}` : undefined, p.link?.label));
       break;
+    case "tab":
+      add(s.body, s.link?.label);
+      break;
     case "buy":
       add(s.body);
       s.items.filter((i) => i.url.trim()).forEach((i) => add(i.name, i.note));

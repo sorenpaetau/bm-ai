@@ -49,7 +49,11 @@ const NOTICES: Record<string, { tone: "info" | "warn"; text: string }> = {
   starter: { tone: "info", text: "We started you with a simple template. Fill in the facts and your story, then publish." },
   sample: {
     tone: "info",
-    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes for our made-up Ridgeline Cellars website: it filled the four boxes (The wine, Shop, Nearby, Events) from the site, laid out “About Ridgeline Cellars” in the same order as the site's own menu, and suggested a picture after each part. Alcohol content, awards, rating, discounts and reviews are left for you. With the AI switched on, it reads your own website the same way.",
+    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes for our made-up Ridgeline Cellars website: the bottle's picture, then one jump button per tab of the winery's own website (Visit, Our Story, Wines, Shop, Ridge Club, Gift Guide, Events, Recipes), each with a picture from that tab and a button to it. Pictures marked “From your website” were copied from the winery's own site. Alcohol content, awards, rating and reviews are left for you. With the AI switched on, it reads your own website the same way.",
+  },
+  copy: {
+    tone: "info",
+    text: "This page is a copy of your other page: your website tabs, pictures, links and Where to buy are already done. Add the new bottle's photo, fill in The wine box (taste, grape, food pairing, alcohol, awards, rating) and its reviews, then approve the page.",
   },
 };
 
@@ -117,6 +121,7 @@ export default async function EditProductPage({
         wine={wine}
         companyName={p.companyName}
         lastSignoff={signoff ? { name: signoff.signerName, email: signoff.signerEmail, at: signoff.createdAt.toISOString() } : null}
+        staff={Boolean(user.staff)}
       />
 
       <section className="rounded-2xl border border-line bg-surface p-4 sm:p-5 lg:max-w-[calc(100%-404px)]">
@@ -128,6 +133,12 @@ export default async function EditProductPage({
           aiAvailable={aiConfigured()}
           wine={wine}
         />
+        <p className="mt-4 text-sm">
+          <Link href={`/portal/products/new?from=${p.id}`} className="font-semibold text-brand underline">
+            Copy this page for the next {wine ? "wine" : "product"}
+          </Link>{" "}
+          <span className="text-muted">Keeps everything about your {wine ? "winery" : "brand"}; you change the product&apos;s details.</span>
+        </p>
         <div className="mt-6 flex flex-wrap gap-3 border-t border-line pt-4 text-sm">
           {p.status === "published" && (
             <form action={unpublish.bind(null, p.id)}>

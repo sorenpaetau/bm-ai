@@ -434,6 +434,7 @@ const sectionIcons: Record<Section["type"], (p: { className?: string }) => React
   topic: ListIcon,
   about: BookIcon,
   buy: StoreIcon,
+  tab: ListIcon,
 };
 
 /** Pictures a topic box can pick by name (TopicSection.icon). Unknown names fall back to a list. */
@@ -473,11 +474,12 @@ const TOPIC_ICONS: Record<string, (p: { className?: string }) => ReactNode> = {
   quote: QuoteIcon,
   store: StoreIcon,
   pin: PinIcon,
+  book: BookIcon,
 };
 
 /** Gift sets are a "products" section too, but deserve their own icon. */
 function iconFor(section: Section) {
-  if (section.type === "topic") return TOPIC_ICONS[section.icon ?? ""] ?? ListIcon;
+  if (section.type === "topic" || section.type === "tab") return TOPIC_ICONS[section.icon ?? ""] ?? ListIcon;
   if (section.type === "products" && /gift/i.test(`${section.navLabel ?? ""} ${section.title}`)) return GiftIcon;
   return sectionIcons[section.type];
 }
@@ -511,6 +513,7 @@ function JumpNav({ links }: { links: Array<{ href: string; label: string; Icon: 
 }
 
 function SectionCard({ section, preview }: { section: Section; preview: boolean }) {
+  if (section.type === "tab") return <TabCard section={section} preview={preview} />;
   const needsReview = preview && section.aiGenerated && !section.reviewed;
   const Icon = iconFor(section);
   return (
@@ -538,6 +541,57 @@ function SectionCard({ section, preview }: { section: Section; preview: boolean 
       <ImageStrip images={section.images ?? []} className="mt-5" />
       <VideoList videos={section.videos ?? []} className="mt-5" />
       {"link" in section && <SectionLink link={section.link} />}
+    </section>
+  );
+}
+
+/**
+ * One tab of the winery's own website (Jens, Nov 18): its picture across the top of the card, the
+ * tab's name, a few sentences and a button to that tab on the winery's site.
+ */
+function TabCard({ section, preview }: { section: Extract<Section, { type: "tab" }>; preview: boolean }) {
+  const needsReview = preview && section.aiGenerated && !section.reviewed;
+  const Icon = iconFor(section);
+  const [cover, ...more] = (section.images ?? []).flatMap((img) => {
+    const src = safeUrl(img.url);
+    return src ? [{ ...img, src }] : [];
+  });
+  return (
+    <section
+      aria-labelledby={`s-${section.id}`}
+      className={`reveal overflow-hidden rounded-[1.75rem] bg-white shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.08)] ring-1 ring-black/[0.04] ${
+        needsReview ? "ring-2 ring-amber-400" : ""
+      }`}
+    >
+      {cover && (
+        <div className="relative">
+          <img src={cover.src} alt={cover.alt} loading="lazy" decoding="async" className="h-52 w-full bg-[var(--lp-tint)] object-cover sm:h-60" />
+          {preview && cover.source && (
+            <span className="absolute top-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">
+              Picture from your website · only you see this
+            </span>
+          )}
+        </div>
+      )}
+      <div className="p-6 sm:p-7">
+        {needsReview && (
+          <p className="mb-3 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+            AI draft: needs review
+          </p>
+        )}
+        <h2 id={`s-${section.id}`} className={`${heading} mb-3 flex scroll-mt-6 items-center gap-3 text-[1.55rem] leading-tight tracking-[-0.01em]`}>
+          <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--lp-accent-soft)] text-[var(--lp-primary)]">
+            <Icon className="h-4 w-4" />
+          </span>
+          {section.title}
+        </h2>
+        <div className="space-y-4">
+          <Paragraphs text={section.body} className="text-[16px] leading-relaxed text-ink/85" />
+        </div>
+        <ImageStrip images={more} className="mt-5" />
+        <VideoList videos={section.videos ?? []} className="mt-5" />
+        <SectionLink link={section.link} />
+      </div>
     </section>
   );
 }

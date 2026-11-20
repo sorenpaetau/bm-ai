@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import type { LandingContent, Section, SectionType } from "@/lib/landing";
 import { Button, inputClass } from "@/components/ui";
 import { otherButtonIndexes, quickLinkUrl, setQuickLink, type TopicExample } from "../../_lib/builder";
-import { publishBlockers, signoffStatement } from "../../_lib/publish";
+import { publishBlockers, signoffStatement, websitePictureCount } from "../../_lib/publish";
 import { wineryBox } from "@/lib/ai/winery";
 import { publish, saveDraft, type Signoff } from "../actions";
 import { ItemList, Panel, TextArea, TextField, Toggle } from "./fields";
@@ -27,11 +27,13 @@ type Props = {
   companyName: string;
   /** Who approved the page last time it was published, and when. */
   lastSignoff?: Signoff | null;
+  /** B&M.ai staff building this page for the company: they can edit, but only the company publishes. */
+  staff?: boolean;
 };
 
 const AUTOSAVE_MS = 1200;
 
-export function Editor({ productId, slug, initial, live, liveIsCurrent, verified, examples = {}, wine = false, companyName, lastSignoff = null }: Props) {
+export function Editor({ productId, slug, initial, live, liveIsCurrent, verified, examples = {}, wine = false, companyName, lastSignoff = null, staff = false }: Props) {
   const [content, setContent] = useState(initial);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -45,6 +47,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
   latest.current = content;
 
   const blockers = publishBlockers(content, verified);
+  const sitePictures = websitePictureCount(content);
   const canPublish = blockers.length === 0 && !(isLive && !changedSincePublish);
 
   // Follow the server when the page is published or taken offline outside the editor.
@@ -146,17 +149,23 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
                   View live page
                 </a>
               )}
-              <Button type="button" onClick={onPublish} disabled={publishing || !canPublish || !approved}>
+              <Button type="button" onClick={onPublish} disabled={publishing || !canPublish || !approved || staff}>
                 {publishing ? "Publishing…" : isLive ? "Publish changes" : "Publish page"}
               </Button>
             </div>
           </div>
-          {canPublish && (
+          {staff && (
+            <p className="mt-3 rounded-lg bg-sky-50 p-3 text-sm text-sky-950 ring-1 ring-sky-200 ring-inset">
+              You&apos;re building this page for {companyName} as B&amp;M.ai staff. Your changes save as you go; {companyName} approves and
+              publishes it after you hand it over from the admin page.
+            </p>
+          )}
+          {canPublish && !staff && (
             <label className="mt-3 flex items-start gap-2.5 rounded-lg bg-surface p-3 text-sm ring-1 ring-line ring-inset">
               <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} className="mt-0.5 size-4 shrink-0" />
               <span>
                 <span className="font-medium">Approve and sign off</span>
-                <span className="block text-muted">{signoffStatement(companyName)}</span>
+                <span className="block text-muted">{signoffStatement(companyName, sitePictures)}</span>
                 <span className="block text-xs text-muted">We keep a record of who approved the page, when, and exactly what it said.</span>
               </span>
             </label>
@@ -190,7 +199,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           <p className="font-semibold">Fill in the blanks, top to bottom</p>
           <p className="mt-1">
             {wine
-              ? "This form follows your page from top to bottom: your main photo, the webstore, website and Contact us links, then the four jump-button boxes (The wine, Shop, Nearby, Events), About your winery laid out like your own website, Where to buy, and Reviews. Upload pictures where the AI suggests them, under any box or paragraph. Anything you leave empty simply stays off your page."
+              ? "This form follows your page from top to bottom: the bottle's photo, the webstore, website and Contact us links, then one jump button per section: The wine, the tabs of your own website (Visit, Our story, Wines, Shop, Wine club, Gift guide, Events, Recipes, or whatever your site has), Reviews and Where to buy. Pictures marked “From your website” were copied by our AI from your own site: keep, replace or remove them. Anything you leave empty simply stays off your page."
               : "This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each topic button. Add pictures anywhere you see the camera. Anything you leave empty simply stays off your page."}
           </p>
         </div>
@@ -200,9 +209,20 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
             size="hero"
             label="Main photo"
             value={content.hero.imageUrl}
-            onChange={(url) => update((d) => void (d.hero.imageUrl = url))}
+            onChange={(url) =>
+              update((d) => {
+                d.hero.imageUrl = url;
+                d.hero.imageSource = undefined;
+              })
+            }
             hint="A clear photo of the product itself. A plain or see-through background looks best. Only use photos your company owns."
           />
+          {content.hero.imageUrl && content.hero.imageSource && (
+            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
+              <span className="font-semibold">From your website:</span> our AI copied this photo from your own site ({content.hero.imageSource}). Keep it or
+              replace it; you approve it when you publish.
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-2">
             <TextField label="Brand name" value={content.hero.brand} onChange={(v) => update((d) => void (d.hero.brand = v))} />
             <TextField label="Product name" value={content.hero.title} onChange={(v) => update((d) => void (d.hero.title = v))} />
@@ -300,10 +320,10 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <h2 className="font-semibold">{wine ? "Step 3 · Jump-button boxes, About, Where to buy and Reviews" : "Step 3 · Your topics"}</h2>
+              <h2 className="font-semibold">{wine ? "Step 3 · The wine, your website's tabs, Reviews and Where to buy" : "Step 3 · Your topics"}</h2>
               <p className="text-sm text-muted">
                 {wine
-                  ? "Each section below gets its own jump button under the photo, in this order. The first four boxes each combine a few things (for example The wine: taste, food pairing, alcohol, awards and rating). Enter what applies; pictures and videos show under the text. Empty rows, boxes and parts stay off the page."
+                  ? "Each section below gets its own jump button under the photo, in this order, just like the tabs on your own website. The wine box holds everything about this wine (taste, food pairing, alcohol, awards and rating). Each website tab has a picture, a few sentences and a button to that page on your site. Empty rows and sections stay off the page."
                   : "Each box below gets its own jump button under the photo, in this order. Give a short answer, a few details and pictures. Empty boxes stay off the page, and hidden ones stay saved but shoppers don't see them."}
               </p>
             </div>

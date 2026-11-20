@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <!-- Illustration of braised short ribs with a glass of red wine, for the fictional Ridgeline Cellars demo page. -->
+  <rect width="640" height="360" fill="#e9dcc7"/>
+  <g stroke="#d8c7ab" stroke-width="3"><path d="M0 60 H640 M0 140 H640 M0 220 H640 M0 300 H640"/></g>
+  <ellipse cx="280" cy="200" rx="190" ry="120" fill="#fff"/>
+  <ellipse cx="280" cy="200" rx="150" ry="92" fill="#f5efe4"/>
+  <ellipse cx="270" cy="214" rx="110" ry="56" fill="#efd9a0"/>
+  <g fill="#6b2b1e"><rect x="200" y="170" width="70" height="50" rx="16"/><rect x="262" y="160" width="74" height="54" rx="18"/></g>
+  <g fill="#8e3d2a"><rect x="210" y="176" width="50" height="10" rx="5"/><rect x="272" y="168" width="54" height="10" rx="5"/></g>
+  <path d="M190 236 c40 20 120 22 170 0" fill="none" stroke="#5b1a2b" stroke-width="10" stroke-linecap="round"/>
+  <g fill="#7d8a4e"><circle cx="230" cy="166" r="6"/><circle cx="300" cy="156" r="6"/><circle cx="330" cy="200" r="5"/></g>
+  <g transform="translate(500 70)">
+    <path d="M0 0 h70 c0 80 -12 110 -35 110 c-23 0 -35 -30 -35 -110z" fill="#fff" opacity="0.7"/>
+    <path d="M3 40 h64 c-2 46 -12 68 -32 68 c-20 0 -30 -22 -32 -68z" fill="#5b1a2b"/>
+    <rect x="31" y="110" width="8" height="110" fill="#fff" opacity="0.8"/><ellipse cx="35" cy="222" rx="40" ry="9" fill="#fff" opacity="0.8"/>
+  </g>
+  <g transform="translate(100 60) rotate(-20)"><rect width="10" height="120" rx="4" fill="#b8b2a7"/></g>
+</svg>

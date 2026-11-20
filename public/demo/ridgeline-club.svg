@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <!-- Illustration of the fictional Ridgeline Cellars members' harvest lunch, drawn for the demo page. -->
+  <defs><linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f3c98b"/><stop offset="0.6" stop-color="#f7e2bf"/><stop offset="1" stop-color="#efe3cf"/></linearGradient></defs>
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <path d="M0 170 C150 140 300 166 420 146 S580 130 640 150 V360 H0Z" fill="#7d8a4e"/>
+  <g stroke="#c9a227" stroke-width="2" fill="none"><path d="M0 70 Q160 120 320 70 T640 70"/></g>
+  <g fill="#fbe2a6"><circle cx="40" cy="82" r="6"/><circle cx="120" cy="104" r="6"/><circle cx="200" cy="104" r="6"/><circle cx="280" cy="82" r="6"/><circle cx="360" cy="82" r="6"/><circle cx="440" cy="104" r="6"/><circle cx="520" cy="104" r="6"/><circle cx="600" cy="82" r="6"/></g>
+  <path d="M40 240 L600 240 L560 290 L80 290Z" fill="#fff"/>
+  <path d="M40 240 L600 240 L600 252 L40 252Z" fill="#e8dcc6"/>
+  <g fill="#6b5640"><rect x="90" y="290" width="10" height="60"/><rect x="540" y="290" width="10" height="60"/></g>
+  <g fill="#efe3cf" stroke="#d8c3a2" stroke-width="2"><ellipse cx="140" cy="244" rx="30" ry="7"/><ellipse cx="250" cy="244" rx="30" ry="7"/><ellipse cx="390" cy="244" rx="30" ry="7"/><ellipse cx="500" cy="244" rx="30" ry="7"/></g>
+  <g fill="#5b1a2b">
+    <path d="M180 206 c0 18 20 18 20 0z"/><path d="M290 206 c0 18 20 18 20 0z"/><path d="M430 206 c0 18 20 18 20 0z"/><path d="M540 206 c0 18 20 18 20 0z"/>
+  </g>
+  <g stroke="#5b1a2b" stroke-width="2"><path d="M190 222 v18 M182 240 h16 M300 222 v18 M292 240 h16 M440 222 v18 M432 240 h16 M550 222 v18 M542 240 h16"/></g>
+  <g fill="#2b1218"><rect x="310" y="186" width="20" height="54" rx="4"/><rect x="316" y="166" width="8" height="24" rx="2"/></g>
+  <g fill="#7d8a4e"><circle cx="350" cy="234" r="8"/><circle cx="362" cy="230" r="8"/><circle cx="356" cy="222" r="7"/></g>
+</svg>

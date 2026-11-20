@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <!-- Illustration of the fictional Ridgeline Cellars summer concert on the lawn at dusk, drawn for the demo page. -->
+  <defs><linearGradient id="dusk" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#3b3355"/><stop offset="0.6" stop-color="#b56a6a"/><stop offset="1" stop-color="#f0b77f"/></linearGradient></defs>
+  <rect width="640" height="360" fill="url(#dusk)"/>
+  <path d="M0 200 C140 170 300 196 440 176 S600 166 640 180 V360 H0Z" fill="#4a5a2a"/>
+  <rect x="0" y="250" width="640" height="110" fill="#5f6e36"/>
+  <g stroke="#2b2238" stroke-width="2" fill="none"><path d="M0 60 Q160 130 320 70 T640 60"/><path d="M0 120 Q200 170 400 120 T640 110"/></g>
+  <g fill="#ffe6a8"><circle cx="40" cy="78" r="6"/><circle cx="110" cy="100" r="6"/><circle cx="180" cy="104" r="6"/><circle cx="250" cy="90" r="6"/><circle cx="380" cy="78" r="6"/><circle cx="460" cy="90" r="6"/><circle cx="540" cy="80" r="6"/><circle cx="610" cy="64" r="6"/><circle cx="60" cy="132" r="5"/><circle cx="160" cy="150" r="5"/><circle cx="300" cy="138" r="5"/><circle cx="440" cy="128" r="5"/><circle cx="580" cy="118" r="5"/></g>
+  <g fill="#ffe6a8" opacity="0.25"><circle cx="110" cy="100" r="16"/><circle cx="380" cy="78" r="16"/><circle cx="540" cy="80" r="16"/></g>
+  <path d="M380 250 v-70 h200 v70z" fill="#3a2a1e"/><path d="M370 180 h220 l-20 -24 h-180z" fill="#5b1a2b"/>
+  <g fill="#1e1a24"><circle cx="440" cy="214" r="10"/><rect x="432" y="224" width="16" height="26" rx="4"/><circle cx="510" cy="214" r="10"/><rect x="502" y="224" width="16" height="26" rx="4"/><rect x="520" y="226" width="20" height="8" rx="3" transform="rotate(-20 520 226)"/></g>
+  <g fill="#1e1a24"><circle cx="80" cy="280" r="12"/><rect x="66" y="292" width="28" height="40" rx="10"/><circle cx="130" cy="286" r="11"/><rect x="117" y="297" width="26" height="36" rx="10"/><circle cx="220" cy="282" r="12"/><rect x="206" y="294" width="28" height="40" rx="10"/><circle cx="290" cy="290" r="11"/><rect x="277" y="301" width="26" height="36" rx="10"/></g>
+  <path d="M40 336 h300 v24 h-300z" fill="#e8dcc6" opacity="0.8"/>
+</svg>

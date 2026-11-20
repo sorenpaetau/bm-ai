@@ -39,7 +39,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           />
           <h2 className="relative font-serif text-2xl font-medium">Welcome, {user.firstName ?? "there"}!</h2>
           <p className="relative mt-1 text-sm text-white/70">
-            Start by adding your first product. Our AI writes a first draft of its page; you check it, then publish.
+            {welcome === "handover"
+              ? "B&M.ai has built your first page. Open it, change anything you like, check each section and approve it to go live. For your next wine, use “Copy for the next wine” and change a few fields."
+              : "Start by adding your first product. Our AI writes a first draft of its page; you check it, then publish."}
           </p>
         </Card>
       )}
@@ -93,6 +95,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       View live page
                     </ButtonLink>
                   )}
+                  <ButtonLink href={`/portal/products/new?from=${p.id}`} variant="ghost">
+                    Copy for the next {nextNoun(content)}
+                  </ButtonLink>
                   <ButtonLink href={`/portal/products/${p.id}`} variant="secondary">
                     Edit page
                   </ButtonLink>
@@ -104,6 +109,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       )}
     </div>
   );
+}
+
+/** "wine" for a wine page (it has The wine box), otherwise "product". */
+function nextNoun(content: ReturnType<typeof safeContent>) {
+  return content?.sections.some((s) => s.id === "wine") ? "wine" : "product";
 }
 
 function StatusPill({ status }: { status: string }) {
