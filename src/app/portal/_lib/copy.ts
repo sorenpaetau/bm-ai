@@ -54,6 +54,7 @@ export function copyPageForNextProduct(source: LandingContent, input: CopyInput)
     hero: {
       ...source.hero,
       title: input.productName.trim(),
+      subtitle: undefined,
       imageUrl: undefined,
       imageSource: undefined,
       sitePhoto: undefined,
@@ -64,4 +65,4 @@ export function copyPageForNextProduct(source: LandingContent, input: CopyInput)
 }
 
 /** What the copy leaves for the winery to fill in for the new wine, for the note on the new page. */
-export const COPY_TODO = "the bottle's photo, the wine box (taste, grape, food pairing, alcohol, awards, rating) and its reviews";
+export const COPY_TODO = "the bottle's photo, the line under its name, the wine box (taste, grape, food pairing, alcohol, awards, rating) and its reviews";

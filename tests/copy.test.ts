@@ -10,12 +10,14 @@ import { LandingContent } from "../src/lib/landing";
 test("a copy keeps the winery's tabs, pictures, links and shops, and clears what belonged to the old bottle", () => {
   const source = demoWineryContent();
   source.hero.price = "$68";
+  source.hero.subtitle = "Cabernet Sauvignon · 2023";
   const copy = LandingContent.parse(copyPageForNextProduct(source, { productName: "Chardonnay 2024", description: "Barrel fermented, from our cool lower block." }));
 
   assert.equal(copy.hero.title, "Chardonnay 2024");
   assert.equal(copy.hero.brand, source.hero.brand);
   assert.equal(copy.hero.imageUrl, undefined, "the new bottle needs its own photo");
   assert.equal(copy.hero.price, undefined);
+  assert.equal(copy.hero.subtitle, undefined, "the old wine's line under the name goes too");
   assert.deepEqual(copy.buttons, source.buttons);
   assert.deepEqual(copy.theme, source.theme);
 

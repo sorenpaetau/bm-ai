@@ -323,8 +323,9 @@ export async function redraft(productId: string): Promise<ActionState> {
       price: current?.hero.price ?? null,
     }, { loadPhoto: uploadedPhotos });
     const website = product.brandLinks?.[0] ?? company.website;
-    const withPictures = vertical === "wine_spirits" ? await attachSitePhotos(fresh, { companyId: user.companyId, userId: user.id, website, productId }) : fresh;
-    const content = current ? carryOverBrandMedia(current, withPictures) : withPictures;
+    // Keep the pictures the page already has first, so only cards still without one get a website picture.
+    const carried = current ? carryOverBrandMedia(current, fresh) : fresh;
+    const content = vertical === "wine_spirits" ? await attachSitePhotos(carried, { companyId: user.companyId, userId: user.id, website, productId }) : carried;
     await sql`UPDATE products SET content = ${sql.json(content)}, updated_at = now() WHERE id = ${productId}`;
   } catch (err) {
     if (err instanceof DraftError) return { error: err.message };
