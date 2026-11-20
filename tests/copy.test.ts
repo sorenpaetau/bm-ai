@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { copyPageForNextProduct } from "../src/app/portal/_lib/copy";
+import { canCopyPage, copyPageForNextProduct } from "../src/app/portal/_lib/copy";
+import { starterContent } from "../src/lib/ai/template";
 import { demoWineryContent } from "../src/lib/demo-winery";
 import { LandingContent } from "../src/lib/landing";
 
@@ -37,4 +38,10 @@ test("a copy keeps the winery's tabs, pictures, links and shops, and clears what
 
   const reviews = copy.sections.find((s) => s.id === "reviews")!;
   assert.ok(reviews.type === "topic" && !reviews.answer && !reviews.body && !reviews.link);
+});
+
+test("only wine pages can be copied for now (other markets keep product details in other boxes)", () => {
+  assert.equal(canCopyPage(starterContent({ companyName: "Ridgeline Cellars", vertical: "wine_spirits", productName: "Merlot 2024", description: "", website: null })), true);
+  assert.equal(canCopyPage(starterContent({ companyName: "Harbor Knit", vertical: "retail", productName: "Cashmere sweater", description: "", website: null })), false);
+  assert.equal(canCopyPage(null), false);
 });

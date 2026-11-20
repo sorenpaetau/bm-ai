@@ -11,6 +11,15 @@ import type { LandingContent, Section } from "@/lib/landing";
 
 export type CopyInput = { productName: string; description: string };
 
+/**
+ * Only wine pages can be copied for now (Jens: "stay focused on Wine and Spirits first"). The copy knows
+ * which parts of a wine page belong to one bottle; the other markets' boxes (materials, size, ingredients)
+ * would carry the old product's details over, so they get their own rules when those markets are built.
+ */
+export function canCopyPage(content: Pick<LandingContent, "sections"> | null | undefined): boolean {
+  return !!content?.sections.some((s) => s.type === "topic" && s.id === "wine");
+}
+
 /** Rows of the wine box that stay true for the winery's next wine. */
 const KEEP_ROWS = new Set(["region"]);
 

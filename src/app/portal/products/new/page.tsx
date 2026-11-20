@@ -16,7 +16,10 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
   const [company] = await sql<{ vertical: Vertical; website: string | null }[]>`SELECT vertical, website FROM companies WHERE id = ${user.companyId}`;
   // Pages the company can copy for its next product (Jens, Nov 18: "use the first page as a template").
   const pages = await sql<{ id: string; name: string }[]>`
-    SELECT id, name FROM products WHERE company_id = ${user.companyId} AND status <> 'archived' ORDER BY (status = 'published') DESC, updated_at DESC LIMIT 50`;
+    SELECT id, name FROM products
+    WHERE company_id = ${user.companyId} AND status <> 'archived'
+      AND COALESCE(published_content, content)->'sections' @> '[{"type":"topic","id":"wine"}]'::jsonb
+    ORDER BY (status = 'published') DESC, updated_at DESC LIMIT 50`;
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>

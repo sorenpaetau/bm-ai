@@ -10,6 +10,7 @@ import type { Vertical } from "@/lib/site";
 import { DEMO_MARKETS } from "@/lib/demo-markets";
 import { WINERY_BOXES } from "@/lib/ai/winery";
 import { tagQuickLinks, topicExamples } from "../../_lib/builder";
+import { canCopyPage } from "../../_lib/copy";
 import { safeContent } from "../../_lib/content";
 import { archiveProduct, redraft, unpublish, updateDetails } from "../actions";
 import { ConfirmSubmit } from "../../_components/confirm-submit";
@@ -133,12 +134,14 @@ export default async function EditProductPage({
           aiAvailable={aiConfigured()}
           wine={wine}
         />
-        <p className="mt-4 text-sm">
-          <Link href={`/portal/products/new?from=${p.id}`} className="font-semibold text-brand underline">
-            Copy this page for the next {wine ? "wine" : "product"}
-          </Link>{" "}
-          <span className="text-muted">Keeps everything about your {wine ? "winery" : "brand"}; you change the product&apos;s details.</span>
-        </p>
+        {canCopyPage(content) && (
+          <p className="mt-4 text-sm">
+            <Link href={`/portal/products/new?from=${p.id}`} className="font-semibold text-brand underline">
+              Copy this page for the next wine
+            </Link>{" "}
+            <span className="text-muted">Keeps everything about your winery; you change the wine&apos;s details.</span>
+          </p>
+        )}
         <div className="mt-6 flex flex-wrap gap-3 border-t border-line pt-4 text-sm">
           {p.status === "published" && (
             <form action={unpublish.bind(null, p.id)}>

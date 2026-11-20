@@ -1,6 +1,9 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import { lookup } from "node:dns/promises";
+import { lookup as dnsLookup, type LookupAddress } from "node:dns";
+import http from "node:http";
+import https from "node:https";
+import type { LookupFunction } from "node:net";
 import { sql } from "../db";
 import { MAX_PHOTO_BYTES, MAX_PHOTOS_PER_COMPANY, mediaUrl, sniffPhotoType, type PhotoType } from "../image-type";
 import type { LandingContent, Section } from "../landing";
@@ -153,57 +156,70 @@ async function safeFetch(
     if (parsed.username || parsed.password || (parsed.port && !["80", "443"].includes(parsed.port))) return null;
     if (!isPublicHostname(parsed.hostname)) return null;
     if (opts.sameSiteAs && !onSite(parsed.href, opts.sameSiteAs)) return null;
-    try {
-      const addresses = await lookup(parsed.hostname, { all: true });
-      if (!addresses.length || addresses.some((a) => isPrivateAddress(a.address))) return null;
-    } catch {
-      return null;
-    }
 
-    let res: Response;
-    try {
-      res = await fetch(parsed.href, {
-        redirect: "manual",
-        headers: { "User-Agent": UA, Accept: opts.accept },
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-    } catch {
-      return null;
-    }
-    if (res.status >= 300 && res.status < 400) {
-      const next = res.headers.get("location");
-      await res.body?.cancel();
-      if (!next) return null;
-      url = new URL(next, parsed.href).href;
+    const res = await getOnce(parsed, opts.accept, opts.maxBytes);
+    if (!res) return null;
+    if ("location" in res) {
+      if (!res.location) return null;
+      url = new URL(res.location, parsed.href).href;
       continue;
     }
-    if (!res.ok || !res.body) {
-      await res.body?.cancel();
-      return null;
-    }
-    const declared = Number(res.headers.get("content-length"));
-    if (declared > opts.maxBytes) {
-      await res.body.cancel();
-      return null;
-    }
-    const chunks: Uint8Array[] = [];
-    let size = 0;
-    const reader = res.body.getReader();
-    try {
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        size += value.length;
-        if (size > opts.maxBytes) {
-          await reader.cancel();
-          return null;
-        }
-        chunks.push(value);
-      }
-    } catch {
-      return null;
-    }
-    return { url: parsed.href, bytes: Buffer.concat(chunks) };
+    return { url: parsed.href, bytes: res.bytes };
   }
   return null;
+}
+
+/**
+ * Resolves a host name and refuses it if any address is on a private network. It is the lookup the
+ * connection itself uses, so the address we check is the address we connect to (a host can't answer
+ * our check with a public address and the connection with a private one).
+ */
+const publicOnlyLookup: LookupFunction = (hostname, options, callback) => {
+  dnsLookup(hostname, { ...options, all: true }, (err, addresses) => {
+    const list = addresses as unknown as LookupAddress[] | undefined;
+    if (err || !list?.length) return callback(err ?? new Error("no address"), "", 0);
+    if (list.some((a) => isPrivateAddress(a.address))) return callback(new Error("private address"), "", 0);
+    if (options.all) return (callback as unknown as (e: null, a: LookupAddress[]) => void)(null, list);
+    callback(null, list[0].address, list[0].family);
+  });
+};
+
+/** One GET with no redirects followed: the redirect target, the body (at most maxBytes), or null. */
+function getOnce(url: URL, accept: string, maxBytes: number): Promise<{ location: string | undefined } | { bytes: Buffer } | null> {
+  return new Promise((resolve) => {
+    const client = url.protocol === "https:" ? https : http;
+    const req = client.get(url, { headers: { "User-Agent": UA, Accept: accept }, lookup: publicOnlyLookup }, (res) => {
+      const status = res.statusCode ?? 0;
+      if (status >= 300 && status < 400) {
+        res.resume();
+        return done({ location: res.headers.location });
+      }
+      if (status < 200 || status >= 300 || Number(res.headers["content-length"]) > maxBytes) {
+        res.destroy();
+        return done(null);
+      }
+      const chunks: Buffer[] = [];
+      let size = 0;
+      res.on("data", (chunk: Buffer) => {
+        size += chunk.length;
+        if (size > maxBytes) {
+          res.destroy();
+          return done(null);
+        }
+        chunks.push(chunk);
+      });
+      res.on("end", () => done({ bytes: Buffer.concat(chunks) }));
+      res.on("error", () => done(null));
+      res.on("aborted", () => done(null));
+    });
+    const timer = setTimeout(() => {
+      req.destroy();
+      done(null);
+    }, TIMEOUT_MS);
+    req.on("error", () => done(null));
+    function done(value: { location: string | undefined } | { bytes: Buffer } | null) {
+      clearTimeout(timer);
+      resolve(value);
+    }
+  });
 }

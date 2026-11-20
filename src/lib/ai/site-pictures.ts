@@ -36,9 +36,26 @@ export function pictureCandidates(html: string, pageUrl: string): string[] {
  */
 export function picturesToTry(html: string, pageUrl: string, suggested?: string, max = 4): string[] {
   const found = pictureCandidates(html, pageUrl);
-  const hint = suggested ? absolute(suggested, pageUrl) : null;
-  const onPage = hint && (found.includes(hint) || html.includes(suggested!) || html.includes(new URL(hint).pathname)) ? [hint] : [];
+  const hint = suggested ? absolute(decodeEntities(suggested).trim(), pageUrl) : null;
+  // Only a complete picture address that the page itself uses (resolved the same way), never a partial match.
+  const onPage = hint && looksLikePhoto(hint) && pagePictureUrls(html, pageUrl).has(hint) ? [hint] : [];
   return [...new Set([...onPage, ...found])].slice(0, max);
+}
+
+/** Every picture address the page uses (share pictures, <img> src, data-src and srcset), made absolute. */
+function pagePictureUrls(html: string, pageUrl: string): Set<string> {
+  const out = new Set<string>();
+  const add = (raw: string | undefined) => {
+    const url = raw ? absolute(decodeEntities(raw).trim(), pageUrl) : null;
+    if (url) out.add(url);
+  };
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) add(attr(tag, "content"));
+  for (const tag of html.match(/<link\b[^>]*>/gi) ?? []) add(attr(tag, "href"));
+  for (const tag of html.match(/<(img|source)\b[^>]*>/gi) ?? []) {
+    for (const name of ["src", "data-src", "data-lazy-src"]) add(attr(tag, name));
+    for (const name of ["srcset", "data-srcset"]) for (const part of (attr(tag, name) ?? "").split(",")) add(part.trim().split(/\s+/)[0]);
+  }
+  return out;
 }
 
 /** A host we may fetch: a public name with a dot, not an IP address, not localhost or a private name. */

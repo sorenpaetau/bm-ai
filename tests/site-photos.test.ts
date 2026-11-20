@@ -36,6 +36,12 @@ test("the AI's picture is tried first only if it really is on the winery's page"
   const stock = picturesToTry(page, url, "https://stockphotos.example.net/vines.jpg");
   assert.ok(!stock.includes("https://stockphotos.example.net/vines.jpg"), "a picture from another site never slips in");
   assert.equal(stock[0], "https://images.squarespace-cdn.com/ridgeline/terrace.jpg?format=1500w&v=2");
+  // Same path on another host, or a bare "/", is not the page's picture.
+  const samePath = picturesToTry(page, url, "https://unrelated.example.net/img/vineyard.jpg");
+  assert.ok(!samePath.includes("https://unrelated.example.net/img/vineyard.jpg"));
+  assert.ok(!picturesToTry(page, url, "/").includes("https://ridgeline.example.org/"));
+  // A picture the page uses through srcset counts, even if it isn't the largest one.
+  assert.equal(picturesToTry('<img srcset="/a-small.jpg 400w, /a-big.jpg 1600w">', url, "/a-small.jpg")[0], "https://ridgeline.example.org/a-small.jpg");
   assert.equal(picturesToTry(page, url, undefined, 2).length, 2);
 });
 

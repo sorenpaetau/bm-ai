@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { ButtonLink, Card } from "@/components/ui";
 import { safeColor, safeUrl } from "@/components/landing/helpers";
+import { canCopyPage } from "./_lib/copy";
 import { safeContent } from "./_lib/content";
 import { needsReview, STATUS_LABEL } from "./_lib/publish";
 
@@ -95,9 +96,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       View live page
                     </ButtonLink>
                   )}
-                  <ButtonLink href={`/portal/products/new?from=${p.id}`} variant="ghost">
-                    Copy for the next {nextNoun(content)}
-                  </ButtonLink>
+                  {canCopyPage(content) && (
+                    <ButtonLink href={`/portal/products/new?from=${p.id}`} variant="ghost">
+                      Copy for the next wine
+                    </ButtonLink>
+                  )}
                   <ButtonLink href={`/portal/products/${p.id}`} variant="secondary">
                     Edit page
                   </ButtonLink>
@@ -109,11 +112,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       )}
     </div>
   );
-}
-
-/** "wine" for a wine page (it has The wine box), otherwise "product". */
-function nextNoun(content: ReturnType<typeof safeContent>) {
-  return content?.sections.some((s) => s.id === "wine") ? "wine" : "product";
 }
 
 function StatusPill({ status }: { status: string }) {

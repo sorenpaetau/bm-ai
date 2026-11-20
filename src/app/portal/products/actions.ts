@@ -18,7 +18,7 @@ import { brandPhotos, carryOverBrandMedia } from "@/lib/ai/brand-media";
 import { sampleWineryDraft } from "@/lib/ai/sample";
 import { signoffStatement, websitePictureCount } from "../_lib/publish";
 import { attachSitePhotos } from "@/lib/ai/site-photos";
-import { copyPageForNextProduct } from "../_lib/copy";
+import { canCopyPage, copyPageForNextProduct } from "../_lib/copy";
 import { readUpload, uploadIdFromUrl } from "@/lib/uploads";
 
 export type ActionState = { error?: string; ok?: string; values?: Record<string, string> };
@@ -229,6 +229,7 @@ async function copyProduct(user: { companyId: string }, fromId: string, values: 
   // The page as the company last approved it, or its draft if it never went live.
   const base = safeContent(source.publishedContent) ?? safeContent(source.content);
   if (!base) return { error: "That page couldn't be copied. Open it and save it once, then try again.", values };
+  if (!canCopyPage(base)) return { error: "Only wine pages can be copied for now.", values };
 
   let sku = parsed.data.sku;
   if (sku) {
