@@ -22,6 +22,7 @@ export const SECTION_TYPES: Record<SectionType, { label: string; hint: string }>
   topic: { label: "Topic box", hint: "One thing shoppers want to know, e.g. Size & fit or Battery: a short answer, details and key rows" },
   about: { label: "About us", hint: "Your story in a few short parts, each with its own photos and videos" },
   buy: { label: "Where to buy", hint: "Shops and apps that sell it, e.g. Vivino or Total Wine & More, each with a link" },
+  tab: { label: "Website tab", hint: "One tab of your own website, e.g. Visit or Wine Club: a picture, a few sentences and a button to that page" },
 };
 
 /** Pictures a topic box can show (the same names the landing page understands). */
@@ -61,6 +62,7 @@ const TOPIC_ICON_CHOICES: Array<[string, string]> = [
   ["calendar", "Calendar (events)"],
   ["quote", "Quote (reviews)"],
   ["store", "Store"],
+  ["book", "Book (story)"],
 ];
 
 export function blankSection(type: SectionType): Section {
@@ -97,6 +99,8 @@ export function blankSection(type: SectionType): Section {
       return { ...base, type, body: "", parts: [{ id: `part-${base.id}`, title: "", body: "", images: [], videos: [], sources: [] }] };
     case "buy":
       return { ...base, type, body: "", items: [{ name: "", url: "" }] };
+    case "tab":
+      return { ...base, type, icon: "list", body: "", images: [], videos: [] };
   }
 }
 
@@ -132,7 +136,9 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white" aria-hidden="true">
           {number}
         </span>
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-700">{box ? "Jump button box" : SECTION_TYPES[section.type].label}</span>
+        <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-700">
+          {box ? "Jump button box" : section.type === "tab" ? "Tab from your website" : SECTION_TYPES[section.type].label}
+        </span>
         {needsReview && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">AI draft · Needs review</span>}
         {section.aiGenerated && section.reviewed && (
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-900">AI draft · Reviewed</span>
@@ -168,7 +174,7 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
             label="Heading"
             value={section.title}
             onChange={(title) => patch({ title })}
-            placeholder={section.type === "topic" ? "e.g. Size & fit" : undefined}
+            placeholder={section.type === "topic" ? "e.g. Size & fit" : section.type === "tab" ? "e.g. Wine Club" : undefined}
           />
           <TextField
             label="Jump button name (optional)"
@@ -233,10 +239,9 @@ function BoxNote({ box }: { box: WineryBox }) {
   return (
     <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950 ring-1 ring-sky-200 ring-inset">
       <span className="font-semibold">One box for: {box.combines}</span>{" "}
-      {box.ai === "site" ? "Our AI fills in what your own website says." : "Our AI fills this in from your description and website."}
+      Our AI fills this in from your description and website.
       {box.ownerRows.length > 0 && ` Only you can fill in ${listWords(box.ownerRows)}: our AI never writes them.`} Enter
       anything else that applies; empty rows, and an empty box with its jump button, stay off your page.
-      {box.id === "events" ? " Write each event's date with its year, like December 6, 2026, and that row hides itself once the day has passed." : ""}
     </p>
   );
 }
@@ -308,6 +313,10 @@ function setPhotoAt<T extends { name: string; imageUrl?: string }>(rows: T[], in
 
 /** What the pictures area under a section is for, in the brand's words. */
 const PHOTO_STRIP_WORDING: Partial<Record<SectionType, { label: string; hint: string }>> = {
+  tab: {
+    label: "Picture for this tab",
+    hint: "The first picture shows across the top of the card. Use a picture from this page of your website, or upload your own.",
+  },
   story: {
     label: "Pictures for your story",
     hint: "Optional. The people who make it, your workshop or farm, your history. Only use photos your company owns.",
@@ -710,6 +719,28 @@ function SectionFields({
               </div>
             )}
           />
+        </div>
+      );
+    case "tab":
+      return (
+        <div className="space-y-3">
+          <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950 ring-1 ring-sky-200 ring-inset">
+            <span className="font-semibold">One tab of your own website, with its own jump button.</span> A picture (the first one below
+            shows across the top of the card), a few sentences, and a button to that page on your site. Change the order with the arrows,
+            hide tabs you don&apos;t want, or add one with “Add a section”.
+          </p>
+          <TextArea label="A few sentences" rows={3} value={section.body} onChange={(body) => patch({ body })} placeholder="e.g. Taste our wines on the terrace, with views across the valley. Open daily, 10 to 5." />
+          <SectionLinkField link={section.link} onChange={(link) => patch({ link })} placeholder="Plan your visit" />
+          <label className="block space-y-1 sm:max-w-xs">
+            <span className="text-xs font-medium text-muted">Jump button picture</span>
+            <select value={section.icon ?? "list"} onChange={(e) => patch({ icon: e.target.value })} className={inputClass}>
+              {TOPIC_ICON_CHOICES.map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       );
     case "buy":

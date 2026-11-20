@@ -7,6 +7,7 @@ import { LogoMark, Wordmark } from "@/components/icons";
 import { Container } from "@/components/ui";
 import { logout } from "../login/actions";
 import { PortalNav } from "./_components/portal-nav";
+import { stopWorkingOnCompany } from "../admin/actions";
 
 export const metadata: Metadata = { title: { default: "Client portal", template: `%s | ${SITE.name} portal` } };
 
@@ -47,7 +48,22 @@ export default async function PortalLayout({ children }: { children: React.React
           <PortalNav />
         </Container>
       </header>
-      {!company?.verifiedAt && (
+      {user.staff && (
+        <div className="border-b border-sky-200 bg-sky-50 text-sm text-sky-950 print:hidden">
+          <Container className="flex flex-wrap items-center justify-between gap-2 py-3">
+            <span>
+              <strong>B&amp;M.ai staff:</strong> you&apos;re building pages for {user.companyName}. They approve and publish them after you hand
+              them over.
+            </span>
+            <form action={stopWorkingOnCompany}>
+              <button type="submit" className="font-semibold underline">
+                Back to admin
+              </button>
+            </form>
+          </Container>
+        </div>
+      )}
+      {!company?.verifiedAt && !user.staff && (
         <div className="border-b border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 text-sm text-amber-900 print:hidden">
           <Container className="py-3">
             <strong>We&apos;re confirming your brand.</strong> You can build and preview pages now. Publishing unlocks once

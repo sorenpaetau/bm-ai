@@ -5,7 +5,8 @@ import { sql } from "@/lib/db";
 import { formatCents, HOSTING_PLANS, TAG_TYPES, type PlanId, type TagType } from "@/lib/pricing";
 import { stripePaymentLink, stripeSubscriptionLink } from "@/lib/stripe";
 import { VERTICALS, type Vertical } from "@/lib/site";
-import { setQuoteStatus, setStarterKitStatus, unverifyCompany, verifyCompany } from "./actions";
+import { setQuoteStatus, setStarterKitStatus, unverifyCompany, verifyCompany, workOnCompany } from "./actions";
+import { HandoverForm, StartWineryForm } from "./build-forms";
 import { StatusForm } from "./status-form";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,9 @@ type Company = {
   planInterval: string | null;
   planStatus: string | null;
   stripeSubscriptionId: string | null;
+  startedByBm: boolean;
+  /** The email a hand-over link was sent to and not used yet. */
+  handoverTo: string | null;
 };
 type Kit = {
   id: string;
@@ -79,7 +83,9 @@ export default async function AdminPage() {
   const [companies, kits, quotes, products] = await Promise.all([
     sql<Company[]>`
       SELECT c.id, c.name, c.vertical, c.website, c.city, c.state, c.verified_at, c.created_at,
-             c.plan, c.plan_interval, c.plan_status, c.stripe_subscription_id,
+             c.plan, c.plan_interval, c.plan_status, c.stripe_subscription_id, c.started_by_bm,
+             (SELECT hu.email FROM handovers h JOIN users hu ON hu.id = h.user_id
+              WHERE h.company_id = c.id AND h.used_at IS NULL AND h.expires_at > now() ORDER BY h.created_at DESC LIMIT 1) AS handover_to,
              u.email AS contact_email, concat_ws(' ', u.first_name, u.last_name) AS contact_name,
              (SELECT count(*)::int FROM products p WHERE p.company_id = c.id AND p.status <> 'archived') AS products,
              (SELECT count(*)::int FROM products p WHERE p.company_id = c.id AND p.status = 'published') AS live,
@@ -126,6 +132,16 @@ export default async function AdminPage() {
         </div>
       </div>
 
+      <Section
+        id="build"
+        title="Build a first page for a winery"
+        hint="For a winery that hasn't signed up yet: we start its account, build its first page from its website, then send it a link to take the page over. The winery checks and approves the page itself before it goes live."
+      >
+        <div className="rounded-2xl border border-line bg-surface p-5">
+          <StartWineryForm />
+        </div>
+      </Section>
+
       <Section id="companies" title="Companies" hint="Verify a company once you're sure the account belongs to the brand. Only verified companies can publish pages.">
         <Table head={["Company", "Signed up by", "Activity", "Status"]}>
           {companies.map((c) => (
@@ -143,13 +159,27 @@ export default async function AdminPage() {
                 )}
               </td>
               <td className="p-3">
+                {c.startedByBm && (
+                  <div className="mb-1">
+                    <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-900">Started by B&amp;M.ai</span>
+                  </div>
+                )}
                 <div>{c.contactName}</div>
                 <div className="text-xs text-muted">{c.contactEmail}</div>
-                {domainMatches(c.contactEmail, c.website) ? (
-                  <div className="mt-1 text-xs text-emerald-800">✓ Email matches their website</div>
-                ) : (
-                  c.contactEmail && <div className="mt-1 text-xs text-amber-800">Email doesn&apos;t match their website: check by phone</div>
-                )}
+                {!c.startedByBm &&
+                  (domainMatches(c.contactEmail, c.website) ? (
+                    <div className="mt-1 text-xs text-emerald-800">✓ Email matches their website</div>
+                  ) : (
+                    c.contactEmail && <div className="mt-1 text-xs text-amber-800">Email doesn&apos;t match their website: check by phone</div>
+                  ))}
+                <div className="mt-2 space-y-2">
+                  <form action={workOnCompany.bind(null, c.id)}>
+                    <button type="submit" className="text-xs font-semibold text-brand underline">
+                      {c.startedByBm ? "Build their pages" : "Open their pages"}
+                    </button>
+                  </form>
+                  {c.startedByBm && <HandoverForm companyId={c.id} companyName={c.name} pending={c.handoverTo} />}
+                </div>
               </td>
               <td className="p-3 text-xs text-muted">
                 {c.products} products ({c.live} live)

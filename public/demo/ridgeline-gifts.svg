@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <!-- Illustration of the fictional Ridgeline Cellars gift boxes, wrapped, drawn for the demo page. -->
+  <rect width="640" height="360" fill="#f3e6d3"/>
+  <g fill="#e6d3b5" opacity="0.7"><circle cx="80" cy="60" r="4"/><circle cx="560" cy="80" r="5"/><circle cx="300" cy="40" r="3"/><circle cx="480" cy="300" r="4"/><circle cx="120" cy="300" r="5"/></g>
+  <g transform="translate(110 150)"><rect width="200" height="150" rx="6" fill="#5b1a2b"/><rect x="88" width="24" height="150" fill="#c9a227"/><rect y="56" width="200" height="22" fill="#c9a227"/><path d="M100 0 c-50 -50 -80 0 0 0 c50 -50 80 0 0 0" fill="none" stroke="#c9a227" stroke-width="9"/></g>
+  <g transform="translate(340 190)"><rect width="150" height="110" rx="6" fill="#7d8a4e"/><rect x="64" width="22" height="110" fill="#efe3cf"/><rect y="42" width="150" height="20" fill="#efe3cf"/><path d="M75 0 c-40 -40 -64 0 0 0 c40 -40 64 0 0 0" fill="none" stroke="#efe3cf" stroke-width="8"/></g>
+  <g transform="translate(500 120)"><rect x="0" y="40" width="44" height="140" rx="7" fill="#2b1218"/><rect x="14" y="0" width="16" height="46" rx="4" fill="#2b1218"/><rect x="4" y="90" width="36" height="36" rx="3" fill="#efe3cf"/><path d="M0 70 h44" stroke="#c9a227" stroke-width="6"/></g>
+  <rect x="0" y="300" width="640" height="60" fill="#d8c3a2"/>
+  <g transform="translate(250 312) rotate(-6)"><rect width="110" height="34" rx="3" fill="#fff"/><text x="12" y="23" font-family="Georgia, serif" font-size="16" fill="#5b1a2b">With love</text></g>
+</svg>

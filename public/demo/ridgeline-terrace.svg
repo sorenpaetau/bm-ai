@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360">
+  <!-- Illustration of the fictional Ridgeline Cellars tasting terrace above the valley, drawn for the demo page. -->
+  <defs><linearGradient id="sky" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f3c98b"/><stop offset="0.6" stop-color="#f7e2bf"/><stop offset="1" stop-color="#efe3cf"/></linearGradient></defs>
+  <rect width="640" height="360" fill="url(#sky)"/>
+  <circle cx="520" cy="96" r="40" fill="#fbe2a6"/>
+  <path d="M0 160 C120 120 220 150 330 126 S520 100 640 130 V360 H0Z" fill="#a898a4" opacity="0.8"/>
+  <path d="M0 200 C140 170 260 196 380 176 S560 160 640 178 V360 H0Z" fill="#7d8a4e"/>
+  <g stroke="#3e4a1e" stroke-opacity="0.4" stroke-width="2" fill="none" stroke-linecap="round">
+    <path d="M40 214 C200 196 360 206 600 192"/><path d="M30 230 C200 212 380 222 620 206"/><path d="M20 246 C200 230 400 238 640 222"/>
+  </g>
+  <rect x="0" y="262" width="640" height="98" fill="#c9a77c"/>
+  <g stroke="#a88660" stroke-width="2"><path d="M0 290 H640"/><path d="M0 322 H640"/></g>
+  <rect x="0" y="250" width="640" height="14" fill="#8b6b4a"/>
+  <g fill="#5b1a2b"><path d="M150 120 L250 150 H50Z"/></g>
+  <rect x="147" y="150" width="6" height="140" fill="#6b5640"/>
+  <ellipse cx="150" cy="292" rx="70" ry="10" fill="#6b5640"/>
+  <g fill="#5b1a2b" opacity="0.9">
+    <path d="M112 270 h8 l2 16 h-12z"/><path d="M178 270 h8 l2 16 h-12z"/>
+  </g>
+  <g fill="none" stroke="#3a2a1e" stroke-width="3">
+    <path d="M60 300 v40 M60 300 h40 v40"/><path d="M200 300 v40 M200 300 h40 v40"/>
+  </g>
+  <g fill="#c9a227"><circle cx="420" cy="230" r="0"/></g>
+  <path d="M400 252 h40 v-30 c0 -20 -40 -20 -40 0z" fill="#fff" opacity="0.6"/>
+</svg>

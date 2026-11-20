@@ -54,7 +54,12 @@ adds its pages under it; it can add nav links there in a small, separate commit.
 - **Pricing.** All prices come from `src/lib/pricing.ts`. Tag tiers apply to the whole order. Hosting is a
   separate yearly invoice, never part of a tag quote.
 - **AI content is a draft.** AI-written sections set `aiGenerated: true` and stay "needs review" until the
-  manufacturer marks them reviewed. Never use web images the brand didn't upload.
+  manufacturer marks them reviewed.
+- **Pictures.** Use only pictures the brand uploaded, or (wine pages) pictures the AI copied from the brand's
+  **own** website: a page on the website it gave us, never a shop, stock, social or any other site
+  (`src/lib/ai/site-photos.ts`). Copied pictures are stored in our uploads, marked with the page they came from
+  (`image.source`, `hero.imageSource`), shown as "From your website" in the editor, and approved by the brand at
+  Publish sign-off. Never hotlink web images on a consumer page.
 - **Privacy.** Location is coarse (city from IP headers) only. No precise GPS. Opt-ins store the exact consent
   text shown. Use a random first-party `bm_vid` cookie for visitor counting.
 - **Age gate** defaults on for wine and spirits.

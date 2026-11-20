@@ -2,7 +2,7 @@ import { z } from "zod";
 import { LandingContent, type Section } from "../landing";
 import type { Vertical } from "../site";
 import { marketFor, type MarketTemplate } from "./markets";
-import { winerySections, wineryButtons, type AiWineryDraft } from "./winery";
+import { winerySections, wineryButtons, wineSitePhoto, type AiWineryDraft } from "./winery";
 
 // Turns what the AI writes (AiDraft) into the shared LandingContent shape, and builds the plain
 // starter page used when no AI key is configured. Pure functions, so they are unit tested.
@@ -179,7 +179,7 @@ function draftByKind(draft: AnyDraft, input: DraftInput): LandingContent {
   const market = marketFor(input.vertical);
   if (market && "topics" in draft) return marketContent(input, market, draft);
   if ("topics" in draft) throw new Error(`No market template for ${input.vertical}`);
-  if ("boxes" in draft) {
+  if ("tabs" in draft) {
     if (!isAlcohol(input.vertical)) throw new Error(`No winery template for ${input.vertical}`);
     return wineryContent(input, draft);
   }
@@ -261,14 +261,16 @@ function starterOptin(input: DraftInput) {
 const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
- * The website-first wine page (Jens, Nov 16 2026): one short box per jump button, then About the
- * winery with photos and videos under each part, then Where to buy. See winery.ts. The AI fills in
+ * The website-first wine page (Jens's final flow, Nov 18 2026): The wine, then one card and jump button
+ * per tab of the winery's own website, then Reviews and Where to buy. See winery.ts. The AI fills in
  * what the winery's own description and website say; everything else starts empty and stays off the
  * live page until the winery fills it in.
  */
 export function wineryContent(input: DraftInput, draft?: AiWineryDraft): LandingContent {
   const content = shell(input, winerySections(input, draft), draft?.optin ?? starterOptin(input));
   content.hero.subtitle = draft?.subtitle || undefined;
+  const sitePhoto = wineSitePhoto(input, draft);
+  if (sitePhoto) content.hero.sitePhoto = sitePhoto;
   content.buttons = wineryButtons(input, draft);
   return content;
 }

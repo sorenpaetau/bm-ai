@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { ButtonLink, Card } from "@/components/ui";
 import { safeColor, safeUrl } from "@/components/landing/helpers";
+import { canCopyPage } from "./_lib/copy";
 import { safeContent } from "./_lib/content";
 import { needsReview, STATUS_LABEL } from "./_lib/publish";
 
@@ -39,7 +40,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           />
           <h2 className="relative font-serif text-2xl font-medium">Welcome, {user.firstName ?? "there"}!</h2>
           <p className="relative mt-1 text-sm text-white/70">
-            Start by adding your first product. Our AI writes a first draft of its page; you check it, then publish.
+            {welcome === "handover"
+              ? "B&M.ai has built your first page. Open it, change anything you like, check each section and approve it to go live. For your next wine, use “Copy for the next wine” and change a few fields."
+              : "Start by adding your first product. Our AI writes a first draft of its page; you check it, then publish."}
           </p>
         </Card>
       )}
@@ -91,6 +94,11 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   {p.status === "published" && (
                     <ButtonLink href={`/p/${p.slug}`} target="_blank" variant="ghost">
                       View live page
+                    </ButtonLink>
+                  )}
+                  {canCopyPage(content) && (
+                    <ButtonLink href={`/portal/products/new?from=${p.id}`} variant="ghost">
+                      Copy for the next wine
                     </ButtonLink>
                   )}
                   <ButtonLink href={`/portal/products/${p.id}`} variant="secondary">

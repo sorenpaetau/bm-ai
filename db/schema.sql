@@ -233,3 +233,20 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS vertical text;
 ALTER TABLE products DROP CONSTRAINT IF EXISTS products_vertical_check;
 ALTER TABLE products ADD CONSTRAINT products_vertical_check
   CHECK (vertical IS NULL OR vertical IN ('wine_spirits', 'cosmetics', 'pharmaceutical', 'retail', 'electronics'));
+
+-- B&M.ai builds the first page for a winery and hands it over (Jens, Nov 18 2026). Staff create the
+-- company and its pages from the admin page, then make a one-time link for the winery's contact. The
+-- link lets them set a password and take the account over. Only a hash of the link's token is stored.
+CREATE TABLE IF NOT EXISTS handovers (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id  uuid NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash  text NOT NULL UNIQUE,
+  created_by  uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  expires_at  timestamptz NOT NULL,
+  used_at     timestamptz
+);
+CREATE INDEX IF NOT EXISTS handovers_company_idx ON handovers (company_id, created_at DESC);
+-- Companies B&M.ai started for a winery (shown on the admin page until the winery takes over).
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS started_by_bm boolean NOT NULL DEFAULT false;

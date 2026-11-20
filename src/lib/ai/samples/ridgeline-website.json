@@ -1,139 +1,180 @@
 {
   "subtitle": "St. Helena, Napa Valley · Estate grown",
-  "boxes": [
-    {
-      "id": "wine",
-      "answer": "Hillside Cabernet from Napa Valley",
-      "body": "Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite. Firm, fine tannins lead to a long finish. A cool spring and a long, mild autumn gave small berries with deep color.",
-      "items": [
-        { "label": "Grape", "value": "92% Cabernet Sauvignon, 8% Merlot" },
-        { "label": "Vintage", "value": "2023" },
-        { "label": "Region", "value": "Hillside estate above St. Helena, Napa Valley" },
-        { "label": "Food pairing", "value": "Grilled ribeye, braised short ribs or aged cheddar" },
-        { "label": "Aging", "value": "20 months in French oak" },
-        { "label": "Drinking", "value": "Now with a decant, or cellar for 15 years" }
-      ],
-      "chips": ["Blackberry", "Cassis", "Black cherry", "Cedar", "Cocoa", "Graphite"],
-      "basis": "brand_pages",
-      "pages": ["https://example.com/wines/cabernet-sauvignon-2023"]
-    },
-    {
-      "id": "shop",
-      "answer": "Gift sets and our other wines",
-      "body": "Order direct from the winery. Gifts can be wrapped, with a handwritten card.",
-      "items": [
-        { "label": "The Ridge Trio", "value": "Cabernet, Chardonnay and Rosé in a wooden box" },
-        { "label": "Holiday Pair", "value": "Two bottles of Cabernet with two crystal glasses" },
-        { "label": "Magnum of Cabernet", "value": "A magnum in a gift tube" },
-        { "label": "Reserve Cabernet Sauvignon", "value": "From the oldest block on the ridge, made only in the best years" },
-        { "label": "Chardonnay", "value": "Barrel fermented, from the cool lower block" },
-        { "label": "Sauvignon Blanc", "value": "Crisp and bright, made in steel" },
-        { "label": "Rosé of Grenache", "value": "Dry, pale, made for summer" },
-        { "label": "Estate Red Blend", "value": "Cabernet, Merlot and Petit Verdot" }
-      ],
-      "chips": [],
-      "basis": "brand_pages",
-      "pages": ["https://example.com/shop", "https://example.com/wines", "https://example.com/gifts"]
-    },
-    {
-      "id": "nearby",
-      "answer": "Stay, eat and explore nearby",
-      "body": "The family's own favorites for a day or a weekend in the valley.",
-      "items": [
-        { "label": "Lodging", "value": "Valley Oak Inn (five minutes away), Cedar House Bed & Breakfast in town" },
-        { "label": "Restaurants", "value": "Olive & Vine for lunch on Main Street, The Grange for dinner" }
-      ],
-      "chips": [],
-      "basis": "brand_pages",
-      "pages": ["https://example.com/visit"]
-    },
-    {
-      "id": "events",
-      "answer": "Thursday to Monday, 10 am to 4 pm",
-      "body": "Tastings are by reservation. Book online or call.",
-      "items": [
-        { "label": "Tasting room hours", "value": "Thursday to Monday, 10 am to 4 pm" },
-        { "label": "Reservations", "value": "Required. Book online or call" },
-        { "label": "Address", "value": "1200 Ridgeline Road, St. Helena, CA" },
-        { "label": "December 6, 2026", "value": "Holiday Open House with live jazz" },
-        { "label": "January 24, 2027", "value": "Library vertical tasting of five Cabernet vintages, in the barrel cave" },
-        { "label": "April 10, 2027", "value": "Spring release party" },
-        { "label": "Summer concerts", "value": "On the lawn, the second Saturday of June, July and August" },
-        { "label": "Weddings", "value": "On the terrace above the vines, May to October" }
-      ],
-      "chips": [],
-      "basis": "brand_pages",
-      "pages": ["https://example.com/visit", "https://example.com/events", "https://example.com/weddings"]
-    }
-  ],
-  "about": [
+  "wine": {
+    "answer": "Hillside Cabernet from Napa Valley",
+    "body": "Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite. Firm, fine tannins lead to a long finish. A cool spring and a long, mild autumn gave small berries with deep color.",
+    "items": [
+      {
+        "label": "Grape",
+        "value": "92% Cabernet Sauvignon, 8% Merlot"
+      },
+      {
+        "label": "Vintage",
+        "value": "2023"
+      },
+      {
+        "label": "Region",
+        "value": "Hillside estate above St. Helena, Napa Valley"
+      },
+      {
+        "label": "Food pairing",
+        "value": "Grilled ribeye, braised short ribs or aged cheddar"
+      },
+      {
+        "label": "Aging",
+        "value": "20 months in French oak"
+      },
+      {
+        "label": "Drinking",
+        "value": "Now with a decant, or cellar for 15 years"
+      }
+    ],
+    "chips": [
+      "Blackberry",
+      "Cassis",
+      "Black cherry",
+      "Cedar",
+      "Cocoa",
+      "Graphite"
+    ],
+    "basis": "brand_pages",
+    "pages": [
+      "https://example.com/wines/cabernet-sauvignon-2023"
+    ],
+    "pageUrl": "https://example.com/wines/cabernet-sauvignon-2023",
+    "photoUrl": "https://example.com/images/cabernet-sauvignon-2023-bottle.jpg"
+  },
+  "tabs": [
     {
       "title": "Visit",
-      "body": "The tasting room sits on the terrace above the vines, with views across the valley to the Mayacamas. Choose the Estate tasting of five wines on the terrace, or the 90-minute Vineyard and cellar walk that ends with a barrel tasting.",
-      "photoHint": "The terrace and the view across the valley",
-      "linkLabel": "Book a visit",
+      "navLabel": "",
+      "body": "Taste on the terrace above the vines, with views across the valley to the Mayacamas. Open Thursday to Monday, 10 am to 4 pm, by reservation. Choose the Estate tasting of five wines, or the 90-minute Vineyard and cellar walk that ends with a barrel tasting.",
+      "linkLabel": "Plan your visit",
       "linkUrl": "https://example.com/visit",
+      "photoUrl": "https://example.com/images/visit-terrace.jpg",
+      "photoAlt": "The tasting terrace above the vines",
       "basis": "brand_pages",
-      "pages": ["https://example.com/visit"]
+      "pages": [
+        "https://example.com/visit"
+      ]
     },
     {
       "title": "Our Story",
+      "navLabel": "",
       "body": "Daniel and Rosa Hale planted their first vines on a steep, rocky ridge above St. Helena in 1998, when everyone told them it was too steep to farm. Today their daughter Maya makes the wines, and the whole family still picks at harvest.",
-      "photoHint": "The Hale family at harvest",
-      "linkLabel": "",
-      "linkUrl": "",
+      "linkLabel": "Read our story",
+      "linkUrl": "https://example.com/our-story",
+      "photoUrl": "https://example.com/images/our-story-estate.jpg",
+      "photoAlt": "The winery on the ridge at golden hour",
       "basis": "brand_pages",
-      "pages": ["https://example.com/our-story"]
+      "pages": [
+        "https://example.com/our-story"
+      ]
     },
     {
       "title": "Wines",
-      "body": "The family farms 40 acres organically and dry farms every block, with no irrigation, so the roots go deep. Every cluster is picked by hand in the cool early morning, and the wines are made in a stone winery built into the hillside, with a barrel cave that stays cool all year.",
-      "photoHint": "The vineyard rows and the barrel cave",
+      "navLabel": "",
+      "body": "Six wines from 40 organically farmed acres: the Reserve Cabernet from the oldest block, a barrel-fermented Chardonnay, a crisp Sauvignon Blanc, a dry Rosé of Grenache and an Estate Red Blend. Every one is aged in the barrel cave built into the hillside.",
       "linkLabel": "See all our wines",
       "linkUrl": "https://example.com/wines",
+      "photoUrl": "https://example.com/images/wines-barrel-cave.jpg",
+      "photoAlt": "Barrels in the cave",
       "basis": "brand_pages",
-      "pages": ["https://example.com/our-story", "https://example.com/wines"]
+      "pages": [
+        "https://example.com/wines",
+        "https://example.com/our-story"
+      ]
+    },
+    {
+      "title": "Shop",
+      "navLabel": "",
+      "body": "Order direct from the winery: gift sets, magnums and wooden boxes, crystal glasses and our own olive oil. Gifts can be wrapped, with a handwritten card.",
+      "linkLabel": "Visit our shop",
+      "linkUrl": "https://example.com/shop",
+      "photoUrl": "https://example.com/images/shop-shelves.jpg",
+      "photoAlt": "The winery shop",
+      "basis": "brand_pages",
+      "pages": [
+        "https://example.com/shop"
+      ]
     },
     {
       "title": "Ridge Club",
-      "body": "Three shipments a year of the newest releases, chosen by Maya, with tasting notes and recipes. Members get first access to library wines, two tastings a year on the house, and an invitation to the members-only harvest lunch.",
-      "photoHint": "Club members at the harvest lunch",
+      "navLabel": "Club",
+      "body": "Three shipments a year of the newest releases, chosen by Maya, with tasting notes and recipes. Members get first access to library wines, two tastings a year on the house and an invitation to the members-only harvest lunch.",
       "linkLabel": "Join the Ridge Club",
       "linkUrl": "https://example.com/club",
+      "photoUrl": "https://example.com/images/club-harvest-lunch.jpg",
+      "photoAlt": "The members' harvest lunch",
       "basis": "brand_pages",
-      "pages": ["https://example.com/club"]
+      "pages": [
+        "https://example.com/club"
+      ]
     },
     {
       "title": "Gift Guide",
+      "navLabel": "Gifts",
       "body": "The Ridge Trio for the holidays, the Holiday Pair for a host, and a magnum for a big celebration. Gift cards come in any amount. Order by December 15 for Christmas delivery.",
-      "photoHint": "The gift boxes, wrapped and ready",
       "linkLabel": "See the gift guide",
       "linkUrl": "https://example.com/gifts",
+      "photoUrl": "https://example.com/images/gift-boxes.jpg",
+      "photoAlt": "Gift boxes, wrapped and ready",
       "basis": "brand_pages",
-      "pages": ["https://example.com/gifts"]
+      "pages": [
+        "https://example.com/gifts"
+      ]
+    },
+    {
+      "title": "Events",
+      "navLabel": "",
+      "body": "Holiday Open House with live jazz on December 6, 2026. Library vertical tasting of five Cabernet vintages in the barrel cave on January 24, 2027. Spring release party on April 10, 2027.",
+      "linkLabel": "See all events",
+      "linkUrl": "https://example.com/events",
+      "photoUrl": "https://example.com/images/events-lawn-concert.jpg",
+      "photoAlt": "A concert on the lawn at dusk",
+      "basis": "brand_pages",
+      "pages": [
+        "https://example.com/events"
+      ]
     },
     {
       "title": "Weddings & Gatherings",
+      "navLabel": "Weddings",
       "body": "Say yes on the terrace above the vines, with room for up to 120 guests from May to October. Private dinners and company gatherings for up to 40 guests are held in the barrel cave all year.",
-      "photoHint": "A wedding on the terrace",
       "linkLabel": "Plan your event",
       "linkUrl": "https://example.com/weddings",
+      "photoUrl": "https://example.com/images/wedding-terrace.jpg",
+      "photoAlt": "A wedding arch on the terrace",
       "basis": "brand_pages",
-      "pages": ["https://example.com/weddings"]
+      "pages": [
+        "https://example.com/weddings"
+      ]
     },
     {
       "title": "Recipes",
+      "navLabel": "",
       "body": "Cook along with the winery: Rosa's braised short ribs with Cabernet, grilled ribeye with rosemary salt, and wild mushroom risotto for the Chardonnay. Each recipe comes with the wine the family pours with it.",
-      "photoHint": "Rosa's short ribs with a glass of Cabernet",
       "linkLabel": "Get the recipes",
       "linkUrl": "https://example.com/recipes",
+      "photoUrl": "https://example.com/images/recipe-short-ribs.jpg",
+      "photoAlt": "Rosa's short ribs with a glass of Cabernet",
       "basis": "brand_pages",
-      "pages": ["https://example.com/recipes"]
+      "pages": [
+        "https://example.com/recipes"
+      ]
     }
   ],
   "whereToBuy": [
-    { "name": "Vivino", "url": "https://www.vivino.com/", "page": "https://example.com/find-our-wines" },
-    { "name": "Total Wine & More", "url": "https://www.totalwine.com/", "page": "https://example.com/find-our-wines" }
+    {
+      "name": "Vivino",
+      "url": "https://www.vivino.com/",
+      "page": "https://example.com/find-our-wines"
+    },
+    {
+      "name": "Total Wine & More",
+      "url": "https://www.totalwine.com/",
+      "page": "https://example.com/find-our-wines"
+    }
   ],
   "shopUrl": "https://example.com/shop",
   "contactUrl": "https://example.com/contact",
@@ -141,5 +182,5 @@
     "headline": "Register this bottle",
     "prompt": "Get news from the ridge, first word on new releases and invitations to events at the winery."
   },
-  "heroPhoto": 1
+  "heroPhoto": 0
 }

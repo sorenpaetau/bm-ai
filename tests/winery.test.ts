@@ -9,13 +9,13 @@ import { sampleWineryAnswer, sampleWineryDraft, sampleWineryInput } from "../src
 import { buildDraftContent, starterContent, type DraftInput } from "../src/lib/ai/template";
 import { AiWineryDraft, WINERY_BOXES } from "../src/lib/ai/winery";
 import { sectionsToShow, tidySection, videoEmbed } from "../src/components/landing/helpers";
-import { publishBlockers, signoffStatement } from "../src/app/portal/_lib/publish";
+import { publishBlockers, signoffStatement, websitePictureCount } from "../src/app/portal/_lib/publish";
 import { demoWineryContent } from "../src/lib/demo-winery";
 import { LandingContent, type Section } from "../src/lib/landing";
 
-// The website-first wine page (Jens, Nov 16 2026): the winery gives the wine, a short description and
-// its website; the AI writes the boxes it may; awards, ratings, ABV, discounts and reviews are the
-// winery's alone; empty boxes stay off the page.
+// The website-first wine page (Jens's final flow, Nov 18 2026): the winery gives the wine (or its SKU)
+// and its website; the page mirrors the winery's own website tabs, with pictures from its own site
+// only; awards, ratings, ABV and reviews are the winery's alone; empty sections stay off the page.
 
 const winery: DraftInput = {
   companyName: "Ridgeline Cellars",
@@ -43,55 +43,87 @@ test("without a website the writer works from the description only", () => {
   assert.match(request.prompt, /none given/);
 });
 
-test("the AI fills the four combined boxes but never the reviews box: it isn't in its answer shape", () => {
+test("the AI writes The wine and the website tabs, never the reviews: they aren't in its answer shape", () => {
   const shape = JSON.stringify(z.toJSONSchema(AiWineryDraft));
-  for (const id of ["wine", "shop", "nearby", "events"]) assert.ok(shape.includes(`"${id}"`), id);
-  assert.deepEqual(WINERY_BOXES.filter((b) => b.place === "top").map((b) => b.id), ["wine", "shop", "nearby", "events"]);
+  assert.ok(shape.includes('"tabs"') && shape.includes('"wine"') && shape.includes('"photoUrl"'));
+  assert.ok(!shape.includes('"reviews"'));
+  assert.deepEqual(WINERY_BOXES.map((b) => [b.id, b.place]), [["wine", "top"], ["reviews", "end"]]);
   assert.deepEqual(WINERY_BOXES.filter((b) => b.ai === "never").map((b) => b.id), ["reviews"]);
-  const bad = { subtitle: "", boxes: [{ id: "reviews", answer: "Great", body: "", items: [], chips: [], basis: "brand_pages", pages: [] }], about: [], whereToBuy: [], shopUrl: "", contactUrl: "", optin: { headline: "", prompt: "" } };
-  assert.equal(AiWineryDraft.safeParse(bad).success, false);
 });
 
-test("rows only the winery may fill (alcohol, awards, rating, discounts) never take the AI's words", () => {
+test("rows only the winery may fill (alcohol, awards, rating) never take the AI's words", () => {
   const answer = sampleWineryAnswer(sampleWineryInput()) as AiWineryDraft;
   const sneaky = {
     ...answer,
-    boxes: answer.boxes.map((b) =>
-      b.id === "wine"
-        ? { ...b, items: [...b.items, { label: "Alcohol (ABV)", value: "14.5%" }, { label: "Awards", value: "Gold medal" }, { label: "Score", value: "95 points" }] }
-        : b.id === "shop"
-          ? { ...b, items: [...b.items, { label: "Discounts", value: "15% off" }, { label: "Member savings", value: "Save 15%" }] }
-          : b,
-    ),
+    wine: { ...answer.wine, items: [...answer.wine.items, { label: "Alcohol (ABV)", value: "14.5%" }, { label: "Awards", value: "Gold medal" }, { label: "Score", value: "95 points" }] },
   };
   const content = buildDraftContent(sneaky, sampleWineryInput());
   const rows = content.sections.flatMap((s) => (s.type === "topic" ? s.items : []));
-  for (const label of ["Alcohol (ABV)", "Awards", "Wine rating", "Discounts"]) {
+  for (const label of ["Alcohol (ABV)", "Awards", "Wine rating"]) {
     const row = rows.find((r) => r.label === label);
     assert.ok(row, `the empty ${label} row is there for the winery`);
     assert.equal(row.value, "", label);
   }
-  assert.ok(!rows.some((r) => r.label === "Score" || r.label === "Member savings"));
+  assert.ok(!rows.some((r) => r.label === "Score"));
 });
 
-test("About follows the winery's own menu, with a suggested picture after each part and links only to its own site", () => {
+test("the jump buttons are the winery's own website tabs, in its menu order, each linking to that tab", () => {
   const { content } = sampleWineryDraft();
-  const about = content.sections.find((s) => s.type === "about")!;
-  assert.ok(about.type === "about");
-  assert.deepEqual(about.parts.map((p) => p.title), ["Visit", "Our Story", "Wines", "Ridge Club", "Gift Guide", "Weddings & Gatherings", "Recipes"]);
-  assert.deepEqual(about.parts.map((p) => p.id).slice(0, 4), ["visit", "our-story", "wines", "ridge-club"]);
-  assert.ok(about.parts.every((p) => p.photoHint && p.images.length === 0), "suggestions only: the AI never adds pictures");
-  assert.equal(about.parts.find((p) => p.id === "ridge-club")?.link?.url, "https://example.com/club");
-  // A part linking off the winery's own site loses its link, and a Contact us link must be on the site too.
+  const tabs = content.sections.filter((s) => s.type === "tab");
+  assert.deepEqual(tabs.map((t) => t.title), ["Visit", "Our Story", "Wines", "Shop", "Ridge Club", "Gift Guide", "Events", "Weddings & Gatherings", "Recipes"]);
+  assert.deepEqual(content.sections.map((s) => s.id), [
+    "wine", "visit", "our-story", "wines", "shop", "ridge-club", "gift-guide", "events", "weddings-gatherings", "recipes", "reviews", "buy",
+  ]);
+  const club = tabs.find((t) => t.id === "ridge-club")!;
+  assert.ok(club.type === "tab");
+  assert.equal(club.link?.url, "https://example.com/club");
+  assert.equal(club.navLabel, "Club");
+  assert.equal(club.icon, "star");
+  // The wine box links to the wine's own page on the winery's site.
+  const wineBox = content.sections.find((s) => s.id === "wine")!;
+  assert.ok(wineBox.type === "topic" && wineBox.link?.url === "https://example.com/wines/cabernet-sauvignon-2023");
+});
+
+test("tabs, links and pictures only from the winery's own site; Home, Contact and Reviews aren't tabs", () => {
   const answer = sampleWineryAnswer(sampleWineryInput()) as AiWineryDraft;
   const offSite = buildDraftContent(
-    { ...answer, contactUrl: "https://evil.example.net/contact", about: answer.about.map((p) => ({ ...p, linkUrl: "https://evil.example.net/" })) },
+    {
+      ...answer,
+      contactUrl: "https://evil.example.net/contact",
+      wine: { ...answer.wine, pageUrl: "https://shop.example.net/cab" },
+      tabs: [
+        ...answer.tabs.map((t) => ({ ...t, linkUrl: "https://evil.example.net/" })),
+        { ...answer.tabs[0], title: "Contact", body: "Call us." },
+        { ...answer.tabs[0], title: "Reviews", body: "Great." },
+        { ...answer.tabs[0], title: "Off-site only", body: "", linkUrl: "https://evil.example.net/x" },
+      ],
+    },
     sampleWineryInput(),
   );
-  const offAbout = offSite.sections.find((s) => s.type === "about")!;
-  assert.ok(offAbout.type === "about" && offAbout.parts.every((p) => !p.link));
+  const tabs = offSite.sections.filter((s) => s.type === "tab");
+  assert.ok(tabs.every((t) => t.type === "tab" && !t.link && !t.sitePhoto), "no off-site links, and nowhere off-site to look for pictures");
+  assert.ok(!tabs.some((t) => ["Contact", "Reviews", "Off-site only"].includes(t.title)));
+  assert.equal(offSite.hero.sitePhoto, undefined, "the bottle's picture is only looked for on the winery's own wine page");
   assert.equal(offSite.buttons.find((b) => b.slot === "contact"), undefined);
-  assert.equal(content.buttons.find((b) => b.slot === "contact")?.url, "https://example.com/contact");
+
+  const onSite = buildDraftContent(answer, sampleWineryInput());
+  assert.deepEqual(onSite.hero.sitePhoto, { page: "https://example.com/wines/cabernet-sauvignon-2023", suggested: "https://example.com/images/cabernet-sauvignon-2023-bottle.jpg" });
+  const visit = onSite.sections.find((s) => s.id === "visit")!;
+  assert.ok(visit.type === "tab" && visit.sitePhoto?.page === "https://example.com/visit");
+  assert.equal(onSite.buttons.find((b) => b.slot === "contact")?.url, "https://example.com/contact");
+});
+
+test("the sample shows pictures 'from the winery's website' on top and on every tab, marked with their page", () => {
+  const { content } = sampleWineryDraft();
+  assert.equal(content.hero.imageUrl, "/demo/ridgeline-cabernet.svg");
+  assert.equal(content.hero.imageSource, "example.com/wines/cabernet-sauvignon-2023");
+  for (const t of content.sections.filter((s) => s.type === "tab")) {
+    assert.equal(t.images?.length, 1, t.id);
+    assert.match(t.images![0].source ?? "", /^example\.com\//, t.id);
+    assert.ok(t.type === "tab" && !t.sitePhoto, "where-to-look notes are cleared once pictures are in");
+  }
+  assert.equal(websitePictureCount(content), 10);
+  assert.match(signoffStatement("Ridgeline Cellars", 10), /the 10 pictures B&M\.ai's AI copied from our own website/);
 });
 
 test("the writer is told the bottle's SKU and to mirror the winery's menu", () => {
@@ -119,14 +151,16 @@ test("the sample draft matches today's answer shape and passes the rule checker"
   assert.ok(!text.includes("harbor wine bar"));
 });
 
-test("the sample draft is all 'needs review' and records which of the winery's pages each box came from", () => {
+test("the sample draft is all 'needs review' and records which of the winery's pages each section came from", () => {
   const { content } = sampleWineryDraft();
   const ai = content.sections.filter((s) => s.aiGenerated);
-  assert.deepEqual(ai.map((s) => s.id), ["wine", "shop", "nearby", "events", "about", "buy"]);
+  assert.deepEqual(ai.map((s) => s.id), [
+    "wine", "visit", "our-story", "wines", "shop", "ridge-club", "gift-guide", "events", "weddings-gatherings", "recipes", "buy",
+  ]);
   assert.ok(ai.every((s) => !s.reviewed));
   const events = content.sections.find((s) => s.id === "events")!;
-  assert.ok(events.sources.includes("Your page: example.com/visit"), events.sources.join(" | "));
-  assert.ok(publishBlockers(content, true).length >= 6, "every AI box must be checked before publishing");
+  assert.ok(events.sources.includes("Your page: example.com/events"), events.sources.join(" | "));
+  assert.ok(publishBlockers(content, true).length >= 11, "every AI section must be checked before publishing");
   // The webstore button comes from the shop page the AI found on the winery's own site.
   assert.equal(content.buttons.find((b) => b.slot === "webstore")?.url, "https://example.com/shop");
   assert.match(content.disclaimer ?? "", /made-up winery/);
@@ -138,15 +172,16 @@ test("a shop link off the winery's own site never becomes the webstore button", 
   assert.equal(content.buttons.find((b) => b.slot === "webstore"), undefined);
 });
 
-test("boxes the winery leaves empty, and their jump buttons, stay off the page", () => {
+test("tabs the winery leaves empty, and their jump buttons, stay off the page", () => {
   const content = starterContent(winery);
-  const shop = content.sections.find((s) => s.id === "shop")!;
-  assert.equal(tidySection(shop), null);
-  assert.ok(shop.type === "topic");
-  const filled = { ...shop, items: shop.items.map((i) => (i.label === "Discounts" ? { ...i, value: "15% off" } : i)) } as Section;
-  assert.ok(tidySection(filled));
-  // Photos alone are enough for a box (Jens: upload pictures under each box).
-  assert.ok(tidySection({ ...shop, images: [{ url: "/media/abc", alt: "" }] } as Section));
+  const club = content.sections.find((s) => s.id === "wine-club")!;
+  assert.equal(tidySection(club), null);
+  assert.ok(club.type === "tab");
+  assert.ok(tidySection({ ...club, body: "Three shipments a year." }));
+  assert.ok(tidySection({ ...club, link: { label: "Join the club", url: "https://example.com/club" } }), "a link alone is useful");
+  assert.equal(tidySection({ ...club, link: { label: "Join", url: "javascript:alert(1)" } }), null, "a bad link doesn't count");
+  assert.ok(tidySection({ ...club, images: [{ url: "/media/abc", alt: "" }] }), "a picture alone is enough");
+  assert.deepEqual(sectionsToShow(content.sections).map((s) => s.id), ["wine"]);
 });
 
 test("About shows only the parts with text, photos or videos; Where to buy shows only shops with a link", () => {
@@ -191,12 +226,14 @@ test("videos on a section stay on the page only if we can play them", () => {
   assert.equal(withVideo.videos?.length, 1);
 });
 
-test("the finished demo page is valid, shows every box and has no AI notes left", () => {
+test("the finished demo page is valid, shows every section and has no AI notes left", () => {
   const content = LandingContent.parse(demoWineryContent());
   const shown = sectionsToShow(content.sections, { now: new Date("2026-11-16T12:00:00Z") }).map((s) => s.id);
-  assert.deepEqual(shown, ["wine", "shop", "nearby", "events", "about", "buy", "reviews"]);
+  assert.deepEqual(shown, ["wine", "visit", "our-story", "wines", "shop", "ridge-club", "gift-guide", "events", "weddings-gatherings", "recipes", "reviews", "buy"]);
   const wineRows = content.sections.find((s) => s.id === "wine");
   assert.ok(wineRows?.type === "topic" && wineRows.items.some((i) => i.label === "Awards" && i.value.startsWith("Gold")));
+  const buy = content.sections.find((s) => s.type === "buy");
+  assert.deepEqual(buy?.type === "buy" && buy.items.filter((i) => i.url).map((i) => i.name), ["Vivino", "Total Wine & More", "Delectable"]);
   assert.deepEqual(publishBlockers(content, true), []);
 });
 
@@ -214,72 +251,66 @@ test("the test bench job for a winery carries its website pages", () => {
   assert.ok(job.includes(request.system));
 });
 
-test("a fresh AI draft keeps the photos and videos under each About part and on each box", async () => {
+test("a fresh AI draft keeps the photos the winery chose on each tab and box", async () => {
   const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
-  const current = starterContent(winery);
-  const about = current.sections.find((s) => s.type === "about")!;
-  if (about.type === "about") {
-    about.parts[0].images = [{ url: "/media/family", alt: "" }];
-    about.parts[0].videos = [{ url: "https://youtu.be/dQw4w9WgXcQ", title: "" }];
-  }
-  const events = current.sections.find((s) => s.id === "events")!;
-  events.videos = [{ url: "https://vimeo.com/76979871", title: "Harvest" }];
-  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
-  const freshAbout = fresh.sections.find((s) => s.type === "about")!;
-  assert.ok(freshAbout.type === "about");
-  // The starter's "Visit us" part matches no part of the fresh draft by name, so its photos move to the
-  // closest one ("Visit"); a starter part the winery never wrote in isn't kept as a leftover.
-  const visit = freshAbout.parts.find((p) => p.id === "visit")!;
-  assert.equal(visit.images[0].url, "/media/family");
-  assert.equal(visit.videos.length, 1);
-  assert.match(visit.body, /terrace/, "the text is the fresh draft's");
-  assert.equal(fresh.sections.find((s) => s.id === "events")!.videos?.[0].title, "Harvest");
+  const current = sampleWineryDraft().content;
+  const visit = current.sections.find((s) => s.id === "visit")!;
+  visit.images = [{ url: "/media/our-terrace", alt: "" }];
+  visit.videos = [{ url: "https://vimeo.com/76979871", title: "Harvest" }];
+  current.hero.imageUrl = "/media/bottle";
+  current.hero.imageSource = undefined;
+  const fresh = carryOverBrandMedia(current, buildDraftContent(sampleWineryAnswer(sampleWineryInput()), sampleWineryInput()));
+  const freshVisit = fresh.sections.find((s) => s.id === "visit")!;
+  assert.equal(freshVisit.images?.[0].url, "/media/our-terrace");
+  assert.equal(freshVisit.videos?.[0].title, "Harvest");
+  assert.equal(fresh.hero.imageUrl, "/media/bottle");
+  assert.equal(fresh.hero.imageSource, undefined, "the winery's own upload isn't marked as from the website");
 });
 
-test("a fresh draft of an older wine page moves its photos to the new boxes instead of dropping them", async () => {
+test("a fresh draft of a Nov 16 page moves the About and box photos onto the closest website tab", async () => {
   const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
+  const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] as string[] };
+  const box = (id: string, url: string): Section => ({ ...own, id, type: "topic", title: id, answer: "", body: "", items: [], chips: [], images: [{ url, alt: "" }] });
   const current = starterContent(winery);
   current.sections = [
-    { id: "story", type: "story", title: "Our story", body: "x", images: [{ url: "/media/story", alt: "" }], visible: true, aiGenerated: false, reviewed: true, sources: [] },
-    { id: "gifts", type: "products", title: "Gift sets", items: [], images: [{ url: "/media/gift", alt: "" }], visible: true, aiGenerated: false, reviewed: true, sources: [] },
-    { id: "club", type: "memberships", title: "Club", tiers: [], images: [{ url: "/media/club", alt: "" }], visible: true, aiGenerated: false, reviewed: true, sources: [] },
+    box("awards", "/media/medal"),
+    box("nearby", "/media/inn"),
+    box("giftsets", "/media/box"),
+    {
+      ...own, id: "about", type: "about", title: "About", body: "",
+      parts: [
+        { id: "our-story", title: "Our story", body: "x", images: [{ url: "/media/family", alt: "" }], videos: [], sources: [] },
+        { id: "wine-club", title: "Wine club", body: "x", images: [{ url: "/media/club", alt: "" }], videos: [], sources: [] },
+      ],
+    },
   ];
-  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
-  const about = fresh.sections.find((s) => s.type === "about")!;
-  assert.ok(about.type === "about");
-  assert.equal(about.parts.find((p) => p.id === "our-story")!.images[0].url, "/media/story");
-  assert.ok(about.parts.find((p) => p.id === "ridge-club")!.images.some((i) => i.url === "/media/club"), "goes to the winery's own club part");
-  assert.ok(fresh.sections.find((s) => s.id === "shop")!.images!.some((i) => i.url === "/media/gift"));
-});
-
-test("a fresh draft of a page with the twelve Nov 16 boxes moves their photos into the four new boxes", async () => {
-  const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
-  const box = (id: string, url: string): Section => ({
-    id, type: "topic", title: id, visible: true, aiGenerated: false, reviewed: true, sources: [], answer: "", body: "", items: [], chips: [],
-    images: [{ url, alt: "" }],
-  });
-  const current = starterContent(winery);
-  current.sections = [box("awards", "/media/medal"), box("giftsets", "/media/box"), box("lodging", "/media/inn"), box("tastingroom", "/media/terrace")];
-  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
+  const fresh = carryOverBrandMedia(current, buildDraftContent(sampleWineryAnswer(sampleWineryInput()), sampleWineryInput()));
   const photos = (id: string) => (fresh.sections.find((s) => s.id === id)?.images ?? []).map((i) => i.url);
   assert.deepEqual(photos("wine"), ["/media/medal"]);
-  assert.deepEqual(photos("shop"), ["/media/box"]);
-  assert.deepEqual(photos("nearby"), ["/media/inn"]);
-  assert.deepEqual(photos("events"), ["/media/terrace"]);
+  assert.deepEqual(photos("visit"), ["/media/inn"]);
+  assert.deepEqual(photos("gift-guide"), ["/media/box"]);
+  assert.deepEqual(photos("our-story"), ["/media/family"]);
+  assert.deepEqual(photos("ridge-club"), ["/media/club"]);
 });
 
-test("a fresh draft keeps About parts the winery added itself", async () => {
+test("an old About whose id is now a website tab still keeps its parts' photos", async () => {
   const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
+  const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] as string[] };
   const current = starterContent(winery);
-  const about = current.sections.find((s) => s.type === "about")!;
-  assert.ok(about.type === "about");
-  about.parts.push({ id: "part-abc", title: "Our dog", body: "Meet Rosie.", images: [{ url: "/media/rosie", alt: "" }], videos: [], sources: [] });
-  const fresh = carryOverBrandMedia(current, sampleWineryDraft().content);
-  const freshAbout = fresh.sections.find((s) => s.type === "about")!;
-  assert.ok(freshAbout.type === "about");
-  const kept = freshAbout.parts.find((p) => p.id === "part-abc");
-  assert.equal(kept?.images[0].url, "/media/rosie");
-  assert.equal(kept?.body, "Meet Rosie.");
+  current.sections = [
+    {
+      ...own, id: "about", type: "about", title: "About", body: "", images: [{ url: "/media/estate", alt: "" }],
+      parts: [{ id: "wine-club", title: "Wine club", body: "x", images: [{ url: "/media/club", alt: "" }], videos: [], sources: [] }],
+    },
+  ];
+  const draft = buildDraftContent(sampleWineryAnswer(sampleWineryInput()), sampleWineryInput());
+  const tab = draft.sections.find((s) => s.type === "tab")!;
+  draft.sections = draft.sections.map((s) => (s === tab ? { ...s, id: "about", title: "About" } : s));
+  const fresh = carryOverBrandMedia(current, draft);
+  const all = fresh.sections.flatMap((s) => (s.images ?? []).map((i) => i.url));
+  assert.ok(all.includes("/media/estate"), "the About section's own photo stays on the About tab");
+  assert.ok(all.includes("/media/club"), "the old part's photo moves to the closest tab");
+  assert.equal(all.filter((u) => u === "/media/estate").length, 1);
 });
 
 test("rows in the Events box hide themselves after their date", async () => {

@@ -37,6 +37,21 @@ export const STATUS_LABEL: Record<string, string> = {
  * What the person publishing a page agrees to, word for word. Stored with every publish (page_signoffs)
  * so there is a record of who approved what the page says, and when.
  */
-export function signoffStatement(companyName: string) {
-  return `I have read this page and approve it. The facts, photos and videos on it are correct, and ${companyName} has the right to use them.`;
+export function signoffStatement(companyName: string, websitePictures = 0) {
+  const fromSite =
+    websitePictures > 0
+      ? ` That includes the ${websitePictures === 1 ? "picture" : `${websitePictures} pictures`} B&M.ai's AI copied from our own website.`
+      : "";
+  return `I have read this page and approve it. The facts, photos and videos on it are correct, and ${companyName} has the right to use them.${fromSite}`;
+}
+
+/**
+ * Pictures on the page that our AI copied from the brand's own website (Nov 20 2026), counted for the
+ * sign-off: the main photo and any section picture marked with the page it came from. Hidden sections
+ * don't count (they don't go live).
+ */
+export function websitePictureCount(content: LandingContent): number {
+  let n = content.hero.imageUrl && content.hero.imageSource ? 1 : 0;
+  for (const s of content.sections) if (s.visible) n += (s.images ?? []).filter((i) => i.url && i.source).length;
+  return n;
 }

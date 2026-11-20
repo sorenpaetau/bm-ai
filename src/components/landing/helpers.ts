@@ -185,6 +185,11 @@ function tidyFields(section: Section, hasImages: boolean): Section | null {
         .filter((p) => filled(p.body) || p.images.length || p.videos.length);
       return filled(section.body) || parts.length || hasImages ? { ...section, parts } : null;
     }
+    case "tab": {
+      // A website tab with only a link still helps ("Join the club"); a link needs its button text.
+      const link = section.link && filled(section.link.label) && safeUrl(section.link.url) ? section.link : undefined;
+      return filled(section.body) || link || hasImages ? { ...section, link } : null;
+    }
     case "buy": {
       // A shop needs a link to be useful; "Vivino" with no link stays off the page.
       const items = section.items.filter((i) => filled(i.name) && safeUrl(i.url));

@@ -9,6 +9,8 @@ import { sql } from "./db";
 // Swap for a hosted auth provider later if needed; callers only use the functions below.
 
 const COOKIE = "bm_session";
+/** For B&M.ai staff: the company whose pages they are building (see requireUser). */
+const STAFF_COMPANY_COOKIE = "bm_staff_company";
 const SESSION_DAYS = 30;
 
 export type CurrentUser = {
@@ -19,6 +21,8 @@ export type CurrentUser = {
   role: "admin" | "editor" | "bm_admin";
   companyId: string | null;
   companyName: string | null;
+  /** True when B&M.ai staff are building this company's pages for it (before handing them over). */
+  staff?: boolean;
 };
 
 export function hashPassword(password: string) {
@@ -61,12 +65,44 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   return user ?? null;
 }
 
-/** For portal pages: a signed-in manufacturer user, or redirect to /login. */
+/**
+ * For portal pages: a signed-in manufacturer user, or redirect to /login. B&M.ai staff who chose a
+ * company on the admin page ("Build pages for this winery") get the portal as that company, marked
+ * `staff`, so they can build its first pages before handing them over (Jens, Nov 18 2026). Staff can't
+ * publish: the company approves and publishes its own pages.
+ */
 export async function requireUser(): Promise<CurrentUser & { companyId: string }> {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (!user.companyId) redirect("/admin");
+  if (!user.companyId) {
+    const company = user.role === "bm_admin" ? await staffCompany() : null;
+    if (!company) redirect("/admin");
+    return { ...user, companyId: company.id, companyName: company.name, staff: true };
+  }
   return user as CurrentUser & { companyId: string };
+}
+
+async function staffCompany(): Promise<{ id: string; name: string } | null> {
+  const id = (await cookies()).get(STAFF_COMPANY_COOKIE)?.value ?? "";
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
+  const [company] = await sql<{ id: string; name: string }[]>`SELECT id, name FROM companies WHERE id = ${id}`;
+  return company ?? null;
+}
+
+/** B&M.ai staff: start (or stop, with null) building a company's pages in the portal. */
+export async function setStaffCompany(companyId: string | null) {
+  const jar = await cookies();
+  if (!companyId) {
+    jar.delete(STAFF_COMPANY_COOKIE);
+    return;
+  }
+  jar.set(STAFF_COMPANY_COOKIE, companyId, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 12 * 60 * 60,
+  });
 }
 
 /** For /admin pages: B&M.ai staff only. */

@@ -13,9 +13,24 @@ import { createProduct, type ActionState } from "../actions";
  * an editable first draft. While the AI writer is off, wineries can open a sample draft for our made-up
  * Ridgeline Cellars instead.
  */
-export function NewPageForm({ aiAvailable, website, vertical }: { aiAvailable: boolean; website: string | null; vertical: Vertical }) {
+export function NewPageForm({
+  aiAvailable,
+  website,
+  vertical,
+  pages = [],
+  from,
+}: {
+  aiAvailable: boolean;
+  website: string | null;
+  vertical: Vertical;
+  /** The company's pages, to copy for the next product. */
+  pages?: Array<{ id: string; name: string }>;
+  from?: string;
+}) {
   const [state, action, pending] = useActionState<ActionState, FormData>(createProduct, {});
   const v = state.values ?? {};
+  const [copyFrom, setCopyFrom] = useState(v.from ?? from ?? "");
+  const copying = pages.find((p) => p.id === copyFrom);
   const startWith = PAGE_MARKETS.find((m) => m.vertical === (v.vertical || vertical) && m.ready)?.vertical ?? "wine_spirits";
   const [market, setMarket] = useState<string>(startWith);
   const chosen = PAGE_MARKETS.find((m) => m.vertical === market) ?? PAGE_MARKETS[0];
@@ -27,6 +42,29 @@ export function NewPageForm({ aiAvailable, website, vertical }: { aiAvailable: b
       <Card>
         <form action={action} className="space-y-5">
           <FormError message={state.error} />
+          {pages.length > 0 && (
+            <Field
+              label="Start from"
+              hint={
+                copying
+                  ? `Keeps everything about your brand from “${copying.name}”: website tabs, pictures, links and Where to buy. You only add the new bottle's photo and details.`
+                  : "Made a page already? Copy it for your next wine and change a few fields."
+              }
+            >
+              <select name="from" value={copyFrom} onChange={(e) => setCopyFrom(e.target.value)} className={inputClass}>
+                <option value="">A new first draft from my website</option>
+                {pages.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    A copy of {p.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
+          )}
+          {copying ? (
+            <CopyFields values={v} />
+          ) : (
+          <>
           <ol className="space-y-6">
             <li className="space-y-3">
               <StepTitle n={1}>Select your market template</StepTitle>
@@ -68,7 +106,7 @@ export function NewPageForm({ aiAvailable, website, vertical }: { aiAvailable: b
                 label={wine ? "Your winery's website" : "Your website"}
                 hint={
                   wine
-                    ? "The AI reads your own site and lays out the draft like it: visit us, your story, wines, shop, wine club, gift guide, events, recipes, where to buy. It writes text only and never copies pictures, awards, ratings, alcohol content, prices or discounts: you add those yourself."
+                    ? "The AI reads your own site and lays out the draft like it: one jump button per tab of your site (visit, your story, wines, shop, wine club, gift guide, events, recipes...), each with a picture from that tab of your own site and a link to it. It never copies awards, ratings, alcohol content, prices or discounts: you add those yourself. You approve every word and picture before the page goes live."
                     : "The AI reads your own site and writes the draft from it. It never copies pictures, reviews, ratings, prices or discounts: you add those yourself."
                 }
               >
@@ -92,7 +130,9 @@ export function NewPageForm({ aiAvailable, website, vertical }: { aiAvailable: b
               <span className="font-medium">Write the first draft for me from my website</span>
               <span className="block text-muted">
                 {aiAvailable
-                  ? "Every AI-written box is marked “Needs review”. You read it, change anything, upload your pictures where the AI suggests them, then approve it before it goes live."
+                  ? wine
+                    ? "Every AI-written section is marked “Needs review”, and every picture it copied from your website is marked “From your website”. You read it, change anything, then approve it before it goes live."
+                    : "Every AI-written box is marked “Needs review”. You read it, change anything, upload your pictures where the AI suggests them, then approve it before it goes live."
                   : `The AI writer isn't switched on for this site yet, so you'll start from the empty page layout instead.${wine ? " To see what the AI writes, open the sample below." : ""}`}
               </span>
             </span>
@@ -101,7 +141,15 @@ export function NewPageForm({ aiAvailable, website, vertical }: { aiAvailable: b
             {pending ? "Reading your website and writing… this can take a minute or two" : "Create editable first draft"}
           </Button>
 
-          {!aiAvailable && wine && (
+          </>
+          )}
+          {copying && (
+            <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+              {pending ? "Copying…" : "Copy the page"}
+            </Button>
+          )}
+
+          {!copying && !aiAvailable && wine && (
             <div className="rounded-xl border border-dashed border-line p-4 text-sm">
               <p className="font-medium">See what the AI writes</p>
               <p className="mt-1 text-muted">
@@ -115,6 +163,23 @@ export function NewPageForm({ aiAvailable, website, vertical }: { aiAvailable: b
           )}
         </form>
       </Card>
+    </div>
+  );
+}
+
+/** Copying a page: only the new product's name, a line about it and its item code. */
+function CopyFields({ values: v }: { values: Record<string, string> }) {
+  return (
+    <div className="space-y-4">
+      <Field label="The new wine or product" hint="As it should appear on the page, e.g. “Chardonnay 2024”.">
+        <input name="name" maxLength={120} defaultValue={v.name} className={inputClass} placeholder="Chardonnay 2024" />
+      </Field>
+      <Field label="Short description (optional)" hint="A sentence or two about it. It starts the wine box; you can change it on the next page.">
+        <textarea name="description" rows={3} maxLength={4000} defaultValue={v.description} className={inputClass} />
+      </Field>
+      <Field label="Item code (SKU, optional)" hint="Leave it empty and we'll make one from the name.">
+        <input name="sku" maxLength={60} defaultValue={v.sku} className={`${inputClass} sm:max-w-60`} />
+      </Field>
     </div>
   );
 }
