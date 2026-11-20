@@ -293,6 +293,26 @@ test("a fresh draft of a Nov 16 page moves the About and box photos onto the clo
   assert.deepEqual(photos("ridge-club"), ["/media/club"]);
 });
 
+test("an old About whose id is now a website tab still keeps its parts' photos", async () => {
+  const { carryOverBrandMedia } = await import("../src/lib/ai/brand-media");
+  const own = { visible: true, aiGenerated: false, reviewed: true, sources: [] as string[] };
+  const current = starterContent(winery);
+  current.sections = [
+    {
+      ...own, id: "about", type: "about", title: "About", body: "", images: [{ url: "/media/estate", alt: "" }],
+      parts: [{ id: "wine-club", title: "Wine club", body: "x", images: [{ url: "/media/club", alt: "" }], videos: [], sources: [] }],
+    },
+  ];
+  const draft = buildDraftContent(sampleWineryAnswer(sampleWineryInput()), sampleWineryInput());
+  const tab = draft.sections.find((s) => s.type === "tab")!;
+  draft.sections = draft.sections.map((s) => (s === tab ? { ...s, id: "about", title: "About" } : s));
+  const fresh = carryOverBrandMedia(current, draft);
+  const all = fresh.sections.flatMap((s) => (s.images ?? []).map((i) => i.url));
+  assert.ok(all.includes("/media/estate"), "the About section's own photo stays on the About tab");
+  assert.ok(all.includes("/media/club"), "the old part's photo moves to the closest tab");
+  assert.equal(all.filter((u) => u === "/media/estate").length, 1);
+});
+
 test("rows in the Events box hide themselves after their date", async () => {
   const { sectionsToShow, eventRowDay } = await import("../src/components/landing/helpers");
   assert.equal(eventRowDay("December 6, 2026"), "2026-12-06");

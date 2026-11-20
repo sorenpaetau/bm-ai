@@ -132,9 +132,13 @@ export function carryOverBrandMedia(current: LandingContent, fresh: LandingConte
     return next;
   });
 
-  const freshIds = new Set(fresh.sections.map((s) => s.id));
+  const freshTypes = new Map(fresh.sections.map((s) => [s.id, s.type]));
   for (const old of current.sections) {
-    if (freshIds.has(old.id)) continue;
+    const kept = freshTypes.has(old.id);
+    // An old About section whose id now belongs to a website tab ("About" on the winery's menu): its own
+    // media was carried over above, but its parts' media still needs a home.
+    const aboutBecameTab = kept && old.type === "about" && freshTypes.get(old.id) !== "about";
+    if (kept && !aboutBecameTab) continue;
     const media: Media = {
       images: (old.images ?? []).filter((i) => i.url),
       videos: (old.videos ?? []).filter((v) => v.url),
@@ -145,7 +149,7 @@ export function carryOverBrandMedia(current: LandingContent, fresh: LandingConte
     const pieces: Array<{ id: string; media: Media }> =
       old.type === "about"
         ? [
-            { id: "about", media: { images: (old.images ?? []).filter((i) => i.url), videos: (old.videos ?? []).filter((v) => v.url) } },
+            ...(aboutBecameTab ? [] : [{ id: "about", media: { images: (old.images ?? []).filter((i) => i.url), videos: (old.videos ?? []).filter((v) => v.url) } }]),
             ...old.parts.map((p) => ({ id: p.id, media: { images: p.images, videos: p.videos } })),
           ]
         : [{ id: old.id, media }];
