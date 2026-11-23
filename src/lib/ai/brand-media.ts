@@ -86,7 +86,9 @@ function closestSectionIndex(sections: LandingContent["sections"], oldId: string
     const hit = sections.findIndex((s) => s.id.includes(word));
     if (hit >= 0) return hit;
   }
-  return sections.findIndex((s) => s.type === "tab" || s.type === "about");
+  const tab = sections.findIndex((s) => s.type === "tab" || s.type === "about");
+  // Version 6 wine pages have no website tabs: the box under the picture of the winery takes them.
+  return tab >= 0 ? tab : sections.findIndex((s) => s.type === "products" && s.display === "buttons");
 }
 
 function addMedia<T extends { images?: Media["images"]; videos?: Media["videos"] }>(target: T, media: Media): T {

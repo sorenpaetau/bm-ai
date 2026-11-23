@@ -4,10 +4,11 @@ import type { LandingContent, Section } from "@/lib/landing";
 // following SKUs will be easy to create by just changing a few fields, by only modifying the first
 // landing page as a template"; Nov 20: "select an approved landing page template for modification").
 //
-// Everything about the winery is kept as the winery approved it: its website tabs with their pictures
-// and links, Where to buy, the buttons, colours, logo and sign-up box. What belongs to the old bottle is
-// cleared so it can't be published by mistake for the new one: the main photo, the price, the wine box
-// (except its region) and the reviews. Pure, so it is unit tested (tests/copy.test.ts).
+// Everything about the winery is kept as the winery approved it: the picture of the winery, its family
+// of wines and "Jump to" links (version 6), or its website tabs and Where to buy (older pages), the
+// buttons, colours, logo and sign-up box. What belongs to the old bottle is cleared so it can't be
+// published by mistake for the new one: the main photo, the price and sizes, the wine box (except its
+// region) and any reviews. Pure, so it is unit tested (tests/copy.test.ts).
 
 export type CopyInput = { productName: string; description: string };
 
@@ -59,10 +60,12 @@ export function copyPageForNextProduct(source: LandingContent, input: CopyInput)
       imageSource: undefined,
       sitePhoto: undefined,
       price: undefined,
+      priceNote: undefined,
+      sizes: undefined,
     },
     sections,
   };
 }
 
 /** What the copy leaves for the winery to fill in for the new wine, for the note on the new page. */
-export const COPY_TODO = "the bottle's photo, the line under its name, the wine box (taste, grape, food pairing, alcohol, awards, rating) and its reviews";
+export const COPY_TODO = "the bottle's photo, its price and sizes, the line under its name and the wine box (taste, grape, food pairing, alcohol, awards, rating)";

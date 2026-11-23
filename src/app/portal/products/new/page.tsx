@@ -28,8 +28,8 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
         </Link>
         <h1 className="mt-2 font-serif text-3xl font-medium tracking-[-0.01em] sm:text-4xl">Create a page</h1>
         <p className="text-sm text-muted">
-          Three quick steps. Our AI reads your website and writes an editable first draft, laid out like your own site. Then you upload your
-          pictures where it suggests them, fill in anything that applies, and approve the page before it goes live.
+          Three quick steps. Our AI reads your own website and writes an editable first draft from it: for wineries, it finds your wines and
+          you pick one or all of them. Then you check every word, picture and link, and approve the page before it goes live.
         </p>
       </div>
       <NewPageForm

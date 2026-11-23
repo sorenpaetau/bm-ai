@@ -1,8 +1,8 @@
 {
-  "subtitle": "St. Helena, Napa Valley · Estate grown",
+  "subtitle": "Napa Valley",
   "wine": {
     "answer": "Hillside Cabernet from Napa Valley",
-    "body": "Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite. Firm, fine tannins lead to a long finish. A cool spring and a long, mild autumn gave small berries with deep color.",
+    "body": "A cool spring and a long, mild autumn gave small berries with deep color. Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite; firm, fine tannins and a long finish. Aged 20 months in French oak.",
     "items": [
       {
         "label": "Grape",
@@ -21,8 +21,8 @@
         "value": "Grilled ribeye, braised short ribs or aged cheddar"
       },
       {
-        "label": "Aging",
-        "value": "20 months in French oak"
+        "label": "Alcohol (ABV)",
+        "value": "14.5%"
       },
       {
         "label": "Drinking",
@@ -42,138 +42,83 @@
       "https://example.com/wines/cabernet-sauvignon-2023"
     ],
     "pageUrl": "https://example.com/wines/cabernet-sauvignon-2023",
-    "photoUrl": "https://example.com/images/cabernet-sauvignon-2023-bottle.jpg"
+    "photoUrl": "https://example.com/images/cabernet-sauvignon-2023-bottle.jpg",
+    "price": "$68",
+    "sizes": [
+      "750 ml",
+      "1.5 L"
+    ]
   },
-  "tabs": [
+  "winery": {
+    "pageUrl": "https://example.com/",
+    "photoUrl": "https://example.com/images/home-ridge-vineyard.jpg",
+    "photoAlt": "The ridge vineyard at sunrise"
+  },
+  "family": {
+    "title": "Our wines",
+    "links": [
+      {
+        "label": "Reserve Cabernet",
+        "url": "https://example.com/wines/reserve-cabernet-2022"
+      },
+      {
+        "label": "Estate Chardonnay",
+        "url": "https://example.com/wines/chardonnay-2024"
+      },
+      {
+        "label": "Sauvignon Blanc",
+        "url": "https://example.com/wines/sauvignon-blanc-2024"
+      },
+      {
+        "label": "Rosé of Grenache",
+        "url": "https://example.com/wines/rose-2024"
+      },
+      {
+        "label": "Estate Red Blend",
+        "url": "https://example.com/wines/estate-red-2022"
+      }
+    ]
+  },
+  "siteLinks": [
     {
-      "title": "Visit",
-      "navLabel": "",
-      "body": "Taste on the terrace above the vines, with views across the valley to the Mayacamas. Open Thursday to Monday, 10 am to 4 pm, by reservation. Choose the Estate tasting of five wines, or the 90-minute Vineyard and cellar walk that ends with a barrel tasting.",
-      "linkLabel": "Plan your visit",
-      "linkUrl": "https://example.com/visit",
-      "photoUrl": "https://example.com/images/visit-terrace.jpg",
-      "photoAlt": "The tasting terrace above the vines",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/visit"
-      ]
+      "label": "Shop",
+      "url": "https://example.com/shop"
     },
     {
-      "title": "Our Story",
-      "navLabel": "",
-      "body": "Daniel and Rosa Hale planted their first vines on a steep, rocky ridge above St. Helena in 1998, when everyone told them it was too steep to farm. Today their daughter Maya makes the wines, and the whole family still picks at harvest.",
-      "linkLabel": "Read our story",
-      "linkUrl": "https://example.com/our-story",
-      "photoUrl": "https://example.com/images/our-story-estate.jpg",
-      "photoAlt": "The winery on the ridge at golden hour",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/our-story"
-      ]
+      "label": "Wine tasting notes",
+      "url": "https://example.com/notes/cabernet-2023.pdf"
     },
     {
-      "title": "Wines",
-      "navLabel": "",
-      "body": "Six wines from 40 organically farmed acres: the Reserve Cabernet from the oldest block, a barrel-fermented Chardonnay, a crisp Sauvignon Blanc, a dry Rosé of Grenache and an Estate Red Blend. Every one is aged in the barrel cave built into the hillside.",
-      "linkLabel": "See all our wines",
-      "linkUrl": "https://example.com/wines",
-      "photoUrl": "https://example.com/images/wines-barrel-cave.jpg",
-      "photoAlt": "Barrels in the cave",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/wines",
-        "https://example.com/our-story"
-      ]
+      "label": "Come visit",
+      "url": "https://example.com/visit"
     },
     {
-      "title": "Shop",
-      "navLabel": "",
-      "body": "Order direct from the winery: gift sets, magnums and wooden boxes, crystal glasses and our own olive oil. Gifts can be wrapped, with a handwritten card.",
-      "linkLabel": "Visit our shop",
-      "linkUrl": "https://example.com/shop",
-      "photoUrl": "https://example.com/images/shop-shelves.jpg",
-      "photoAlt": "The winery shop",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/shop"
-      ]
+      "label": "Videos",
+      "url": "https://example.com/videos"
     },
     {
-      "title": "Ridge Club",
-      "navLabel": "Club",
-      "body": "Three shipments a year of the newest releases, chosen by Maya, with tasting notes and recipes. Members get first access to library wines, two tastings a year on the house and an invitation to the members-only harvest lunch.",
-      "linkLabel": "Join the Ridge Club",
-      "linkUrl": "https://example.com/club",
-      "photoUrl": "https://example.com/images/club-harvest-lunch.jpg",
-      "photoAlt": "The members' harvest lunch",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/club"
-      ]
+      "label": "Gift sets",
+      "url": "https://example.com/gifts"
     },
     {
-      "title": "Gift Guide",
-      "navLabel": "Gifts",
-      "body": "The Ridge Trio for the holidays, the Holiday Pair for a host, and a magnum for a big celebration. Gift cards come in any amount. Order by December 15 for Christmas delivery.",
-      "linkLabel": "See the gift guide",
-      "linkUrl": "https://example.com/gifts",
-      "photoUrl": "https://example.com/images/gift-boxes.jpg",
-      "photoAlt": "Gift boxes, wrapped and ready",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/gifts"
-      ]
+      "label": "Wine locator",
+      "url": "https://example.com/find-our-wines"
     },
     {
-      "title": "Events",
-      "navLabel": "",
-      "body": "Holiday Open House with live jazz on December 6, 2026. Library vertical tasting of five Cabernet vintages in the barrel cave on January 24, 2027. Spring release party on April 10, 2027.",
-      "linkLabel": "See all events",
-      "linkUrl": "https://example.com/events",
-      "photoUrl": "https://example.com/images/events-lawn-concert.jpg",
-      "photoAlt": "A concert on the lawn at dusk",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/events"
-      ]
+      "label": "Gift cards",
+      "url": "https://example.com/gift-cards"
     },
     {
-      "title": "Weddings & Gatherings",
-      "navLabel": "Weddings",
-      "body": "Say yes on the terrace above the vines, with room for up to 120 guests from May to October. Private dinners and company gatherings for up to 40 guests are held in the barrel cave all year.",
-      "linkLabel": "Plan your event",
-      "linkUrl": "https://example.com/weddings",
-      "photoUrl": "https://example.com/images/wedding-terrace.jpg",
-      "photoAlt": "A wedding arch on the terrace",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/weddings"
-      ]
+      "label": "Ridge Club",
+      "url": "https://example.com/club"
     },
     {
-      "title": "Recipes",
-      "navLabel": "",
-      "body": "Cook along with the winery: Rosa's braised short ribs with Cabernet, grilled ribeye with rosemary salt, and wild mushroom risotto for the Chardonnay. Each recipe comes with the wine the family pours with it.",
-      "linkLabel": "Get the recipes",
-      "linkUrl": "https://example.com/recipes",
-      "photoUrl": "https://example.com/images/recipe-short-ribs.jpg",
-      "photoAlt": "Rosa's short ribs with a glass of Cabernet",
-      "basis": "brand_pages",
-      "pages": [
-        "https://example.com/recipes"
-      ]
-    }
-  ],
-  "whereToBuy": [
-    {
-      "name": "Vivino",
-      "url": "https://www.vivino.com/",
-      "page": "https://example.com/find-our-wines"
+      "label": "Events",
+      "url": "https://example.com/events"
     },
     {
-      "name": "Total Wine & More",
-      "url": "https://www.totalwine.com/",
-      "page": "https://example.com/find-our-wines"
+      "label": "Our story",
+      "url": "https://example.com/our-story"
     }
   ],
   "shopUrl": "https://example.com/shop",

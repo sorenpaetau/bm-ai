@@ -1,11 +1,10 @@
 import type { LandingContent, Section } from "./landing";
 import { sampleWineryDraft } from "./ai/sample";
 
-// The finished demo of the website-first wine page (Jens's final flow, Nov 18 2026): the sample AI
-// draft for our made-up Ridgeline Cellars, as if the winery had checked every section, kept the
-// pictures copied from its own website, and filled in what only it may fill (alcohol, awards, rating)
-// and its reviews. Published at /t/DEMOWINE. Every name, award and review here is made up; the
-// pictures are our own drawings (public/demo).
+// The finished demo of the website-first wine page, version 6 (Jens, Nov 22 2026): the sample AI draft
+// for our made-up Ridgeline Cellars, as if the winery had checked every section and kept the pictures
+// copied from its own website, and added an award of its own. Published at /t/DEMOWINE. Every name,
+// price and award here is made up; the pictures are our own drawings (public/demo).
 
 export const DEMO_WINERY_PRODUCT = {
   sku: "RC-CAB-2023-WEB",
@@ -18,40 +17,24 @@ export const DEMO_WINERY_TAG = "DEMOWINE";
 
 /**
  * Section ids only the older wine layouts had: a stored demo with one of these is upgraded by the seed
- * (Nov 16 boxes, Nov 17 "About" and "Nearby", and the earlier full wine page).
+ * (Nov 16 boxes, Nov 17 "About" and "Nearby", the Nov 18 website tabs with Reviews and Where to buy,
+ * and the earlier full wine page).
  */
-export const OLD_WINERY_IDS = ["awards", "rating", "giftsets", "otherwines", "tastingroom", "about", "nearby"];
+export const OLD_WINERY_IDS = ["awards", "rating", "giftsets", "otherwines", "tastingroom", "about", "nearby", "reviews", "buy", "visit", "our-story"];
 
-/** The rows only the winery may fill, by row label. */
+/** What the winery added itself, by row label, where its website didn't show it. */
 const OWNER_FILLED: Record<string, string> = {
-  "Alcohol (ABV)": "14.5%",
   Awards: "Gold medal, 2025 Valley Wine Awards (2021 vintage)",
-  "Wine rating": "94 points, Valley Wine Review (2021 vintage)",
 };
-
-const REVIEWS: Partial<Extract<Section, { type: "topic" }>> = {
-  answer: "“Polished, deep and built to age.”",
-  body: "Valley Wine Review, 2025. Read more reviews from people who bought it at Total Wine & More.",
-  link: { label: "Read the reviews", url: "https://www.totalwine.com/" },
-};
-
-const SHOPS: Record<string, string> = { Delectable: "https://delectable.com/" };
 
 export function demoWineryContent(): LandingContent {
   const { content } = sampleWineryDraft();
   const sections = content.sections.map((s): Section => {
     const reviewed = { ...s, reviewed: true, sources: s.sources.filter((x) => !x.startsWith("Please check")) };
-    if (reviewed.type === "topic") {
-      return {
-        ...reviewed,
-        ...(s.id === "reviews" ? REVIEWS : {}),
-        items: reviewed.items.map((row) => (s.id === "wine" && OWNER_FILLED[row.label] ? { ...row, value: OWNER_FILLED[row.label] } : row)),
-      };
-    }
-    if (reviewed.type === "buy") {
-      return { ...reviewed, items: reviewed.items.map((i) => (SHOPS[i.name] && !i.url ? { ...i, url: SHOPS[i.name] } : i)) };
+    if (reviewed.type === "topic" && s.id === "wine") {
+      return { ...reviewed, items: reviewed.items.map((row) => (OWNER_FILLED[row.label] && !row.value ? { ...row, value: OWNER_FILLED[row.label] } : row)) };
     }
     return reviewed;
   });
-  return { ...content, sections, disclaimer: "Demo page for a made-up winery. Awards, ratings and reviews are examples. Please enjoy responsibly." };
+  return { ...content, sections, disclaimer: "Demo page for a made-up winery. Prices and awards are examples. Please enjoy responsibly." };
 }

@@ -199,7 +199,7 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           <p className="font-semibold">Fill in the blanks, top to bottom</p>
           <p className="mt-1">
             {wine
-              ? "This form follows your page from top to bottom: the bottle's photo, the webstore, website and Contact us links, then one jump button per section: The wine, the tabs of your own website (Visit, Our story, Wines, Shop, Wine club, Gift guide, Events, Recipes, or whatever your site has), Reviews and Where to buy. Pictures marked “From your website” were copied by our AI from your own site: keep, replace or remove them. Anything you leave empty simply stays off your page."
+              ? "This form follows your page from top to bottom: the bottle's photo, its price and sizes, the webstore, website and Contact us links, then The wine, a picture of your winery above your other wines, and buttons to the pages of your own website. Everything our AI filled in came from your own website: pictures marked “From your website” were copied from it, and you can keep, replace or remove anything. Anything you leave empty simply stays off your page."
               : "This form follows your page from top to bottom: your main photo, the webstore and website buttons, then one box for each topic button. Add pictures anywhere you see the camera. Anything you leave empty simply stays off your page."}
           </p>
         </div>
@@ -246,6 +246,19 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
               placeholder="Suggested retail price"
             />
           </div>
+          {wine && (
+            <TextField
+              label="Bottle sizes (optional)"
+              value={(content.hero.sizes ?? []).join(", ")}
+              onChange={(v) =>
+                update((d) => {
+                  const sizes = v.split(",").map((x) => x.trim());
+                  d.hero.sizes = sizes.some(Boolean) ? sizes : undefined;
+                })
+              }
+              placeholder="750ml, 1L"
+            />
+          )}
         </Panel>
 
         <Panel
@@ -320,10 +333,10 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
         <div className="space-y-4">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <h2 className="font-semibold">{wine ? "Step 3 · The wine, your website's tabs, Reviews and Where to buy" : "Step 3 · Your topics"}</h2>
+              <h2 className="font-semibold">{wine ? "Step 3 · The wine, your other wines and your website links" : "Step 3 · Your topics"}</h2>
               <p className="text-sm text-muted">
                 {wine
-                  ? "Each section below gets its own jump button under the photo, in this order, just like the tabs on your own website. The wine box holds everything about this wine (taste, food pairing, alcohol, awards and rating). Each website tab has a picture, a few sentences and a button to that page on your site. Empty rows and sections stay off the page."
+                  ? "Each section below gets its own jump button under the photo, in this order. The wine box holds everything about this wine (description, taste, food pairing, and alcohol, awards and rating if your website shows them). The two button boxes link to your other wines and to the pages of your own website. Empty rows, buttons without a link and empty sections stay off the page."
                   : "Each box below gets its own jump button under the photo, in this order. Give a short answer, a few details and pictures. Empty boxes stay off the page, and hidden ones stay saved but shoppers don't see them."}
               </p>
             </div>

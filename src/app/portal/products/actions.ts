@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { aiConfigured, DraftError, draftLandingContent, httpsPhotos, type PhotoLoader } from "@/lib/ai/draft";
+import { aiConfigured, DraftError, draftLandingContent, findWinesOnSite, httpsPhotos, type PhotoLoader } from "@/lib/ai/draft";
 import { cleanLinks } from "@/lib/ai/brief";
 import { MARKET_CHOICES } from "@/lib/ai/markets";
 import { starterContent, type DraftInput } from "@/lib/ai/template";
@@ -15,7 +15,9 @@ import type { Vertical } from "@/lib/site";
 import { safeContent } from "../_lib/content";
 import { publishBlockers } from "../_lib/publish";
 import { brandPhotos, carryOverBrandMedia } from "@/lib/ai/brand-media";
-import { sampleWineryDraft } from "@/lib/ai/sample";
+import { SAMPLE_WINERY, sampleBottle, sampleWineryDraft } from "@/lib/ai/sample";
+import { MAX_PAGES_AT_ONCE, SAMPLE_CATALOG, type CatalogWine } from "@/lib/ai/wine-catalog";
+import { onSite, shortPage } from "@/lib/ai/winery";
 import { signoffStatement, websitePictureCount } from "../_lib/publish";
 import { attachSitePhotos } from "@/lib/ai/site-photos";
 import { canCopyPage, copyPageForNextProduct } from "../_lib/copy";
@@ -204,6 +206,117 @@ export async function createProduct(_prev: ActionState, form: FormData): Promise
     RETURNING id`;
   revalidatePath("/portal");
   redirect(`/portal/products/${row.id}?drafted=${drafted}`);
+}
+
+export type FindState = { error?: string; wines?: CatalogWine[]; website?: string; sample?: boolean; values?: Record<string, string> };
+
+/**
+ * "Find my wines" (Jens's modified flow, Nov 23 2026): the AI goes to the winery's website and lists its
+ * wines, for the winery to pick one or all. While the AI writer is off, the sample winery's wines are
+ * listed instead, so the flow can be tried.
+ */
+export async function findWines(_prev: FindState, form: FormData): Promise<FindState> {
+  const user = await requireUser();
+  const company = await currentCompany(user.companyId);
+  const values = { website: String(form.get("website") ?? "") };
+  if (form.get("sample") === "1") return { wines: SAMPLE_CATALOG, website: SAMPLE_WINERY.website, sample: true, values };
+  if (!aiConfigured()) return { error: "The AI writer isn't switched on for this site yet. Try the sample winery, or type one wine below.", values };
+  const website = websiteFrom(values.website) ?? (values.website.trim() ? null : company.website);
+  if (!website) return { error: "Type your winery's website, like yourwinery.com", values };
+  if (!company.website) await sql`UPDATE companies SET website = ${website} WHERE id = ${user.companyId}`;
+  try {
+    const wines = await findWinesOnSite(company.name, website);
+    if (!wines.length) return { error: "We couldn't find a list of wines on that website. Type one wine below instead.", values };
+    return { wines, website, values };
+  } catch (err) {
+    if (err instanceof DraftError) return { error: err.message, values };
+    console.error("Finding wines failed", err);
+    return { error: "We couldn't read your website just now. Try again in a minute, or type one wine below.", values };
+  }
+}
+
+/** The wines ticked on "Find my wines", each sent as JSON {name, pageUrl}. */
+function pickedWines(form: FormData, website: string): CatalogWine[] {
+  const out: CatalogWine[] = [];
+  for (const raw of form.getAll("wine")) {
+    try {
+      const w = JSON.parse(String(raw)) as Partial<CatalogWine>;
+      const name = String(w.name ?? "").trim().slice(0, 120);
+      const pageUrl = String(w.pageUrl ?? "");
+      if (name.length >= 2 && onSite(pageUrl, website) && !out.some((o) => o.pageUrl === pageUrl)) out.push({ name, pageUrl });
+    } catch {
+      // not one of ours, skip it
+    }
+  }
+  return out;
+}
+
+/**
+ * Makes a draft page for each wine the winery ticked (one, several or all). Each page is written by the
+ * AI from that wine's own page on the winery's site, all at the same time, then the pictures are copied
+ * from the winery's own site. With the sample winery, the first wine is the sample draft and the others
+ * are copies of it, ready for their own details.
+ */
+export async function createWinePages(_prev: FindState, form: FormData): Promise<FindState> {
+  const user = await requireUser();
+  const company = await currentCompany(user.companyId);
+  const sample = form.get("sample") === "1";
+  const website = sample ? SAMPLE_WINERY.website : websiteFrom(String(form.get("website") ?? ""));
+  if (!website) return { error: "Type your winery's website first." };
+  const wines = pickedWines(form, website);
+  if (!wines.length) return { error: "Tick at least one wine." };
+  if (wines.length > MAX_PAGES_AT_ONCE) return { error: `Pick up to ${MAX_PAGES_AT_ONCE} wines at a time. You can come back for the rest.` };
+
+  const made: Array<{ name: string; content: LandingContent; drafted: string; pageUrl: string }> = [];
+  if (sample) {
+    if (aiConfigured()) return { error: "The sample is only for trying the flow while the AI writer is off." };
+    const base = sampleWineryDraft().content;
+    for (const w of wines) {
+      if (/^cabernet sauvignon 2023$/i.test(w.name)) {
+        made.push({ name: `${w.name} (sample)`, content: base, drafted: "sample", pageUrl: w.pageUrl });
+        continue;
+      }
+      const copy = copyPageForNextProduct(base, { productName: w.name, description: "" });
+      const bottle = sampleBottle(w.name);
+      if (bottle) copy.hero = { ...copy.hero, imageUrl: bottle, imageSource: shortPage(w.pageUrl) };
+      made.push({ name: `${w.name} (sample)`, content: copy, drafted: "sample-copy", pageUrl: w.pageUrl });
+    }
+  } else {
+    if (!aiConfigured()) return { error: "The AI writer isn't switched on for this site yet." };
+    const drafts = await Promise.all(
+      wines.map(async (w) => {
+        const input: DraftInput = {
+          companyName: company.name,
+          vertical: "wine_spirits",
+          productName: w.name,
+          description: "",
+          website,
+          winePage: w.pageUrl,
+          links: [],
+        };
+        const draft = await draftFor(input, true);
+        const content =
+          draft.drafted === "ai" ? await attachSitePhotos(draft.content, { companyId: user.companyId, userId: user.id, website }) : draft.content;
+        return { name: w.name, content, drafted: draft.drafted, pageUrl: w.pageUrl };
+      }),
+    );
+    made.push(...drafts);
+  }
+
+  const ids: string[] = [];
+  for (const page of made) {
+    const sku = await makeSku(user.companyId, page.name);
+    const slug = await uniqueSlug(slugify(`${company.name} ${page.name}`));
+    const [row] = await sql<{ id: string }[]>`
+      INSERT INTO products (company_id, sku, name, description, slug, content, brand_links, vertical)
+      VALUES (${user.companyId}, ${sku}, ${page.name}, ${""}, ${slug}, ${sql.json(page.content)}, ${[website, page.pageUrl]}, 'wine_spirits')
+      RETURNING id`;
+    ids.push(row.id);
+  }
+  revalidatePath("/portal");
+  if (ids.length === 1) redirect(`/portal/products/${ids[0]}?drafted=${made[0].drafted}`);
+  const failed = made.filter((m) => m.drafted === "ai-failed").length;
+  redirect(`/portal?made=${ids.length}${failed ? `&failed=${failed}` : ""}${sample ? "&sample=1" : ""}`);
 }
 
 const CopyPage = z.object({

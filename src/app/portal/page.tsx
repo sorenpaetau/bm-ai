@@ -19,9 +19,15 @@ type Row = {
   taps30d: number;
 };
 
-export default async function ProductsPage({ searchParams }: { searchParams: Promise<{ welcome?: string }> }) {
+export default async function ProductsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ welcome?: string; made?: string; failed?: string; sample?: string }>;
+}) {
   const user = await requireUser();
-  const { welcome } = await searchParams;
+  const { welcome, made, failed, sample } = await searchParams;
+  const madeCount = Number(made) || 0;
+  const failedCount = Number(failed) || 0;
   const products = await sql<Row[]>`
     SELECT p.id, p.sku, p.name, p.slug, p.status, p.content, p.updated_at,
            (p.status = 'published' AND p.content IS DISTINCT FROM p.published_content) AS has_unpublished_changes,
@@ -43,6 +49,19 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
             {welcome === "handover"
               ? "B&M.ai has built your first page. Open it, change anything you like, check each section and approve it to go live. For your next wine, use “Copy for the next wine” and change a few fields."
               : "Start by adding your first product. Our AI writes a first draft of its page; you check it, then publish."}
+          </p>
+        </Card>
+      )}
+      {madeCount > 0 && (
+        <Card className="border-sky-200 bg-sky-50 text-sky-950">
+          <p className="font-semibold">
+            {madeCount} wine pages are ready for you to check.
+          </p>
+          <p className="mt-1 text-sm">
+            {sample
+              ? "This is the sample winery. The Cabernet is the full sample draft; the other wines are copies of it with their own bottle, ready for their own details."
+              : "Our AI wrote each one from that wine's own page on your website. Open each page, check every section marked “Needs review” and approve it to go live."}
+            {failedCount > 0 && ` ${failedCount} couldn't be written by the AI this time and start from the simple template: open it and try “Write a fresh AI draft”.`}
           </p>
         </Card>
       )}

@@ -148,7 +148,8 @@ function tidyFields(section: Section, hasImages: boolean): Section | null {
       return filled(t.body) || t.flavors.length || t.structure.length || t.blend.length || t.vintage ? t : null;
     }
     case "products": {
-      const items = section.items.filter((i) => filled(i.name));
+      // A box of link buttons (version 6 wine pages) only shows buttons that have both words and a link.
+      const items = section.items.filter((i) => filled(i.name) && (section.display !== "buttons" || filled(i.url)));
       return items.length ? { ...section, items } : null;
     }
     case "offers":

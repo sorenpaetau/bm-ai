@@ -42,7 +42,7 @@ export function signoffStatement(companyName: string, websitePictures = 0) {
     websitePictures > 0
       ? ` That includes the ${websitePictures === 1 ? "picture" : `${websitePictures} pictures`} B&M.ai's AI copied from our own website.`
       : "";
-  return `I have read this page and approve it. The facts, photos and videos on it are correct, and ${companyName} has the right to use them.${fromSite}`;
+  return `I have read this page and approve it. The facts, prices, photos, videos and links on it are correct, and ${companyName} has the right to use them.${fromSite}`;
 }
 
 /**

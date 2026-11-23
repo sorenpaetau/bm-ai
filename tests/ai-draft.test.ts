@@ -99,10 +99,7 @@ test("the rule checker catches invented prices, ratings and medical claims", () 
 });
 
 const wineBox = (over: Partial<AiWineryDraft["wine"]> = {}): AiWineryDraft["wine"] => ({
-  answer: "Napa Cabernet", body: "Blackberry and cedar.", items: [], chips: ["Blackberry"], basis: "general_knowledge", pages: [], pageUrl: "", photoUrl: "", ...over,
-});
-const tab = (title: string, body: string): AiWineryDraft["tabs"][number] => ({
-  title, navLabel: "", body, linkLabel: "", linkUrl: "", photoUrl: "", photoAlt: "", basis: "brand_pages", pages: [],
+  answer: "Napa Cabernet", body: "Blackberry and cedar.", items: [], chips: ["Blackberry"], basis: "general_knowledge", pages: [], pageUrl: "", photoUrl: "", price: "", sizes: [], ...over,
 });
 
 const wineryDraft = (over: Partial<AiWineryDraft> = {}) =>
@@ -110,8 +107,9 @@ const wineryDraft = (over: Partial<AiWineryDraft> = {}) =>
     {
       subtitle: "Napa Valley",
       wine: wineBox(),
-      tabs: [tab("Our story", "Grown on our hillside.")],
-      whereToBuy: [],
+      winery: { pageUrl: "", photoUrl: "", photoAlt: "" },
+      family: { title: "Our wines", links: [] },
+      siteLinks: [],
       shopUrl: "",
       contactUrl: "",
       optin: { headline: "Register this bottle", prompt: "Hear about new releases." },
@@ -133,19 +131,16 @@ test("an invented blend is flagged, a blend the brand gave is not", () => {
 });
 
 test("wine drafts can't claim drinking is good for you", () => {
-  const content = wineryDraft({ tabs: [tab("Our story", "Full of antioxidants and good for your heart.")] });
+  const content = wineryDraft({ wine: wineBox({ body: "Full of antioxidants and good for your heart." }) });
   const findings = checkDraft(content, wine);
-  assert.ok(findings.some((f) => f.sectionId === "our-story" && f.level === "problem" && f.message.includes("health claim")), JSON.stringify(findings));
+  assert.ok(findings.some((f) => f.sectionId === "wine" && f.level === "problem" && f.message.includes("health claim")), JSON.stringify(findings));
 });
 
-test("alcohol content and discounts in an AI draft are flagged: the winery adds those itself", () => {
-  const content = wineryDraft({
-    wine: wineBox({ body: "14.5% alc. by vol.", chips: [], basis: "brand_pages" }),
-    tabs: [tab("Shop", "Members save 15%. 15% off gift boxes.")],
-  });
+test("alcohol content from the winery's site is for checking; discounts are refused", () => {
+  const content = wineryDraft({ wine: wineBox({ body: "14.5% alc. by vol. Members save 15%.", chips: [], basis: "brand_pages" }) });
   const findings = checkDraft(content, wine);
-  assert.ok(findings.some((f) => f.sectionId === "wine" && f.level === "problem" && f.message.includes("alcohol content")), JSON.stringify(findings));
-  assert.ok(findings.some((f) => f.sectionId === "shop" && f.level === "problem" && f.message.includes("discount")), JSON.stringify(findings));
+  assert.ok(findings.some((f) => f.sectionId === "wine" && f.level === "check" && f.message.includes("alcohol content")), JSON.stringify(findings));
+  assert.ok(findings.some((f) => f.sectionId === "wine" && f.level === "problem" && f.message.includes("discount")), JSON.stringify(findings));
 });
 
 test("findings show up in the editor's 'Where this came from' note, and the page stays valid", () => {
