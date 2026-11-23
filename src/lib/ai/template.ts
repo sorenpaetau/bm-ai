@@ -2,7 +2,7 @@ import { z } from "zod";
 import { LandingContent, type Section } from "../landing";
 import type { Vertical } from "../site";
 import { marketFor, type MarketTemplate } from "./markets";
-import { winerySections, wineryButtons, wineSitePhoto, type AiWineryDraft } from "./winery";
+import { winerySections, wineryButtons, wineryHeroExtras, wineSitePhoto, type AiWineryDraft } from "./winery";
 
 // Turns what the AI writes (AiDraft) into the shared LandingContent shape, and builds the plain
 // starter page used when no AI key is configured. Pure functions, so they are unit tested.
@@ -20,6 +20,8 @@ export type DraftInput = {
   website?: string | null;
   /** The brand's own item code or SKU, if it gave one, to help the AI find the product on its site. */
   sku?: string | null;
+  /** Wine pages: this wine's own page on the winery's site, when the winery picked it from the wines we found there. */
+  winePage?: string | null;
   /** The brand's own web pages the AI may read (product page, about page). Max MAX_LINKS. */
   links?: string[];
   /** Photos the brand uploaded ("/media/<id>" or https). Max MAX_PHOTOS. Never web images. */
@@ -179,7 +181,7 @@ function draftByKind(draft: AnyDraft, input: DraftInput): LandingContent {
   const market = marketFor(input.vertical);
   if (market && "topics" in draft) return marketContent(input, market, draft);
   if ("topics" in draft) throw new Error(`No market template for ${input.vertical}`);
-  if ("tabs" in draft) {
+  if ("siteLinks" in draft) {
     if (!isAlcohol(input.vertical)) throw new Error(`No winery template for ${input.vertical}`);
     return wineryContent(input, draft);
   }
@@ -261,16 +263,17 @@ function starterOptin(input: DraftInput) {
 const sameLabel = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
 
 /**
- * The website-first wine page (Jens's final flow, Nov 18 2026): The wine, then one card and jump button
- * per tab of the winery's own website, then Reviews and Where to buy. See winery.ts. The AI fills in
- * what the winery's own description and website say; everything else starts empty and stays off the
- * live page until the winery fills it in.
+ * The website-first wine page, version 6 (Jens, Nov 22 2026): the bottle with its price and sizes, The
+ * wine, a picture of the winery above its family of wines, and "Jump to" links into the winery's own
+ * site. See winery.ts. The AI fills in what the winery's own website says; everything else starts
+ * empty and stays off the live page until the winery fills it in.
  */
 export function wineryContent(input: DraftInput, draft?: AiWineryDraft): LandingContent {
   const content = shell(input, winerySections(input, draft), draft?.optin ?? starterOptin(input));
   content.hero.subtitle = draft?.subtitle || undefined;
   const sitePhoto = wineSitePhoto(input, draft);
   if (sitePhoto) content.hero.sitePhoto = sitePhoto;
+  Object.assign(content.hero, wineryHeroExtras(draft));
   content.buttons = wineryButtons(input, draft);
   return content;
 }

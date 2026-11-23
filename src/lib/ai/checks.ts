@@ -61,6 +61,9 @@ export function sectionText(s: Section): string {
     case "tab":
       add(s.body, s.link?.label);
       break;
+    case "products":
+      s.items.forEach((i) => add(i.name, i.description, i.price));
+      break;
     case "buy":
       add(s.body);
       s.items.filter((i) => i.url.trim()).forEach((i) => add(i.name, i.note));
@@ -116,19 +119,25 @@ export function checkDraft(content: LandingContent, input: DraftInput, extra: st
 
     const found = (re: RegExp) => [...new Set((text.match(re) ?? []).map((m) => m.trim()))];
 
+    // Wine pages (version 6, Nov 22 2026): the price, awards, rating and alcohol content may be copied from
+    // the winery's OWN website, so the winery checks each against its site instead of it being refused.
+    const fromSite = input.vertical === "wine_spirits";
+
     // Prices: the brand's own price is already shown at the top, so any price in the text is extra.
     const allMoney = found(MONEY);
     const money = allMoney.filter((m) => !inSource(m));
-    if (money.length) push("problem", `Mentions a price (${money.join(", ")}) that isn't in what you gave us.`);
+    if (money.length && fromSite) push("check", `Mentions a price (${money.join(", ")}). Check it matches your website exactly.`);
+    else if (money.length) push("problem", `Mentions a price (${money.join(", ")}) that isn't in what you gave us.`);
     else if (allMoney.length) push("check", `Mentions a price (${allMoney.join(", ")}). Prices are usually best in the price line at the top.`);
 
-    // Ratings and awards are never AI-written, even real ones: the brand adds them itself.
+    // Ratings and awards are never AI-written, even real ones, except copied from a winery's own site.
     const ratings = found(RATING);
-    if (ratings.length) push("problem", `Mentions a rating or award (${ratings.join(", ")}). Only add real ones yourself, in the fact box or reviews.`);
+    if (ratings.length && fromSite) push("check", `Shows a rating or award (${ratings.join(", ")}). Check it is on your website, for this vintage, word for word.`);
+    else if (ratings.length) push("problem", `Mentions a rating or award (${ratings.join(", ")}). Only add real ones yourself, in the fact box or reviews.`);
 
-    if (input.vertical === "wine_spirits") {
+    if (fromSite) {
       const abv = found(ABV);
-      if (abv.length) push("problem", `Mentions the alcohol content (${abv.join(", ")}). Only add it yourself, in the ABV box.`);
+      if (abv.length) push("check", `Shows the alcohol content (${abv.join(", ")}). Check it matches your website and label for this vintage.`);
     }
     // A sign-up offer the brand typed itself is fine; one copied from its website needs its say-so.
     const discounts = found(DISCOUNT).filter((m) => !containsWhole(ownWords, norm(m)));

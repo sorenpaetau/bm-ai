@@ -10,7 +10,7 @@
   "pages": [
     {
       "url": "https://example.com/",
-      "text": "Ridgeline Cellars. Family wines from the ridge above St. Helena. Menu: Visit (https://example.com/visit) · Our Story (https://example.com/our-story) · Wines (https://example.com/wines) · Shop (https://example.com/shop) · Ridge Club (https://example.com/club) · Gift Guide (https://example.com/gifts) · Events (https://example.com/events) · Weddings & Gatherings (https://example.com/weddings) · Recipes (https://example.com/recipes) · Find Our Wines (https://example.com/find-our-wines) · Press (https://example.com/press) · Contact (https://example.com/contact). Our 2021 Cabernet was rated 95 points! Join the Ridge Club and save 15% on every order."
+      "text": "Ridgeline Cellars. Family wines from the ridge above St. Helena. Menu: Visit (https://example.com/visit) · Our Story (https://example.com/our-story) · Wines (https://example.com/wines) · Shop (https://example.com/shop) · Ridge Club (https://example.com/club) · Gift Guide (https://example.com/gifts) · Events (https://example.com/events) · Weddings & Gatherings (https://example.com/weddings) · Recipes (https://example.com/recipes) · Videos (https://example.com/videos) · Gift Cards (https://example.com/gift-cards) · Find Our Wines (https://example.com/find-our-wines) · Press (https://example.com/press) · Contact (https://example.com/contact). Our 2021 Cabernet was rated 95 points! Join the Ridge Club and save 15% on every order. [Wide photo on this page: https://example.com/images/home-ridge-vineyard.jpg, the ridge vineyard at sunrise.]"
     },
     {
       "url": "https://example.com/visit",
@@ -22,11 +22,11 @@
     },
     {
       "url": "https://example.com/wines",
-      "text": "Our wines. Cabernet Sauvignon 2023 (https://example.com/wines/cabernet-sauvignon-2023): our flagship. Reserve Cabernet Sauvignon: from the oldest block on the ridge, made only in the best years. Chardonnay: barrel fermented, from our cool lower block. Sauvignon Blanc: crisp and bright, made in steel. Rosé of Grenache: dry, pale, made for summer. Estate Red Blend: Cabernet, Merlot and Petit Verdot. Gold Medal, 2025 California State Wine Competition."
+      "text": "Our wines. Cabernet Sauvignon 2023 (https://example.com/wines/cabernet-sauvignon-2023): our flagship. Reserve Cabernet Sauvignon 2022 (https://example.com/wines/reserve-cabernet-2022): from the oldest block on the ridge, made only in the best years. Estate Chardonnay 2024 (https://example.com/wines/chardonnay-2024): barrel fermented, from our cool lower block. Sauvignon Blanc 2024 (https://example.com/wines/sauvignon-blanc-2024): crisp and bright, made in steel. Rosé of Grenache 2024 (https://example.com/wines/rose-2024): dry, pale, made for summer. Estate Red Blend 2022 (https://example.com/wines/estate-red-2022): Cabernet, Merlot and Petit Verdot. Gold Medal, 2025 California State Wine Competition."
     },
     {
       "url": "https://example.com/wines/cabernet-sauvignon-2023",
-      "text": "Cabernet Sauvignon 2023 (item RC-CAB-2023). Napa Valley. 92% Cabernet Sauvignon, 8% Merlot, all from our hillside estate. A cool spring and a long, mild autumn gave small berries with deep color. Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite; firm, fine tannins and a long finish. Aged 20 months in French oak. Drink now with a decant, or cellar for 15 years. Try it with grilled ribeye, braised short ribs or aged cheddar. 14.5% alc. by vol. 750 ml. $68."
+      "text": "Cabernet Sauvignon 2023 (item RC-CAB-2023). Napa Valley. 92% Cabernet Sauvignon, 8% Merlot, all from our hillside estate. A cool spring and a long, mild autumn gave small berries with deep color. Blackberry, cassis and black cherry, with cedar, cocoa and a little graphite; firm, fine tannins and a long finish. Aged 20 months in French oak. Drink now with a decant, or cellar for 15 years. Try it with grilled ribeye, braised short ribs or aged cheddar. 14.5% alc. by vol. 750 ml. $68. Also in 1.5 L magnum. Tasting notes (PDF): https://example.com/notes/cabernet-2023.pdf"
     },
     {
       "url": "https://example.com/shop",

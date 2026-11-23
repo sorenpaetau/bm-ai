@@ -50,11 +50,15 @@ const NOTICES: Record<string, { tone: "info" | "warn"; text: string }> = {
   starter: { tone: "info", text: "We started you with a simple template. Fill in the facts and your story, then publish." },
   sample: {
     tone: "info",
-    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes for our made-up Ridgeline Cellars website: the bottle's picture, then one jump button per tab of the winery's own website (Visit, Our Story, Wines, Shop, Ridge Club, Gift Guide, Events, Recipes), each with a picture from that tab and a button to it. Pictures marked “From your website” were copied from the winery's own site. Alcohol content, awards, rating and reviews are left for you. With the AI switched on, it reads your own website the same way.",
+    text: "This is a sample. The AI writer isn't switched on yet, so this shows the draft it writes from our made-up Ridgeline Cellars website, laid out as the version 6 wine page: the bottle's picture with its price and sizes, The wine (description, flavors, food pairing and the alcohol content its website shows), a picture of the winery above its other wines, and buttons to the pages of its own website. Everything came from the winery's own site, and pictures marked “From your website” were copied from it. With the AI switched on, it reads your own website the same way.",
+  },
+  "sample-copy": {
+    tone: "info",
+    text: "This is a sample: a copy of the sample winery's Cabernet page for another of its wines, with that wine's bottle. With the AI switched on, each wine you pick gets its own page written from that wine's page on your website.",
   },
   copy: {
     tone: "info",
-    text: "This page is a copy of your other page: your website tabs, pictures, links and Where to buy are already done. Add the new bottle's photo, fill in The wine box (taste, grape, food pairing, alcohol, awards, rating) and its reviews, then approve the page.",
+    text: "This page is a copy of your other page: the picture of your winery, your other wines, your website links and buttons are already done. Add the new bottle's photo, its price and sizes, and fill in The wine box, then approve the page.",
   },
 };
 

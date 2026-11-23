@@ -181,6 +181,17 @@ export function LandingView({
                 </span>
               </p>
             )}
+            {(hero.sizes ?? []).some((v) => v.trim()) && (
+              <ul aria-label="Sizes" className="mt-4 flex flex-wrap justify-center gap-2">
+                {(hero.sizes ?? [])
+                  .filter((v) => v.trim())
+                  .map((size, i) => (
+                    <li key={i} className="rounded-full px-3 py-1 text-[13px] font-semibold ring-1 ring-[var(--lp-on-primary)]/35 ring-inset">
+                      {size.trim()}
+                    </li>
+                  ))}
+              </ul>
+            )}
           </div>
         </header>
 
@@ -514,6 +525,7 @@ function JumpNav({ links }: { links: Array<{ href: string; label: string; Icon: 
 
 function SectionCard({ section, preview }: { section: Section; preview: boolean }) {
   if (section.type === "tab") return <TabCard section={section} preview={preview} />;
+  if (section.type === "products" && section.display === "buttons") return <LinkButtonsCard section={section} preview={preview} />;
   const needsReview = preview && section.aiGenerated && !section.reviewed;
   const Icon = iconFor(section);
   return (
@@ -591,6 +603,71 @@ function TabCard({ section, preview }: { section: Extract<Section, { type: "tab"
         <ImageStrip images={more} className="mt-5" />
         <VideoList videos={section.videos ?? []} className="mt-5" />
         <SectionLink link={section.link} />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A box of link buttons into the brand's own website (Jens's version 6 wine page, Nov 22 2026): a wide
+ * picture across the top (e.g. the vineyard), a dark title bar ("Wagner Family of Wines", "Jump to
+ * Caymus Vineyards links") and the buttons two across. Each button opens that page of the brand's site.
+ */
+function LinkButtonsCard({ section, preview }: { section: Extract<Section, { type: "products" }>; preview: boolean }) {
+  const needsReview = preview && section.aiGenerated && !section.reviewed;
+  const [cover, ...more] = (section.images ?? []).flatMap((img) => {
+    const src = safeUrl(img.url);
+    return src ? [{ ...img, src }] : [];
+  });
+  const buttons = section.items.flatMap((item) => {
+    const href = safeUrl(item.url);
+    return href && item.name.trim() ? [{ label: item.name.trim(), href }] : [];
+  });
+  return (
+    <section
+      aria-labelledby={`s-${section.id}`}
+      className={`reveal overflow-hidden rounded-[1.75rem] bg-white shadow-[0_1px_2px_rgb(0_0_0/0.04),0_8px_24px_-12px_rgb(0_0_0/0.08)] ring-1 ring-black/[0.04] ${
+        needsReview ? "ring-2 ring-amber-400" : ""
+      }`}
+    >
+      {cover && (
+        <div className="relative">
+          <img src={cover.src} alt={cover.alt} loading="lazy" decoding="async" className="h-56 w-full bg-[var(--lp-tint)] object-cover sm:h-64" />
+          {preview && cover.source && (
+            <span className="absolute top-3 left-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-ink shadow-sm">
+              Picture from your website · only you see this
+            </span>
+          )}
+        </div>
+      )}
+      <div className="p-4 sm:p-5">
+        {needsReview && (
+          <p className="mb-3 inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-900">
+            AI draft: needs review
+          </p>
+        )}
+        <h2
+          id={`s-${section.id}`}
+          className={`${heading} scroll-mt-6 rounded-2xl bg-[var(--lp-primary)] px-4 py-3 text-center text-[1.3rem] leading-tight text-[var(--lp-on-primary)]`}
+        >
+          {section.title}
+        </h2>
+        <ul className="mt-3 grid grid-cols-2 gap-2.5">
+          {buttons.map((b, i) => (
+            <li key={i} className={buttons.length % 2 === 1 && i === buttons.length - 1 ? "col-span-2" : ""}>
+              <a
+                href={b.href}
+                {...externalProps(b.href)}
+                className="flex h-full min-h-[3.25rem] items-center justify-center gap-1.5 rounded-2xl bg-[var(--lp-accent-soft)] px-3 py-3 text-center text-[15px] leading-tight font-semibold text-[var(--lp-primary)] ring-1 ring-[var(--lp-primary)]/10 transition ring-inset active:scale-[0.97]"
+              >
+                {b.label}
+                <ArrowRightIcon className="h-3.5 w-3.5 shrink-0 opacity-70" />
+              </a>
+            </li>
+          ))}
+        </ul>
+        <ImageStrip images={more} className="mt-4" />
+        <VideoList videos={section.videos ?? []} className="mt-4" />
       </div>
     </section>
   );

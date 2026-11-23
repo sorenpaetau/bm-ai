@@ -6,6 +6,7 @@ import { BenchWaiting, benchWriter } from "./bench";
 import { brandDomains, draftRequest, pickedPhotoToInput, type DraftRequest } from "./brief";
 import { addFindingNotes, checkDraft, type Finding } from "./checks";
 import { buildDraftContent, type AiDraft, type AiMarketDraft, type DraftInput } from "./template";
+import { AiWineList, catalogRequest, cleanCatalog, type CatalogWine } from "./wine-catalog";
 
 // Writes a first draft of a product landing page. The result is a DRAFT: every section comes back
 // aiGenerated + not reviewed, and the manufacturer must review it before publishing.
@@ -81,6 +82,18 @@ export async function draftWithFindings(input: DraftInput, options: DraftOptions
   const findings = checkDraft(content, input);
   if (findings.length) console.warn(`AI draft for "${input.productName}": ${findings.length} thing(s) to check`, findings);
   return { content: addFindingNotes(content, findings), findings };
+}
+
+/**
+ * "Find my wines" (Jens, Nov 23): the AI reads the winery's own site and lists its wines, each with its
+ * own page, for the winery to pick one or all. Only the Claude writer can do it (it reads the site).
+ */
+export async function findWinesOnSite(companyName: string, website: string): Promise<CatalogWine[]> {
+  if (aiWriter() !== "claude") throw new DraftError("The AI writer isn't switched on for this site yet.");
+  const answer = await claudeWriter(catalogRequest(companyName, website), []);
+  const parsed = AiWineList.safeParse(answer);
+  if (!parsed.success) throw new DraftError("The AI couldn't read the list of wines on your website.");
+  return cleanCatalog(parsed.data, website);
 }
 
 async function loadPhotos(request: DraftRequest, load: PhotoLoader) {

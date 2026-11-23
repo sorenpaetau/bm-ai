@@ -87,7 +87,19 @@ export function draftKind(input: Pick<DraftInput, "vertical">): DraftKind {
 
 /** Wine pages start from the winery's website, so it goes first in the links the writer may read. */
 function writerLinks(input: DraftInput, kind: DraftKind): string[] {
-  return cleanLinks(kind === "winery" && input.website ? [input.website, ...(input.links ?? [])] : input.links);
+  if (kind !== "winery" || !input.website) return cleanLinks(input.links);
+  // The wine's own page (picked from the wines we found on the site) is read too, if it's on the winery's site.
+  const winePage = input.winePage && sameSite(input.winePage, input.website) ? [input.winePage] : [];
+  return cleanLinks([input.website, ...winePage, ...(input.links ?? [])]);
+}
+
+function sameSite(a: string, b: string): boolean {
+  try {
+    const host = (u: string) => new URL(u).hostname.replace(/^www\./, "").toLowerCase();
+    return host(a) === host(b);
+  } catch {
+    return false;
+  }
 }
 
 export function draftRequest(input: DraftInput): DraftRequest {
@@ -134,7 +146,11 @@ function wineryPrompt(input: DraftInput, links: string[], photoCount: number) {
   const lines = [`Winery: ${input.companyName}`, `Wine: ${input.productName}`];
   if (input.sku?.trim()) lines.push(`The bottle's item code (SKU): ${input.sku.trim()} (use it to find this wine on the website)`);
   lines.push(website ? `The winery's website: ${website}` : "The winery's website: none given (write from the description only)");
-  if (more.length) lines.push(`More of the winery's own pages it pointed us to:\n${more.map((l) => `- ${l}`).join("\n")}`);
+  const pageLink = cleanLinks(input.winePage ? [input.winePage] : [])[0];
+  const winePage = pageLink ? more.find((l) => l === pageLink) : undefined;
+  if (winePage) lines.push(`This wine's own page on the winery's site (read it first): ${winePage}`);
+  const others = more.filter((l) => l !== winePage);
+  if (others.length) lines.push(`More of the winery's own pages it pointed us to:\n${others.map((l) => `- ${l}`).join("\n")}`);
   lines.push(`Today's date: ${input.today ?? new Date().toISOString().slice(0, 10)}`);
   lines.push(photoCount ? `Photos attached above: ${photoCount}` : "Photos attached: none (set heroPhoto to 0)");
   return `${lines.join("\n")}

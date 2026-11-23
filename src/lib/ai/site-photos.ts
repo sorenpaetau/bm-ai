@@ -45,12 +45,14 @@ export async function attachSitePhotos(content: LandingContent, opts: Options): 
   const jobs: Job[] = [];
   if (!content.hero.imageUrl && content.hero.sitePhoto) jobs.push({ key: "(hero)", ...content.hero.sitePhoto, alt: content.hero.title });
   for (const s of content.sections) {
-    if (s.type === "tab" && s.sitePhoto && !(s.images ?? []).length) jobs.push({ key: s.id, ...s.sitePhoto, alt: s.sitePhoto.alt || s.title });
+    // Website tabs (Nov 18 pages) and the picture of the winery above its family of wines (version 6).
+    if ((s.type === "tab" || s.type === "products") && s.sitePhoto && !(s.images ?? []).length)
+      jobs.push({ key: s.id, ...s.sitePhoto, alt: s.sitePhoto.alt || s.title });
   }
   const strip = (c: LandingContent): LandingContent => ({
     ...c,
     hero: { ...c.hero, sitePhoto: undefined },
-    sections: c.sections.map((s) => (s.type === "tab" ? { ...s, sitePhoto: undefined } : s)),
+    sections: c.sections.map((s) => (s.type === "tab" || s.type === "products" ? { ...s, sitePhoto: undefined } : s)),
   });
   if (!jobs.length || !opts.website) return strip(content);
 
@@ -97,7 +99,7 @@ export async function attachSitePhotos(content: LandingContent, opts: Options): 
       ...content,
       hero: hero ? { ...content.hero, imageUrl: hero.url, imageSource: hero.source } : content.hero,
       sections: content.sections.map((s): Section => {
-        const pic = s.type === "tab" ? found.get(s.id) : undefined;
+        const pic = s.type === "tab" || s.type === "products" ? found.get(s.id) : undefined;
         return pic ? { ...s, images: [pic, ...(s.images ?? [])] } : s;
       }),
     });

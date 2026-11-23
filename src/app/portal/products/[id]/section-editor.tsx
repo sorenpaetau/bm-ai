@@ -137,7 +137,13 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
           {number}
         </span>
         <span className="rounded-full bg-stone-100 px-2 py-0.5 font-medium text-stone-700">
-          {box ? "Jump button box" : section.type === "tab" ? "Tab from your website" : SECTION_TYPES[section.type].label}
+          {box
+            ? "Jump button box"
+            : section.type === "tab"
+              ? "Tab from your website"
+              : section.type === "products" && section.display === "buttons"
+                ? "Link buttons to your website"
+                : SECTION_TYPES[section.type].label}
         </span>
         {needsReview && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900">AI draft · Needs review</span>}
         {section.aiGenerated && section.reviewed && (
@@ -190,7 +196,10 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
             <PhotoStrip
               images={section.images ?? []}
               onChange={(fn) => onUpdate((s) => ({ ...s, images: fn(s.images ?? []) }) as Section)}
-              {...(box?.photos ?? PHOTO_STRIP_WORDING[section.type])}
+              {...(box?.photos ??
+                (section.type === "products" && section.display === "buttons"
+                  ? { label: "Picture across the top (optional)", hint: "One wide picture shown above the buttons, e.g. a view of your vineyard." }
+                  : PHOTO_STRIP_WORDING[section.type]))}
             />
             <VideoField videos={section.videos ?? []} onChange={(videos) => patch({ videos })} />
           </>
@@ -226,22 +235,15 @@ export function SectionEditor({ section, onChange, onUpdate, number, example, bo
   );
 }
 
-/** The line under a wine box's heading: what it combines, and who may fill it in (Jens, Nov 16). */
+/** The line under a wine box's heading: what it combines, and where the AI may take it from (Jens, version 6). */
 function BoxNote({ box }: { box: WineryBox }) {
-  if (box.ai === "never") {
-    return (
-      <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-950 ring-1 ring-amber-200 ring-inset">
-        <span className="font-semibold">{box.combines}</span> Only you can fill this in: our AI never writes reviews. Shown after Where to
-        buy. Leave it empty and it stays off your page.
-      </p>
-    );
-  }
   return (
     <p className="rounded-lg bg-sky-50 px-3 py-2 text-xs text-sky-950 ring-1 ring-sky-200 ring-inset">
       <span className="font-semibold">One box for: {box.combines}</span>{" "}
-      Our AI fills this in from your description and website.
-      {box.ownerRows.length > 0 && ` Only you can fill in ${listWords(box.ownerRows)}: our AI never writes them.`} Enter
-      anything else that applies; empty rows, and an empty box with its jump button, stay off your page.
+      Our AI fills this in from your own website.
+      {box.siteOnlyRows.length > 0 &&
+        ` It only fills in ${listWords(box.siteOnlyRows)} when your website shows them for this wine: check each one.`}{" "}
+      Enter anything else that applies; empty rows stay off your page.
     </p>
   );
 }
@@ -435,6 +437,28 @@ function SectionFields({
         </div>
       );
     case "products":
+      if (section.display === "buttons") {
+        // A box of link buttons (version 6 wine pages): just the words on each button and the page it opens.
+        return (
+          <div className="space-y-3">
+            <p className="text-xs text-muted">
+              Each button opens that page of your own website. Buttons without a link stay off your page.
+            </p>
+            <ItemList
+              items={section.items}
+              onChange={(items) => patch({ items })}
+              blank={(): Item<typeof section> => ({ name: "", url: "" })}
+              addLabel="Add a button"
+              render={(item, set) => (
+                <div className="grid gap-2 sm:grid-cols-[1fr_2fr]">
+                  <TextField label="Button" value={item.name} onChange={(name) => set({ name })} placeholder="e.g. Gift Sets" />
+                  <TextField label="Link" type="url" value={item.url} onChange={(url) => set({ url: url || undefined })} placeholder="https://" />
+                </div>
+              )}
+            />
+          </div>
+        );
+      }
       return (
         <div className="space-y-3">
           <ItemList

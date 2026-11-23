@@ -9,9 +9,9 @@ import sampleAnswer from "./samples/ridgeline-website.json";
 // It lets anyone try "Create a page" on the live site before the AI writer is switched on (no API key
 // yet), and it has exactly the shape of a real draft: the answer is written for the free test bench's
 // made-up Ridgeline website (tests/fixtures/ai-bench/briefs/ridgeline-website.json) in the same answer
-// shape the Claude API must return, and it goes through the same page builder and rule checker. Its
-// jump buttons follow that website's own menu tabs (Visit, Our Story, Wines, Shop, Ridge Club, Gift
-// Guide, Events, Weddings & Gatherings, Recipes), as Jens set out in his final flow (Nov 18).
+// shape the Claude API must return, and it goes through the same page builder and rule checker. It is
+// laid out as Jens's version 6 wine page (Nov 22): the bottle with its price and sizes, The wine, a
+// picture of the winery above its other wines, and "Jump to" links into the winery's own site.
 //
 // The made-up website can't be visited, so the pictures a real draft copies from the winery's own site
 // are stood in for by our own drawings of it (public/demo), marked "From your website" just the same.
@@ -29,22 +29,25 @@ export const SAMPLE_WINERY = {
   photo: "/demo/ridgeline-cabernet.svg",
 };
 
-/** Our drawings standing in for the picture on each tab of the made-up website, by tab id. */
-export const SAMPLE_SITE_PICTURES: Record<string, string> = {
-  visit: "/demo/ridgeline-terrace.svg",
-  "our-story": "/demo/ridgeline-estate.svg",
-  wines: "/demo/ridgeline-cellar.svg",
-  shop: "/demo/ridgeline-shop.svg",
-  "ridge-club": "/demo/ridgeline-club.svg",
-  "gift-guide": "/demo/ridgeline-gifts.svg",
-  events: "/demo/ridgeline-events.svg",
-  "weddings-gatherings": "/demo/ridgeline-wedding.svg",
-  recipes: "/demo/ridgeline-recipe.svg",
-};
+/** Our drawing standing in for the wide picture of the winery on the made-up website's home page. */
+export const SAMPLE_WINERY_PICTURE = "/demo/ridgeline-estate.svg";
+
+/** Our bottle drawings for the made-up winery's other wines (public/demo), by the start of the wine's name. */
+export const SAMPLE_BOTTLES: Array<[RegExp, string]> = [
+  [/^reserve/i, "/demo/ridgeline-reserve.svg"],
+  [/chardonnay/i, "/demo/ridgeline-chardonnay.svg"],
+  [/sauvignon blanc/i, "/demo/ridgeline-sauvignon-blanc.svg"],
+  [/ros[eé]/i, "/demo/ridgeline-rose.svg"],
+  [/cabernet/i, "/demo/ridgeline-cabernet.svg"],
+];
+
+export function sampleBottle(name: string): string | undefined {
+  return SAMPLE_BOTTLES.find(([re]) => re.test(name))?.[1];
+}
 
 /**
  * What site-photos.ts does for a real winery, done with our drawings: the bottle's picture on top and
- * one picture per tab, each marked with the page of the (made-up) website it stands in for.
+ * the picture of the winery, each marked with the page of the (made-up) website it stands in for.
  */
 export function withSampleSitePictures(content: LandingContent): LandingContent {
   const hero = content.hero.sitePhoto;
@@ -56,10 +59,10 @@ export function withSampleSitePictures(content: LandingContent): LandingContent 
       ...(hero && !content.hero.imageUrl ? { imageUrl: SAMPLE_WINERY.photo, imageSource: shortPage(hero.page) } : {}),
     },
     sections: content.sections.map((s) => {
-      if (s.type !== "tab") return s;
-      const url = SAMPLE_SITE_PICTURES[s.id];
+      if (s.type !== "products" && s.type !== "tab") return s;
       const page = s.sitePhoto?.page;
-      const images = url && page && !(s.images ?? []).length ? [{ url, alt: s.sitePhoto?.alt || s.title, source: shortPage(page) }] : s.images;
+      const images =
+        page && !(s.images ?? []).length ? [{ url: SAMPLE_WINERY_PICTURE, alt: s.sitePhoto?.alt || s.title, source: shortPage(page) }] : s.images;
       return { ...s, images, sitePhoto: undefined };
     }),
   };

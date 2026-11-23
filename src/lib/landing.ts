@@ -90,6 +90,15 @@ export const ProductsSection = z.object({
     }),
   ),
   link: sectionLink,
+  /**
+   * "buttons": a box of plain link buttons, two across, under a dark title bar (Jens's version 6 wine
+   * page, Nov 22 2026: "Wagner Family of Wines" and "Jump to Caymus Vineyards links"). Each button opens
+   * that page on the brand's own website. The box's first picture (if any) shows across the top, e.g. a
+   * view of the vineyard. Default "cards": product cards with a picture, description and price.
+   */
+  display: z.enum(["cards", "buttons"]).optional(),
+  /** Where the AI looks for this box's picture on the brand's own site (see TabSection.sitePhoto). Never shown. */
+  sitePhoto: z.object({ page: z.string(), suggested: z.string().optional(), alt: z.string().optional() }).optional(),
 });
 
 export const OffersSection = z.object({
@@ -319,6 +328,8 @@ export const LandingContent = z.object({
     price: z.string().optional(),
     /** Small print next to the price. Defaults to "Suggested retail price". */
     priceNote: z.string().optional(),
+    /** Bottle or pack sizes, shown as small chips under the name, e.g. ["750 ml", "1.5 L"] (version 6 wine page). */
+    sizes: z.array(z.string()).optional(),
     /** The page on the brand's own website the main photo was copied from (see image.source). */
     imageSource: z.string().optional(),
     /** Where the AI looks for the bottle's picture on the winery's own site (see TabSection.sitePhoto). Never shown. */

@@ -7,7 +7,7 @@ import { LandingContent } from "../src/lib/landing";
 
 // "Copy for the next wine" (Jens, Nov 18): keep everything about the winery, clear the old bottle.
 
-test("a copy keeps the winery's tabs, pictures, links and shops, and clears what belonged to the old bottle", () => {
+test("a copy keeps the winery's picture, other wines and links, and clears what belonged to the old bottle", () => {
   const source = demoWineryContent();
   source.hero.price = "$68";
   source.hero.subtitle = "Cabernet Sauvignon · 2023";
@@ -21,8 +21,8 @@ test("a copy keeps the winery's tabs, pictures, links and shops, and clears what
   assert.deepEqual(copy.buttons, source.buttons);
   assert.deepEqual(copy.theme, source.theme);
 
-  // Website tabs and Where to buy come across exactly as approved.
-  for (const s of source.sections.filter((x) => x.type === "tab" || x.type === "buy")) {
+  // The winery's boxes (other wines and website links, with the picture of the winery) come across as approved.
+  for (const s of source.sections.filter((x) => x.type === "products")) {
     assert.deepEqual(copy.sections.find((c) => c.id === s.id), s, s.id);
   }
 
@@ -37,9 +37,7 @@ test("a copy keeps the winery's tabs, pictures, links and shops, and clears what
   for (const label of ["Grape", "Food pairing", "Alcohol (ABV)", "Awards", "Wine rating"]) assert.equal(row(label), "", label);
   assert.equal(wine.link, undefined, "no link to the old wine's page");
   assert.equal(wine.aiGenerated, false);
-
-  const reviews = copy.sections.find((s) => s.id === "reviews")!;
-  assert.ok(reviews.type === "topic" && !reviews.answer && !reviews.body && !reviews.link);
+  assert.ok(source.sections.filter((x) => x.type === "products").length === 2);
 });
 
 test("only wine pages can be copied for now (other markets keep product details in other boxes)", () => {
