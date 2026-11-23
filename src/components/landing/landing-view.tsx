@@ -187,7 +187,7 @@ export function LandingView({
                   .filter((v) => v.trim())
                   .map((size, i) => (
                     <li key={i} className="rounded-full px-3 py-1 text-[13px] font-semibold ring-1 ring-[var(--lp-on-primary)]/35 ring-inset">
-                      {size}
+                      {size.trim()}
                     </li>
                   ))}
               </ul>

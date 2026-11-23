@@ -249,11 +249,12 @@ export function Editor({ productId, slug, initial, live, liveIsCurrent, verified
           {wine && (
             <TextField
               label="Bottle sizes (optional)"
-              value={(content.hero.sizes ?? []).join(", ")}
+              value={(content.hero.sizes ?? []).join(",")}
               onChange={(v) =>
                 update((d) => {
-                  const sizes = v.split(",").map((x) => x.trim());
-                  d.hero.sizes = sizes.some(Boolean) ? sizes : undefined;
+                  // Kept as typed (spaces too, e.g. "750 ml"); the page trims each size when it shows it.
+                  const sizes = v.split(",");
+                  d.hero.sizes = sizes.some((x) => x.trim()) ? sizes : undefined;
                 })
               }
               placeholder="750ml, 1L"

@@ -212,12 +212,14 @@ function WineFinder({ website, sample }: { website: string | null; sample: boole
   const [found, findAction, finding] = useActionState<FindState, FormData>(findWines, {});
   const [made, createAction, creating] = useActionState<FindState, FormData>(createWinePages, {});
   const wines = found.wines ?? [];
-  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [ticked, setPicked] = useState<Set<string>>(new Set());
+  // Only wines in the latest search count (a new search can list different wines).
+  const picked = new Set(wines.map((w) => w.pageUrl).filter((url) => ticked.has(url)));
   const allPicked = wines.length > 0 && wines.every((w) => picked.has(w.pageUrl));
   const tooMany = picked.size > MAX_PAGES_AT_ONCE;
   const toggle = (url: string) =>
-    setPicked((prev) => {
-      const next = new Set(prev);
+    setPicked(() => {
+      const next = new Set(picked);
       if (next.has(url)) next.delete(url);
       else next.add(url);
       return next;
